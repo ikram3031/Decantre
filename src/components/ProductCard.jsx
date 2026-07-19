@@ -124,13 +124,7 @@ export const ProductCard = ({
                 {size}
               </button>
             ))}
-
-                  {conc === 'Eau de Parfum' ? 'EDP' : 'EXTRAIT'}
-                </button>
-              ))}
-            </div>
-          </div>
-        */}
+        </div>
 
       </div>
 
