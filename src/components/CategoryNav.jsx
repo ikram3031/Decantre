@@ -1,0 +1,115 @@
+import React from 'react';
+
+export const CategoryNav = ({ setSelectedCategory }) => {
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <section id="categories-section" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="text-center space-y-3 mb-14">
+        <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium">Olfactory Genders</span>
+        <h2 className="text-3xl sm:text-4xl font-serif font-light text-luxury-white tracking-wide">
+          EXPLORE THE PALETTE
+        </h2>
+        <div className="w-20 h-[1px] bg-gold/30 mx-auto"></div>
+        <p className="text-zinc-500 text-xs sm:text-sm max-w-md mx-auto font-sans font-light leading-relaxed">
+          Choose from our specialized collections carefully formulated with hand-selected extracts for your distinct character.
+        </p>
+      </div>
+
+      {/* 3 Categories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        {/* For Him Card */}
+        <div 
+          id="cat-card-him"
+          onClick={() => handleCategorySelect('For Him')}
+          className="group relative h-96 rounded-sm overflow-hidden border border-gold/20 hover:border-gold/60 transition-all duration-500 cursor-pointer shadow-2xl"
+        >
+          <div className="absolute inset-0 bg-luxury-black">
+            <img 
+              src="/src/assets/images/perfume_for_him_1784311883603.jpg" 
+              alt="For Him Category" 
+              className="w-full h-full object-cover object-center opacity-40 group-hover:scale-105 transition-transform duration-700"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/40 to-transparent"></div>
+          </div>
+          
+          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-2">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-sans font-medium">Woody, Smoky, Fresh</span>
+            <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">FOR HIM</h3>
+            <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
+            <p className="text-xs text-zinc-400 font-sans font-light opacity-0 group-hover:opacity-100 transition-opacity duration-500 pt-2">
+              Bold obsidian shapes, rich leather notes, and rugged mountain cedarwood.
+            </p>
+            <button className="text-[10px] text-gold tracking-widest uppercase font-bold pt-2 block mx-auto group-hover:underline font-sans">
+              Explore Collection
+            </button>
+          </div>
+        </div>
+
+        {/* For Her Card */}
+        <div 
+          id="cat-card-her"
+          onClick={() => handleCategorySelect('For Her')}
+          className="group relative h-96 rounded-sm overflow-hidden border border-gold/20 hover:border-gold/60 transition-all duration-500 cursor-pointer shadow-2xl"
+        >
+          <div className="absolute inset-0 bg-luxury-black">
+            <img 
+              src="/src/assets/images/perfume_for_her_1784311895919.jpg" 
+              alt="For Her Category" 
+              className="w-full h-full object-cover object-center opacity-40 group-hover:scale-105 transition-transform duration-700"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/40 to-transparent"></div>
+          </div>
+          
+          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-2">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-sans font-medium">Floral, Rose, Sweet Nectar</span>
+            <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">FOR HER</h3>
+            <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
+            <p className="text-xs text-zinc-400 font-sans font-light opacity-0 group-hover:opacity-100 transition-opacity duration-500 pt-2">
+              Rose absolute extracts, honeyed orchards, and delicate crystalline caps.
+            </p>
+            <button className="text-[10px] text-gold tracking-widest uppercase font-bold pt-2 block mx-auto group-hover:underline font-sans">
+              Explore Collection
+            </button>
+          </div>
+        </div>
+
+        {/* Unisex Card */}
+        <div 
+          id="cat-card-unisex"
+          onClick={() => handleCategorySelect('Unisex')}
+          className="group relative h-96 rounded-sm overflow-hidden border border-gold/20 hover:border-gold/60 transition-all duration-500 cursor-pointer shadow-2xl"
+        >
+          <div className="absolute inset-0 bg-luxury-black">
+            <img 
+              src="/src/assets/images/perfume_unisex_1784311906469.jpg" 
+              alt="Unisex Category" 
+              className="w-full h-full object-cover object-center opacity-40 group-hover:scale-105 transition-transform duration-700"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/40 to-transparent"></div>
+          </div>
+          
+          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-2">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-sans font-medium">Saffron, Spices, Amber Resins</span>
+            <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">UNISEX</h3>
+            <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
+            <p className="text-xs text-zinc-400 font-sans font-light opacity-0 group-hover:opacity-100 transition-opacity duration-500 pt-2">
+              Intricate blends of high-altitude saffron, dark rum, and golden cashmeran.
+            </p>
+            <button className="text-[10px] text-gold tracking-widest uppercase font-bold pt-2 block mx-auto group-hover:underline font-sans">
+              Explore Collection
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  );
+};
