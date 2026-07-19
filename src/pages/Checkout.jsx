@@ -1,13 +1,29 @@
 import React, { useEffect } from 'react';
-import { ShieldCheck, Calendar, Lock, CheckCircle, ArrowLeft, Loader2, Award } from 'lucide-react';
+import {
+  ShieldCheck as IconShield,
+  CheckCircle as IconCheck,
+  ArrowLeft as IconBack,
+  Loader2 as IconLoader,
+  Award as IconAward,
+  Lock as IconLock,
+  Calendar as IconCalendar
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { formatBDT as fmtBDT } from '../utils/formatCurrency';
 import { useApp } from '../context/AppContext';
+import { DISTRICTS as districtData } from '../lib/districts.js';
 
 export const Checkout = () => {
   const {
     cart,
     shippingInfo,
     setShippingInfo,
+    shippingAddress,
+    setShippingAddress,
+    paymentMethod,
+    setPaymentMethod,
+    sameAsBilling,
+    setSameAsBilling,
     isProcessingOrder,
     handleCheckoutSubmit,
     orderCompleted,
@@ -20,6 +36,25 @@ export const Checkout = () => {
   } = useApp();
 
   const navigate = useNavigate();
+
+  const {
+    fullName,
+    phone,
+    email,
+    address,
+    city,
+    thana,
+    district,
+    zip,
+    giftWrap
+  } = shippingInfo;
+
+  const {
+    address: shipAddress,
+    thana: shipThana,
+    district: shipDistrict,
+    zip: shipZip
+  } = shippingAddress;
 
   // If cart is empty, send them back to shop
   useEffect(() => {
@@ -57,7 +92,7 @@ export const Checkout = () => {
           <div className="lg:col-span-7 space-y-8">
             <div className="flex items-center gap-3">
               <Link to="/cart" className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-400 hover:text-gold transition-colors font-semibold">
-                <ArrowLeft className="w-4 h-4 text-gold" /> Back to Cart
+                <IconBack className="w-4 h-4 text-gold" /> Back to Cart
               </Link>
             </div>
 
@@ -76,7 +111,7 @@ export const Checkout = () => {
                       type="text" 
                       required
                       placeholder="Baron Jean-Pierre"
-                      value={shippingInfo.fullName}
+                      value={fullName}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, fullName: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
@@ -88,7 +123,7 @@ export const Checkout = () => {
                       type="email" 
                       required
                       placeholder="client@noble-regency.com"
-                      value={shippingInfo.email}
+                      value={email}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
@@ -100,7 +135,7 @@ export const Checkout = () => {
                       type="text" 
                       required
                       placeholder="14 Avenue Montaigne"
-                      value={shippingInfo.address}
+                      value={address}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
@@ -112,7 +147,7 @@ export const Checkout = () => {
                       type="text" 
                       required
                       placeholder="Paris"
-                      value={shippingInfo.city}
+                      value={city}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
@@ -124,8 +159,8 @@ export const Checkout = () => {
                       type="text" 
                       required
                       placeholder="75008"
-                      value={shippingInfo.postalCode}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, postalCode: e.target.value })}
+                      value={zip}
+                      onChange={(e) => setShippingInfo({ ...shippingInfo, zip: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
                   </div>
@@ -135,66 +170,178 @@ export const Checkout = () => {
               {/* Payment Section */}
               <div className="space-y-4 pt-4">
                 <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-zinc-300 border-b border-white/5 pb-2">
-                  2. Luxury Secure Payment
+                  2. Preferred Handover Method
                 </h3>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className={`cursor-pointer rounded-sm border px-4 py-3 text-[10px] uppercase tracking-widest font-semibold ${paymentMethod === 'cod' ? 'border-gold bg-gold/10 text-gold' : 'border-white/10 bg-black/40 text-zinc-300'}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={paymentMethod === 'cod'}
+                        onChange={() => setPaymentMethod('cod')}
+                        className="sr-only"
+                      />
+                      Cash on Delivery
+                    </label>
+                    <label className={`cursor-pointer rounded-sm border px-4 py-3 text-[10px] uppercase tracking-widest font-semibold ${paymentMethod === 'instore' ? 'border-gold bg-gold/10 text-gold' : 'border-white/10 bg-black/40 text-zinc-300'}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="instore"
+                        checked={paymentMethod === 'instore'}
+                        onChange={() => setPaymentMethod('instore')}
+                        className="sr-only"
+                      />
+                      Instore Pickup
+                    </label>
+                  </div>
+
+                  <p className="text-[10px] text-zinc-500 leading-relaxed">
+                    {paymentMethod === 'cod'
+                      ? 'Select Cash on Delivery to receive your order directly at your address. A shipping fee applies unless the order qualifies for complimentary courier transport.'
+                      : 'Select Instore Pickup to collect your order from our boutique. Courier shipping is waived and you will receive pickup details by email.'}
+                  </p>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Cardholder Name</label>
-                    <input 
-                      type="text" 
+                    <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Contact Phone</label>
+                    <input
+                      type="tel"
                       required
-                      placeholder="JEAN PIERRE"
-                      value={shippingInfo.cardName}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, cardName: e.target.value })}
-                      className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans uppercase"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Credit Card Number</label>
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        required
-                        maxLength="19"
-                        placeholder="4111 2222 3333 4444"
-                        value={shippingInfo.cardNumber}
-                        onChange={(e) => setShippingInfo({ ...shippingInfo, cardNumber: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 pl-10 outline-none rounded-sm font-sans"
-                      />
-                      <Lock className="w-3.5 h-3.5 text-gold/40 absolute left-3.5 top-3.5" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Expiration Date</label>
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        required
-                        maxLength="5"
-                        placeholder="12/28"
-                        value={shippingInfo.cardExpiry}
-                        onChange={(e) => setShippingInfo({ ...shippingInfo, cardExpiry: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 pl-10 outline-none rounded-sm font-sans"
-                      />
-                      <Calendar className="w-3.5 h-3.5 text-gold/40 absolute left-3.5 top-3.5" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">CVV Code</label>
-                    <input 
-                      type="password" 
-                      required
-                      maxLength="4"
-                      placeholder="•••"
-                      value={shippingInfo.cardCvv}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, cardCvv: e.target.value })}
+                      placeholder="+880 1XXX XXX XXX"
+                      value={phone}
+                      onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
                   </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Thana / Subdistrict</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Dhanmondi"
+                      value={thana}
+                      onChange={(e) => setShippingInfo({ ...shippingInfo, thana: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">District</label>
+                    <input
+                      list="district-options"
+                      required
+                      placeholder="Dhaka"
+                      value={district}
+                      onChange={(e) => setShippingInfo({ ...shippingInfo, district: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                    />
+                    <datalist id="district-options">
+                      {districtData.map((district) => (
+                        <option key={district.id} value={district.name} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Postal Code</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="1207"
+                      value={zip}
+                      onChange={(e) => setShippingInfo({ ...shippingInfo, zip: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                    />
+                  </div>
+                </div>
+
+                {paymentMethod === 'cod' && (
+                  <div className="pt-4 border-t border-white/10">
+                    <label className="flex items-center gap-3 text-xs text-zinc-300">
+                      <input
+                        type="checkbox"
+                        checked={sameAsBilling}
+                        onChange={(e) => setSameAsBilling(e.target.checked)}
+                        className="h-4 w-4 rounded-sm border border-white/10 bg-black text-gold focus:ring-gold"
+                      />
+                      Use billing address as shipping address
+                    </label>
+                  </div>
+                )}
+
+                {paymentMethod === 'cod' && !sameAsBilling && (
+                  <div className="pt-4 border-t border-white/10 space-y-4">
+                    <div className="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Shipping Address</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="sm:col-span-2">
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Shipping Street Address</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="House 24, Road 18"
+                          value={shippingAddress.address}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, address: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Thana / Subdistrict</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Gulshan"
+                          value={shippingAddress.thana}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, thana: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">District</label>
+                        <input
+                          list="district-options"
+                          required
+                          placeholder="Dhaka"
+                          value={shippingAddress.district}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, district: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Postal Code</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="1212"
+                          value={shippingAddress.zip}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, zip: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 p-3 bg-black/30 border border-white/10 rounded-sm mt-2">
+                  <input
+                    type="checkbox"
+                    id="gift-wrap-checkbox"
+                    checked={giftWrap}
+                    onChange={(e) => setShippingInfo({ ...shippingInfo, giftWrap: e.target.checked })}
+                    className="rounded-sm text-gold focus:ring-gold h-4 w-4 bg-black border-white/10"
+                  />
+                  <label htmlFor="gift-wrap-checkbox" className="text-[11px] text-zinc-400 font-sans font-light cursor-pointer select-none">
+                    <strong className="text-gold font-medium">Include Presentation Box (+{fmtBDT(15)})</strong>
+                    <br />Hand-finish your order inside a black velvet case with custom wax seal.
+                  </label>
                 </div>
               </div>
 
@@ -205,29 +352,29 @@ export const Checkout = () => {
                   disabled={isProcessingOrder}
                   className="w-full bg-gold text-black text-xs font-sans font-bold uppercase tracking-widest py-4 rounded-sm hover:bg-gold/90 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-gold/5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProcessingOrder ? (
+                      {isProcessingOrder ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin text-black" />
+                      <IconLoader className="w-4 h-4 animate-spin text-black" />
                       COMPILING SECURITY LEDGER...
                     </>
-                  ) : (
-                    <>
-                      AUTHORIZE SECURE PURCHASE — ${cartTotal}
-                    </>
-                  )}
+                      ) : (
+                        <>
+                          AUTHORIZE SECURE PURCHASE — {fmtBDT(cartTotal)}
+                        </>
+                      )}
                 </button>
 
                 <div className="flex items-center justify-center gap-6 text-[10px] text-zinc-500 font-sans font-medium py-2">
                   <span className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-gold/60" /> SSL SECURED
+                    <IconShield className="w-4 h-4 text-gold/60" /> SSL SECURED
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-gold/60" /> 256-BIT ENCRYPTION
+                    <IconLock className="w-3.5 h-3.5 text-gold/60" /> 256-BIT ENCRYPTION
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1.5">
-                    <Award className="w-4 h-4 text-gold/60" /> INSURED COURIER
+                    <IconAward className="w-4 h-4 text-gold/60" /> INSURED COURIER
                   </span>
                 </div>
               </div>
@@ -251,47 +398,47 @@ export const Checkout = () => {
                       {item.size} • {item.concentration} • Qty {item.quantity}
                     </span>
                   </div>
-                  <span className="font-mono text-gold font-semibold">${item.unitPrice * item.quantity}</span>
+                  <span className="font-mono text-gold font-semibold">{fmtBDT(item.unitPrice * item.quantity)}</span>
                 </div>
               ))}
             </div>
 
             {/* Calculations Breakdown */}
             <div className="border-t border-white/5 pt-4 space-y-2.5 font-sans text-xs">
-              <div className="flex justify-between text-zinc-400 font-light">
+                <div className="flex justify-between text-zinc-400 font-light">
                 <span>Subtotal</span>
-                <span className="font-mono text-zinc-300">${cartSubtotal}</span>
+                <span className="font-mono text-zinc-300">{fmtBDT(cartSubtotal)}</span>
               </div>
 
               {discountAmount > 0 && (
                 <div className="flex justify-between text-emerald-400 font-light">
                   <span>Sovereign Discount</span>
-                  <span className="font-mono">-${discountAmount}</span>
+                  <span className="font-mono">-{fmtBDT(discountAmount)}</span>
                 </div>
               )}
 
               <div className="flex justify-between text-zinc-400 font-light">
                 <span>Courier Shipping</span>
                 <span className="font-mono text-zinc-300">
-                  {shippingFee === 0 ? 'Complimentary' : `$${shippingFee}`}
+                  {shippingFee === 0 ? 'Complimentary' : fmtBDT(shippingFee)}
                 </span>
               </div>
 
               <div className="flex justify-between text-zinc-400 font-light">
                 <span>Luxury Duties & Customs</span>
-                <span className="font-mono text-zinc-300">${luxuryTax}</span>
+                <span className="font-mono text-zinc-300">{fmtBDT(luxuryTax)}</span>
               </div>
 
-              {shippingInfo.giftWrap && (
+              {giftWrap && (
                 <div className="flex justify-between text-gold/80 font-light">
                   <span>Velvet Presentation Wrapping</span>
-                  <span className="font-mono">+$15</span>
+                  <span className="font-mono">+{fmtBDT(15)}</span>
                 </div>
               )}
 
               <div className="border-t border-gold/20 pt-4 flex justify-between items-end">
                 <span className="text-xs font-sans font-bold uppercase text-zinc-300 tracking-wider">Total Charge</span>
-                <span className="text-lg font-serif text-gold font-semibold font-mono">${cartTotal}</span>
+                <span className="text-lg font-serif text-gold font-semibold font-mono">{fmtBDT(cartTotal)}</span>
               </div>
             </div>
 

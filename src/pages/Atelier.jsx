@@ -10,7 +10,7 @@ export const Atelier = () => {
         <div className="text-center space-y-4 mb-20 relative py-16 border-b border-gold/15">
           <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">The Genesis of Essence</span>
           <h1 className="text-3xl sm:text-5xl font-serif font-light text-luxury-white tracking-wide">
-            L'ATELIER PARFUMÉ
+            DECANTRE PARFUMÉ
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-xl mx-auto leading-relaxed">
             Where natural chemistry merges with couture art. Learn about our rich history, extraction methodology, and master curators.
@@ -26,7 +26,7 @@ export const Atelier = () => {
             </h2>
             <div className="h-[1px] w-20 bg-gold/40"></div>
             <p className="text-zinc-400 text-sm font-sans font-light leading-relaxed">
-              Founded on the pristine coasts of Southern France, L'Atelier Parfumé was born from a singular vision: to treat fragrance not as a simple accessory, but as liquid architecture that dialogues directly with human chemistry.
+              Founded on the pristine coasts of Southern France, Decantre Parfumé was born from a singular vision: to treat fragrance not as a simple accessory, but as liquid architecture that dialogues directly with human chemistry.
             </p>
             <p className="text-zinc-400 text-sm font-sans font-light leading-relaxed">
               We bypass industrial factory synthetic short-cuts. Instead, we harvest premium raw natural elements—like rare Cambodian Oud, Damask Roses, and Madagascar Vanilla pods—in complete synergy with regional farming cycles.

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { products } from '../data';
+import { mapRemoteProduct } from './productHelpers';
 
 export const useAppStore = create((set, get) => {
   // Load initial cached values safely
@@ -24,6 +24,66 @@ export const useAppStore = create((set, get) => {
   })();
 
   return {
+    // products can be loaded from remote API; initialize empty until fetched
+    products: [],
+    categories: [],
+    brands: [],
+
+    setProducts: (newProducts) => set({ products: newProducts }),
+    setCategories: (newCategories) => set({ categories: newCategories }),
+    setBrands: (newBrands) => set({ brands: newBrands }),
+
+    fetchProducts: async (opts = {}) => {
+      try {
+        const base = 'http://localhost:4000/api/wp/products';
+        const url = opts && opts.rawQuery ? `${base}?${opts.rawQuery}` : base;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
+        const json = await res.json();
+        const list = Array.isArray(json.data) ? json.data : [];
+
+        // map remote shape to app product shape, include variations
+        const mapped = list.map(mapRemoteProduct);
+
+        set({ products: mapped });
+        return mapped;
+      } catch (err) {
+        console.error('Error fetching products', err);
+        return get().products;
+      }
+    },
+
+    fetchCategories: async (opts = {}) => {
+      try {
+        const base = 'http://localhost:4000/api/wp/taxonomies/categories';
+        const rawQuery = opts && opts.rawQuery ? opts.rawQuery : 'skip=0&limit=50';
+        const res = await fetch(`${base}?${rawQuery}`);
+        if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
+        const json = await res.json();
+        const list = Array.isArray(json.data) ? json.data : [];
+        set({ categories: list });
+        return list;
+      } catch (err) {
+        console.error('Error fetching categories', err);
+        return get().categories;
+      }
+    },
+
+    fetchBrands: async (opts = {}) => {
+      try {
+        const base = 'http://localhost:4000/api/wp/taxonomies/brands';
+        const rawQuery = opts && opts.rawQuery ? opts.rawQuery : 'skip=0&limit=50';
+        const res = await fetch(`${base}?${rawQuery}`);
+        if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
+        const json = await res.json();
+        const list = Array.isArray(json.data) ? json.data : [];
+        set({ brands: list });
+        return list;
+      } catch (err) {
+        console.error('Error fetching brands', err);
+        return get().brands;
+      }
+    },
     // 1. Core States
     currentSlide: 0,
     selectedCategory: 'All',
@@ -54,20 +114,30 @@ export const useAppStore = create((set, get) => {
     promoCode: '',
     appliedDiscount: 0,
     promoError: '',
+    paymentMethod: 'cod',
+    sameAsBilling: true,
+    shippingZone: 'inside-dhaka',
+    shippingAddress: {
+      address: '',
+      city: '',
+      thana: '',
+      district: '',
+      zip: ''
+    },
     shippingInfo: {
       fullName: '',
+      phone: '',
       email: '',
       address: '',
       city: '',
-      postalCode: '',
-      cardName: '',
-      cardNumber: '',
-      cardExpiry: '',
-      cardCvv: '',
+      thana: '',
+      district: '',
+      zip: '',
       giftWrap: false
     },
     orderCompleted: false,
     isProcessingOrder: false,
+    orderNumber: null,
     toasts: [],
 
     // 2. Direct State Setters
@@ -106,6 +176,13 @@ export const useAppStore = create((set, get) => {
     setPromoCode: (code) => set({ promoCode: code }),
     setAppliedDiscount: (discount) => set({ appliedDiscount: discount }),
     setPromoError: (error) => set({ promoError: error }),
+    setPaymentMethod: (method) => set({ paymentMethod: method }),
+    setSameAsBilling: (same) => set({ sameAsBilling: same }),
+    setShippingZone: (zone) => set({ shippingZone: zone }),
+    setShippingAddress: (updater) => set((state) => {
+      const nextAddress = typeof updater === 'function' ? updater(state.shippingAddress) : updater;
+      return { shippingAddress: nextAddress };
+    }),
     setShippingInfo: (updater) => set((state) => {
       const nextInfo = typeof updater === 'function' ? updater(state.shippingInfo) : updater;
       return { shippingInfo: nextInfo };
@@ -232,19 +309,20 @@ export const useAppStore = create((set, get) => {
         set({ quizStep: step + 1 });
       } else {
         // Find recommendation
-        let bestMatch = products[0];
+        const allProducts = get().products || [];
+        let bestMatch = allProducts[0];
         const gender = updated['gender'];
         const family = updated['family'];
 
         if (gender === 'Him') {
-          if (family === 'Fresh') bestMatch = products.find(p => p.id === 'bergamote-sauvage') || products[3];
-          else bestMatch = products.find(p => p.id === 'oud-imperial') || products[0];
+          if (family === 'Fresh') bestMatch = allProducts.find(p => p.id === 'bergamote-sauvage') || allProducts[3];
+          else bestMatch = allProducts.find(p => p.id === 'oud-imperial') || allProducts[0];
         } else if (gender === 'Her') {
-          if (family === 'Floral' || family === 'Fresh') bestMatch = products.find(p => p.id === 'rose-absolue') || products[5];
-          else bestMatch = products.find(p => p.id === 'nectar-de-saphir') || products[1];
+          if (family === 'Floral' || family === 'Fresh') bestMatch = allProducts.find(p => p.id === 'rose-absolue') || allProducts[5];
+          else bestMatch = allProducts.find(p => p.id === 'nectar-de-saphir') || allProducts[1];
         } else {
-          if (family === 'Warm' || family === 'Woody') bestMatch = products.find(p => p.id === 'saffron-mystique') || products[2];
-          else bestMatch = products.find(p => p.id === 'ambre-nuit') || products[4];
+          if (family === 'Warm' || family === 'Woody') bestMatch = allProducts.find(p => p.id === 'saffron-mystique') || allProducts[2];
+          else bestMatch = allProducts.find(p => p.id === 'ambre-nuit') || allProducts[4];
         }
 
         set({
@@ -254,25 +332,104 @@ export const useAppStore = create((set, get) => {
       }
     },
 
-    handleCheckoutSubmit: (e) => {
+    handleCheckoutSubmit: async (e) => {
       if (e) e.preventDefault();
       const cart = get().cart;
       const shippingInfo = get().shippingInfo;
+      const paymentMethod = get().paymentMethod;
+      const sameAsBilling = get().sameAsBilling;
+      const shippingAddress = get().shippingAddress;
       if (cart.length === 0) return;
 
-      if (!shippingInfo.fullName || !shippingInfo.email || !shippingInfo.address || !shippingInfo.cardNumber) {
-        get().addToast('Please satisfy all luxury shipping and payment credentials.', 'error');
+      const requiredBilling = [
+        shippingInfo.fullName,
+        shippingInfo.phone,
+        shippingInfo.email,
+        shippingInfo.address,
+        shippingInfo.thana,
+        shippingInfo.district,
+        shippingInfo.zip
+      ];
+
+      if (requiredBilling.some((field) => !field)) {
+        get().addToast('Please complete all billing details before continuing.', 'error');
         return;
       }
 
+      if (paymentMethod === 'cod' && !sameAsBilling) {
+        const requiredShipping = [
+          shippingAddress.address,
+          shippingAddress.thana,
+          shippingAddress.district,
+          shippingAddress.zip
+        ];
+        if (requiredShipping.some((field) => !field)) {
+          get().addToast('Please complete the shipping address or enable billing as shipping.', 'error');
+          return;
+        }
+      }
+
       set({ isProcessingOrder: true });
-      setTimeout(() => {
+
+      try {
+        const pricing = get().getCartPricing();
+
+        const payload = {
+          fullName: shippingInfo.fullName,
+          phone: shippingInfo.phone,
+          email: shippingInfo.email,
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          thana: shippingInfo.thana,
+          district: shippingInfo.district,
+          zip: shippingInfo.zip,
+          giftWrap: shippingInfo.giftWrap,
+          paymentMethod,
+          subtotal: pricing.cartSubtotal,
+          shippingFee: pricing.shippingFee,
+          tax: pricing.luxuryTax,
+          total: pricing.cartTotal,
+          items: cart.map((item) => ({
+            name: item.product.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            size: item.size,
+            concentration: item.concentration
+          }))
+        };
+
+        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+        const res = await fetch(`${apiBaseUrl}/api/v1/orders/new-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        let json = {};
+        try {
+          json = await res.json();
+        } catch {
+          json = {};
+        }
+
+        if (!res.ok || json.status !== 'success') {
+          const errMsg = json?.errors?.[0] || json?.message || 'Order submission failed. Please try again.';
+          get().addToast(errMsg, 'error');
+          set({ isProcessingOrder: false });
+          return;
+        }
+
         set({
           isProcessingOrder: false,
-          orderCompleted: true
+          orderCompleted: true,
+          orderNumber: json.data?.orderNumber ?? null
         });
-        get().addToast('Your order has been officially verified and compiled.', 'success');
-      }, 2500);
+        get().addToast(json?.message || 'Your order has been officially verified and compiled.', 'success');
+      } catch (err) {
+        console.error('Order submission error:', err);
+        get().addToast('Network error — could not reach the order server. Please try again.', 'error');
+        set({ isProcessingOrder: false });
+      }
     },
 
     handleResetCheckout: () => {
@@ -280,17 +437,26 @@ export const useAppStore = create((set, get) => {
       set({
         isCheckoutMode: false,
         orderCompleted: false,
+        orderNumber: null,
         isCartOpen: false,
+        paymentMethod: 'cod',
+        sameAsBilling: true,
+        shippingZone: 'inside-dhaka',
+        shippingAddress: {
+          address: '',
+          thana: '',
+          district: '',
+          zip: ''
+        },
         shippingInfo: {
           fullName: '',
+          phone: '',
           email: '',
           address: '',
           city: '',
-          postalCode: '',
-          cardName: '',
-          cardNumber: '',
-          cardExpiry: '',
-          cardCvv: '',
+          thana: '',
+          district: '',
+          zip: '',
           giftWrap: false
         },
         promoCode: '',
@@ -325,7 +491,8 @@ export const useAppStore = create((set, get) => {
     getFilteredProducts: () => {
       const selectedCategory = get().selectedCategory;
       const searchQuery = get().searchQuery;
-      return products.filter((prod) => {
+      const allProducts = get().products || [];
+      return allProducts.filter((prod) => {
         const matchesCategory = selectedCategory === 'All' || prod.category === selectedCategory;
         const matchesSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                               prod.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -337,10 +504,11 @@ export const useAppStore = create((set, get) => {
     getCartPricing: () => {
       const cart = get().cart;
       const appliedDiscount = get().appliedDiscount;
+      const paymentMethod = get().paymentMethod;
       const shippingInfo = get().shippingInfo;
       const cartSubtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
       const discountAmount = Math.round(cartSubtotal * appliedDiscount);
-      const shippingFee = cartSubtotal > 200 || cartSubtotal === 0 ? 0 : 25;
+      const shippingFee = paymentMethod === 'instore' ? 0 : (cartSubtotal > 200 || cartSubtotal === 0 ? 0 : 25);
       const luxuryTax = Math.round((cartSubtotal - discountAmount) * 0.08);
       const cartTotal = Math.max(0, cartSubtotal - discountAmount + shippingFee + luxuryTax + (shippingInfo.giftWrap ? 15 : 0));
 
