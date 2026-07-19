@@ -1,7 +1,6 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
-import { formatBDT } from '../utils/formatCurrency';
 
 export const ScentFinderQuiz = ({
   isQuizOpen,
@@ -156,7 +155,7 @@ export const ScentFinderQuiz = ({
               <div className="font-sans">
                 <span className="text-[8px] uppercase tracking-widest text-gold font-bold block">{quizRecommendation.category} • {quizRecommendation.scentFamily}</span>
                 <p className="text-[11px] text-zinc-400 font-light leading-relaxed line-clamp-2 mt-0.5">{quizRecommendation.description}</p>
-                <span className="text-[11px] font-sans font-medium text-gold mt-1 block">Base Value: {formatBDT(quizRecommendation.basePrice)}</span>
+                <span className="text-[11px] font-sans font-medium text-gold mt-1 block">Base Value: ${quizRecommendation.basePrice}</span>
               </div>
             </div>
 

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Star, MessageSquare, Plus, Check, Filter } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { products } from '../data';
 
 export const Reviews = () => {
-  const { addToast, products } = useApp();
+  const { addToast } = useApp();
 
   // Initial static reviews
   const [reviewsList, setReviewsList] = useState([

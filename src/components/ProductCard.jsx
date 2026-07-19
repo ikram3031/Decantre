@@ -1,6 +1,5 @@
 import React from 'react';
 import { Star, Heart, Eye, ShoppingCart } from 'lucide-react';
-import { formatBDT } from '../utils/formatCurrency';
 
 export const ProductCard = ({
   product,
@@ -13,11 +12,7 @@ export const ProductCard = ({
   handleAddToCart,
   calculateItemPrice
 }) => {
-  // determine base price from selected variation if available
-  const variationPrice = (product.variations && product.variations.find(v => v.size === currentSel.size))
-    ? product.variations.find(v => v.size === currentSel.size).price
-    : product.basePrice;
-  const currentPrice = calculateItemPrice(variationPrice, currentSel.size, currentSel.concentration);
+  const currentPrice = calculateItemPrice(product.basePrice, currentSel.size, currentSel.concentration);
 
   return (
     <div 
@@ -26,27 +21,14 @@ export const ProductCard = ({
     >
       {/* Badge Row */}
       <div className="absolute top-8 left-8 z-20 flex flex-col gap-1.5">
-        {(product.badges || []).map((badge) => {
-          const badgeClass = badge.color && badge.color.startsWith('bg-') ? badge.color : 'bg-gold';
-          const badgeStyle = badge.color && !badge.color.startsWith('bg-') ? { backgroundColor: badge.color } : undefined;
-          return (
-            <span
-              key={`${badge.name || badge.text}-${badge.priority || 0}`}
-              className={`${badgeClass} text-black font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-sm shadow-md font-sans ${badgeClass === 'bg-gold' ? 'text-black' : 'text-white'}`}
-              style={badgeStyle}
-            >
-              {badge.text || badge.name}
-            </span>
-          );
-        })}
-        {(!product.badges || product.badges.length === 0) && product.isBestSeller && (
+        {product.isBestSeller && (
           <span className="bg-gold text-black font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-sm shadow-md font-sans">
             BESTSELLER
           </span>
         )}
-        {(!product.badges || product.badges.length === 0) && product.isFeatured && (
+        {product.isFeatured && (
           <span className="bg-luxury-black border border-gold/40 text-gold font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-sm shadow-md font-sans">
-            DECANTRE CHOICE
+            ATELIER CHOICE
           </span>
         )}
       </div>
@@ -64,11 +46,11 @@ export const ProductCard = ({
 
       {/* Image container */}
       <div className="relative aspect-square rounded-sm overflow-hidden bg-black/40 mb-6">
-        <img
-          src={product.image || (product.raw && product.raw.image) || '/src/assets/images/perfume_for_him_1784311883603.jpg'}
+        <img 
+          src={product.image} 
           alt={product.name}
           className="w-full h-full object-cover object-center scale-95 group-hover:scale-100 transition-all duration-700"
-          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/src/assets/images/perfume_for_him_1784311883603.jpg'; }}
+          referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-luxury-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-center pb-6">
           <button 
@@ -101,17 +83,24 @@ export const ProductCard = ({
         <h3 className="text-xl font-serif font-light text-luxury-white tracking-wider">
           {product.name}
         </h3>
+        
+        <p className="text-zinc-500 text-xs font-serif italic line-clamp-1">
+          "{product.tagline}"
+        </p>
+
+        <p className="text-zinc-400 text-xs font-sans font-light leading-relaxed line-clamp-2">
+          {product.description}
+        </p>
       </div>
 
       {/* SELECTION CONTROLS (Size & Concentration) */}
       <div className="border-t border-white/5 pt-4 mt-4 space-y-3">
         
         {/* Size selector pills */}
-        <div className="flex flex-wrap justify-center gap-2 text-xs">
-          {(product.variations && product.variations.length > 0
-            ? product.variations.map(v => v.size)
-            : ['50ml', '100ml', '200ml']
-          ).map((size) => (
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-zinc-500 text-[10px] font-sans uppercase tracking-widest">Vial Volume</span>
+          <div className="flex gap-1.5">
+            {['50ml', '100ml', '200ml'].map((size) => (
               <button
                 key={size}
                 onClick={() => onSizeChange(size)}
@@ -124,13 +113,28 @@ export const ProductCard = ({
                 {size}
               </button>
             ))}
-
-                  {conc === 'Eau de Parfum' ? 'EDP' : 'EXTRAIT'}
-                </button>
-              ))}
-            </div>
           </div>
-        */}
+        </div>
+
+        {/* Concentration selector pills */}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-zinc-500 text-[10px] font-sans uppercase tracking-widest">Formulation</span>
+          <div className="flex gap-1">
+            {['Eau de Parfum', 'Extrait de Parfum'].map((conc) => (
+              <button
+                key={conc}
+                onClick={() => onConcentrationChange(conc)}
+                className={`px-2 py-1 rounded-sm text-[8px] font-sans font-medium transition-all ${
+                  currentSel.concentration === conc
+                    ? 'bg-black text-gold border border-gold'
+                    : 'bg-luxury-black border border-white/5 text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {conc === 'Eau de Parfum' ? 'EDP' : 'EXTRAIT'}
+              </button>
+            ))}
+          </div>
+        </div>
 
       </div>
 
@@ -139,7 +143,7 @@ export const ProductCard = ({
         <div className="text-left">
           <span className="text-[9px] font-sans uppercase text-zinc-500 block tracking-wider">Price Estimate</span>
           <span className="text-2xl font-serif font-light text-gold">
-            {formatBDT(currentPrice)}
+            ${currentPrice}
           </span>
         </div>
 

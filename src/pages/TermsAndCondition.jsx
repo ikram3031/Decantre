@@ -26,7 +26,7 @@ export const TermsAndCondition = () => {
             </h3>
           </div>
           <p>
-            By finalizing your perfume order on our portal, you certify that all entered client coordinates and billing files are authentic. Decantre reserves the absolute right to cancel, intercept, or refuse service to any transaction flag displaying signs of currency speculation or resale intentions.
+            By finalizing your perfume order on our portal, you certify that all entered client coordinates and billing files are authentic. L'Élixir reserves the absolute right to cancel, intercept, or refuse service to any transaction flag displaying signs of currency speculation or resale intentions.
           </p>
 
           <div className="flex items-center gap-3 border-b border-white/5 pb-4 pt-4">
@@ -46,7 +46,7 @@ export const TermsAndCondition = () => {
             </h3>
           </div>
           <p>
-            The client agrees to maintain their purchased fragrances inside cool, sun-shielded environments (15-20°C). Decantre is not responsible for rapid top note evaporation, chemical bond collapse, or physical bottle degradation arising from improper storage practices.
+            The client agrees to maintain their purchased fragrances inside cool, sun-shielded environments (15-20°C). L'Élixir is not responsible for rapid top note evaporation, chemical bond collapse, or physical bottle degradation arising from improper storage practices.
           </p>
 
           <div className="flex items-center gap-3 border-b border-white/5 pb-4 pt-4">
@@ -56,7 +56,7 @@ export const TermsAndCondition = () => {
             </h3>
           </div>
           <p>
-            The names Decantre, Decantre d'Art, and all specific perfume formulas are protected under global fragrance trade patents. Copying, re-bottling, or chemical reverse-engineering of our proprietary aromatic oil configurations is strictly prohibited.
+            The names L'ÉLIXIR, L'Élixir d'Art, and all specific perfume formulas are protected under global fragrance trade patents. Copying, re-bottling, or chemical reverse-engineering of our proprietary aromatic oil configurations is strictly prohibited.
           </p>
         </div>
 

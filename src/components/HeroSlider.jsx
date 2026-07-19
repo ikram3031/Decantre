@@ -72,7 +72,7 @@ export const HeroSlider = ({
                     href="#catalog-section"
                     className="border border-white/10 hover:border-gold text-zinc-400 hover:text-luxury-white text-[10px] font-bold uppercase tracking-[0.3em] font-sans px-8 py-3.5 bg-black/40 backdrop-blur-sm transition-all"
                   >
-                    Decantre Catalog
+                    Atelier Catalog
                   </a>
                 </div>
               </div>

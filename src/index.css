@@ -139,7 +139,3 @@
     @apply font-sans;
   }
 }
-
-a, button {
-  cursor: pointer;
-}

@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, ShoppingBag, Trash2, Minus, Plus, CheckCircle, CreditCard, ArrowRight, X } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
-import { formatBDT } from '../utils/formatCurrency';
 
 export const CartDrawer = ({
   isCartOpen,
@@ -118,7 +117,7 @@ export const CartDrawer = ({
                         <span>{item.concentration}</span>
                       </div>
                       <div className="text-xs font-serif font-light text-gold pt-1">
-                        {formatBDT(item.unitPrice)} <span className="text-[9px] text-zinc-500 font-sans">each</span>
+                        ${item.unitPrice} <span className="text-[9px] text-zinc-500 font-sans">each</span>
                       </div>
 
                       {/* Qty selectors */}
@@ -159,16 +158,16 @@ export const CartDrawer = ({
                   
                   <div className="space-y-2">
                     <h3 className="text-xl font-serif font-light tracking-wide text-luxury-white">ORDER COMMISSIONED</h3>
-                    <p className="text-[9px] text-gold uppercase tracking-widest font-sans font-medium">Decantre Invoice No: DXR-{(100000 + Math.floor(Math.random() * 900000))}</p>
+                    <p className="text-[9px] text-gold uppercase tracking-widest font-sans font-medium">L'Élixir Invoice No: ELXR-{(100000 + Math.floor(Math.random() * 900000))}</p>
                   </div>
 
                   <div className="bg-[#080808] p-5 rounded-sm border border-gold/10 text-left text-[11px] space-y-3 font-light text-zinc-300 font-sans">
-                    <p className="font-semibold text-luxury-white uppercase tracking-wider text-center border-b border-white/5 pb-2">Decantre Courier Shipment Receipt</p>
+                    <p className="font-semibold text-luxury-white uppercase tracking-wider text-center border-b border-white/5 pb-2">Atelier Courier Shipment Receipt</p>
                     <p><strong className="text-zinc-500 uppercase tracking-wider">Noble Client:</strong> {shippingInfo.fullName}</p>
                     <p><strong className="text-zinc-500 uppercase tracking-wider">Email Address:</strong> {shippingInfo.email}</p>
-                    <p><strong className="text-zinc-500 uppercase tracking-wider">Destination:</strong> {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.zip}</p>
+                    <p><strong className="text-zinc-500 uppercase tracking-wider">Destination:</strong> {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.postalCode}</p>
                     <p><strong className="text-zinc-500 uppercase tracking-wider">Selected Decants:</strong> {cart.map(i => `${i.product.name} (${i.size}) x${i.quantity}`).join(', ')}</p>
-                    <p className="pt-2 border-t border-white/5 text-right text-xs font-serif font-light text-gold">Paid Grand Total: {formatBDT(cartTotal)}</p>
+                    <p className="pt-2 border-t border-white/5 text-right text-xs font-serif font-light text-gold">Paid Grand Total: ${cartTotal}</p>
                   </div>
 
                   <p className="text-[11px] text-zinc-400 font-sans font-light leading-relaxed">
@@ -179,7 +178,7 @@ export const CartDrawer = ({
                     onClick={handleResetCheckout}
                     className="w-full bg-transparent border border-gold text-gold font-sans font-bold uppercase tracking-[0.2em] text-[10px] py-3.5 rounded-sm hover:bg-gold hover:text-black transition-all shadow-xl"
                   >
-                    Return to Decantre
+                    Return to Atelier
                   </button>
                 </div>
               ) : (
@@ -322,7 +321,7 @@ export const CartDrawer = ({
                         className="rounded-sm text-gold focus:ring-gold h-4 w-4 bg-black border-white/5"
                       />
                       <label htmlFor="gift-wrap-checkbox" className="text-[11px] text-zinc-400 font-sans font-light cursor-pointer select-none">
-                        <strong className="text-gold font-medium">Include Presentation Box (+{formatBDT(15)})</strong>
+                        <strong className="text-gold font-medium">Include Presentation Box (+$15)</strong>
                         <br />Pack bottles inside a hand-stitched black velvet box with custom wax seal.
                       </label>
                     </div>
@@ -397,34 +396,34 @@ export const CartDrawer = ({
             )}
 
             {/* Pricing Recalcs */}
-                <div className="space-y-2 text-xs font-sans font-light text-zinc-400 border-t border-white/5 pt-3 text-left">
+            <div className="space-y-2 text-xs font-sans font-light text-zinc-400 border-t border-white/5 pt-3 text-left">
               <div className="flex justify-between">
                 <span>Decants Subtotal</span>
-                <span className="text-zinc-200 font-medium">{formatBDT(cartSubtotal)}</span>
+                <span className="text-zinc-200 font-medium">${cartSubtotal}</span>
               </div>
               {appliedDiscount > 0 && (
                 <div className="flex justify-between text-gold">
                   <span>Discount ({appliedDiscount * 100}%)</span>
-                  <span>-{formatBDT(discountAmount)}</span>
+                  <span>-${discountAmount}</span>
                 </div>
               )}
               {shippingInfo.giftWrap && (
                 <div className="flex justify-between text-zinc-300">
                   <span>Presentation Velvet Box</span>
-                  <span>+{formatBDT(15)}</span>
+                  <span>+$15</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span>Elite Courier Shipping</span>
-                <span className="text-zinc-200">{shippingFee === 0 ? 'COMPLIMENTARY' : formatBDT(shippingFee)}</span>
+                <span className="text-zinc-200">{shippingFee === 0 ? 'COMPLIMENTARY' : `$${shippingFee}`}</span>
               </div>
               <div className="flex justify-between">
                 <span>Luxury Excise Duty (8%)</span>
-                <span className="text-zinc-200">{formatBDT(luxuryTax)}</span>
+                <span className="text-zinc-200">${luxuryTax}</span>
               </div>
               <div className="flex justify-between text-xs font-semibold text-luxury-white border-t border-white/5 pt-2 font-sans tracking-widest">
                 <span>GRAND TOTAL DEVIATION</span>
-                <span className="text-gold text-base">{formatBDT(cartTotal)}</span>
+                <span className="text-gold text-base">${cartTotal}</span>
               </div>
             </div>
 

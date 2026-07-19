@@ -6,12 +6,11 @@ import { useApp } from '../context/AppContext';
 export const ThankYou = () => {
   const {
     shippingInfo,
-    orderNumber: apiOrderNumber,
     handleResetCheckout,
     addToast
   } = useApp();
 
-  const orderNumber = apiOrderNumber || ('LX-' + Math.floor(100000 + Math.random() * 900000));
+  const orderNumber = 'LX-' + Math.floor(100000 + Math.random() * 900000);
   const formattedDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -72,7 +71,7 @@ export const ThankYou = () => {
 
           <div className="space-y-4 text-xs font-sans font-light text-zinc-400 leading-relaxed">
             <p>
-              This document certifies that your ordered decants from <span className="text-gold font-semibold">Decantre Atelier d'Art</span> contain 100% genuine botanical oils, cold-pressed raw spices, and hand-aged resins extracted directly from regional sustainable farms in Southern France, Calabria, and Cambodia.
+              This document certifies that your ordered decants from <span className="text-gold font-semibold">L'ÉLIXIR Atelier d'Art</span> contain 100% genuine botanical oils, cold-pressed raw spices, and hand-aged resins extracted directly from regional sustainable farms in Southern France, Calabria, and Cambodia.
             </p>
             <p>
               Your personal bottle is hand-poured in sterile nitrogen chambers, labeled with your member coordinates, and sealed with high-tensile protective wax.
@@ -83,7 +82,7 @@ export const ThankYou = () => {
                 <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Secured Courier Consignee</span>
                 <p className="font-mono text-zinc-300">
                   {shippingInfo.fullName}<br />
-                  {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.zip}<br />
+                  {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.postalCode}<br />
                   <span className="text-gold/80 italic">{shippingInfo.email}</span>
                 </p>
               </div>

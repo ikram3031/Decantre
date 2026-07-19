@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
@@ -23,14 +23,14 @@ import { ReturnPolicy } from './pages/ReturnPolicy';
 export default function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="catalog" element={<Catalog />} />
             <Route path="atelier" element={<Atelier />} />
             <Route path="reviews" element={<Reviews />} />
-
+            
             {/* Newly added routes */}
             <Route path="season" element={<Season />} />
             <Route path="shop" element={<Shop />} />
@@ -47,7 +47,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </AppProvider>
   );
 }

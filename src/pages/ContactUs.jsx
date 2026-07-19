@@ -34,21 +34,21 @@ export const ContactUs = () => {
       city: 'Paris Salon',
       address: '14 Avenue Montaigne, 75008 Paris',
       phone: '+33 1 42 68 53 00',
-      email: 'paris@decantre.com',
+      email: 'paris@lelelixir-atelier.com',
       hours: 'Mon - Sat: 10:00 AM - 7:00 PM'
     },
     {
       city: 'London Atelier',
       address: '28 Bruton Place, Mayfair, London W1J 6NP',
       phone: '+44 20 7493 0000',
-      email: 'london@decantre.com',
+      email: 'london@lelelixir-atelier.com',
       hours: 'Mon - Sat: 11:00 AM - 6:30 PM'
     },
     {
       city: 'Monaco Private Vault',
       address: '6 Boulevard des Moulins, 98000 Monaco',
       phone: '+377 97 97 00 00',
-      email: 'monaco@decantre.com',
+      email: 'monaco@lelelixir-atelier.com',
       hours: 'By Elite Appointment Only'
     }
   ];
@@ -61,7 +61,7 @@ export const ContactUs = () => {
         <div className="text-center space-y-4 mb-20 relative py-12 border-b border-gold/15">
           <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">The Private Liaison Bureau</span>
           <h1 className="text-3xl sm:text-5xl font-serif font-light text-luxury-white tracking-wide">
-            CONTACT DECANTRE
+            CONTACT L'ÉLIXIR
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-xl mx-auto leading-relaxed">
             Reach out to our VIP concierge team. Book private fragrance blending sessions or inquire about bespoke commission bottles.
