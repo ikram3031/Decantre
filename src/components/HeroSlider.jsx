@@ -1,96 +1,81 @@
-import React from 'react';
-import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export const HeroSlider = ({
-  slides,
-  currentSlide,
-  setCurrentSlide,
-  products,
-  handleOpenProductDetail
-}) => {
+const bannerSlides = [
+  {
+    bgImage: "https://decantrebd.com/wp-content/uploads/2025/12/main-bannerJPG-scaled-1.jpg",
+    tagline: "Enchanting aromas for every unique moment",
+    title: "INDULGE IN LUXURY",
+    buttonText: "SHOP OUR COLLECTION"
+  },
+  {
+    bgImage: "https://decantrebd.com/wp-content/uploads/2026/07/main_banner-2.jpg",
+    tagline: "Elevate your olfactory signature",
+    title: "CRAFT IN ELEGANCE",
+    buttonText: "DISCOVER THE ART"
+  },
+  {
+    bgImage: "https://decantrebd.com/wp-content/uploads/2026/07/main_banner-1.jpg",
+    tagline: "Exquisite rare ingredients hand-poured with mastery",
+    title: "ROYAL SIGNATURES",
+    buttonText: "EXPLORE THE SELECTIONS"
+  }
+];
+
+export const HeroSlider = () => {
+  const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Auto-play the slider
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <section id="hero-section" className="relative h-[85vh] sm:h-[80vh] bg-[#050505] overflow-hidden border-b border-gold/20">
-      {slides.map((slide, index) => (
+    <section id="hero-slider" className="relative h-[80vh] bg-[#050505] overflow-hidden border-b border-gold/15">
+      {bannerSlides.map((slide, index) => (
         <div 
           key={index}
-          id={`hero-slide-${index}`}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+          className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+            index === currentSlide ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-105 z-0'
           }`}
         >
-          {/* Dark background image with gold/black ambient overlays */}
-          <div className="absolute inset-0 bg-luxury-black">
+          {/* Rich full-color background image with elegant gradient dark overlays */}
+          <div className="absolute inset-0 bg-black">
             <img 
               src={slide.bgImage} 
               alt={slide.title} 
-              className="w-full h-full object-cover object-center opacity-30 mix-blend-luminosity scale-105 transition-transform duration-[6000ms] ease-out"
+              className="w-full h-full object-cover object-center opacity-85"
               referrerPolicy="no-referrer"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/40 to-luxury-black"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-luxury-black via-transparent to-luxury-black/80"></div>
-            {/* Gold light leakage overlay */}
-            <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-gold/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
+            {/* Top, Bottom and center dark protection overlays for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70"></div>
+            <div className="absolute inset-0 bg-black/35"></div>
           </div>
 
-          {/* Slider Content */}
-          <div className="absolute inset-0 flex items-center">
-            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          {/* Centered Content overlay */}
+          <div className="absolute inset-0 flex items-center justify-center text-center p-4">
+            <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
               
-              {/* Left Side: Slogans and Luxury Text */}
-              <div className="space-y-6 text-left max-w-xl">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-gold/10 border border-gold/20 rounded-full">
-                  <Sparkles className="w-3 h-3 text-gold animate-spin" />
-                  <span className="text-[9px] uppercase tracking-[0.25em] text-gold font-sans font-medium">
-                    Exclusive Fragrance Collection
-                  </span>
-                </div>
-                
-                <h1 className="text-4xl sm:text-5xl lg:text-6.5xl font-serif font-light text-luxury-white leading-tight tracking-wide">
-                  {slide.title}
-                </h1>
-                
-                <p className="text-gold/90 text-lg sm:text-xl font-light tracking-widest font-serif italic">
-                  {slide.subtitle}
-                </p>
-                
-                <p className="text-zinc-400 text-xs sm:text-sm font-sans font-light leading-relaxed tracking-wide">
-                  {slide.description}
-                </p>
+              <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.45em] text-zinc-300 font-sans font-medium block animate-fade-in drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                {slide.tagline}
+              </span>
+              
+              <h1 className="text-3xl sm:text-5xl lg:text-6.5xl font-serif font-light text-white leading-tight tracking-[0.1em] sm:tracking-[0.15em] uppercase select-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                {slide.title}
+              </h1>
 
-                <div className="pt-4 flex flex-wrap items-center gap-4">
-                  <button 
-                    onClick={() => {
-                      const targetProd = products.find(p => p.id === slide.productId);
-                      if (targetProd) handleOpenProductDetail(targetProd);
-                    }}
-                    className="px-8 py-3.5 border border-gold text-[10px] uppercase tracking-[0.3em] font-sans font-bold hover:bg-gold hover:text-black transition-all duration-300 bg-transparent text-gold"
-                  >
-                    <span>Discover Now</span>
-                  </button>
-                  
-                  <a 
-                    href="#catalog-section"
-                    className="border border-white/10 hover:border-gold text-zinc-400 hover:text-luxury-white text-[10px] font-bold uppercase tracking-[0.3em] font-sans px-8 py-3.5 bg-black/40 backdrop-blur-sm transition-all"
-                  >
-                    Decantre Catalog
-                  </a>
-                </div>
-              </div>
-
-              {/* Right Side: Perfume Bottle Closeup preview inside frame */}
-              <div className="hidden md:flex justify-center items-center">
-                <div className="relative p-3 bg-gradient-to-b from-gold/20 via-[#080808] to-[#0A0A0A] border border-gold/30 rounded-sm max-w-sm w-full aspect-[4/5] shadow-[0_0_50px_rgba(197,160,89,0.08)] overflow-hidden group">
-                  <img 
-                    src={slide.bgImage} 
-                    alt="Close view" 
-                    className="w-full h-full object-cover rounded-sm transition-all duration-[4000ms] group-hover:scale-105"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-luxury-black via-luxury-black/60 to-transparent text-center">
-                    <span className="text-[10px] text-gold tracking-[0.3em] uppercase block mb-1">Mélange Impérial</span>
-                    <span className="text-xs text-zinc-300 tracking-wide font-light font-serif italic">Available in Eau & Extrait de Parfum</span>
-                  </div>
-                </div>
+              <div className="pt-2 flex justify-center">
+                <button 
+                  onClick={() => navigate('/shop')}
+                  className="inline-flex items-center justify-center w-[220px] sm:w-[260px] h-12 sm:h-13 bg-white text-black hover:bg-gold hover:text-black text-[10px] sm:text-[11px] uppercase tracking-[0.25em] sm:tracking-[0.35em] font-sans font-bold rounded-none transition-all duration-300 shadow-xl border border-white hover:border-gold cursor-pointer"
+                >
+                  {slide.buttonText}
+                </button>
               </div>
 
             </div>
@@ -98,35 +83,37 @@ export const HeroSlider = ({
         </div>
       ))}
 
-      {/* Slider Controls */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
-        {slides.map((_, idx) => (
+      {/* Slider Controls (Bottom Dot Indicators) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/5">
+        {bannerSlides.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrentSlide(idx)}
-            className={`h-[2px] transition-all duration-300 ${
-              idx === currentSlide ? 'w-10 bg-gold' : 'w-4 bg-white/20 hover:bg-white/40'
+            className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+              idx === currentSlide ? 'bg-gold scale-125' : 'bg-white/40 hover:bg-white/70'
             }`}
             title={`Slide ${idx + 1}`}
           />
         ))}
       </div>
 
-      {/* Prev & Next arrows */}
+      {/* Left & Right Arrows */}
       <button 
-        onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/20 hover:border-gold transition-all"
+        onClick={() => setCurrentSlide((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length)}
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-white/10 hover:border-gold transition-all duration-300 cursor-pointer"
         title="Previous slide"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
       <button 
-        onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/20 hover:border-gold transition-all"
+        onClick={() => setCurrentSlide((prev) => (prev + 1) % bannerSlides.length)}
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-white/10 hover:border-gold transition-all duration-300 cursor-pointer"
         title="Next slide"
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
     </section>
   );
 };
+
+export default HeroSlider;

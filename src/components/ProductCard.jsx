@@ -107,18 +107,20 @@ export const ProductCard = ({
       <div className="border-t border-white/5 pt-4 mt-4 space-y-3">
         
         {/* Size selector pills */}
-        <div className="flex flex-wrap justify-center gap-2 text-xs">
-          {(product.variations && product.variations.length > 0
-            ? product.variations.map(v => v.size)
-            : ['50ml', '100ml', '200ml']
-          ).map((size) => (
+        <div className="flex flex-wrap justify-center gap-3 text-xs">
+          {Array.from(new Set(
+            (product.variations && product.variations.length > 0
+              ? product.variations.map(v => v.size)
+              : ['50ml', '100ml', '200ml']
+            ).filter(Boolean)
+          )).map((size) => (
               <button
                 key={size}
                 onClick={() => onSizeChange(size)}
-                className={`px-2 py-1 rounded-sm text-[9px] font-sans font-medium transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-sans font-medium transition-all duration-300 border ${
                   currentSel.size === size
-                    ? 'bg-black text-gold border border-gold'
-                    : 'bg-luxury-black border border-white/5 text-zinc-500 hover:text-zinc-300'
+                    ? 'bg-black text-gold border-gold shadow-[0_0_12px_rgba(197,160,89,0.15)]'
+                    : 'bg-[#0d0d0d]/90 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
                 }`}
               >
                 {size}

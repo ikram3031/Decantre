@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, Sparkles, Search } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatBDT } from '../utils/formatCurrency';
@@ -20,10 +21,16 @@ export const Shop = () => {
     brands,
     fetchProducts,
     fetchCategories,
-    fetchBrands
+    fetchBrands,
+    selectedCategory,
+    setSelectedCategory
   } = useApp();
 
-  const [selectedCategoryUI, setSelectedCategoryUI] = useState('All');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
+  const brandParam = searchParams.get('brand');
+  const searchParam = searchParams.get('search');
+
   const [maxPrice, setMaxPrice] = useState(200);
   const [sortOrder, setSortOrder] = useState('newest');
   const [brandFilters, setBrandFilters] = useState([]);
@@ -39,6 +46,31 @@ export const Shop = () => {
     [brands, products]
   );
 
+  // Sync URL query params to state
+  useEffect(() => {
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    } else {
+      setSelectedCategory('All');
+    }
+  }, [categoryParam, setSelectedCategory]);
+
+  useEffect(() => {
+    if (brandParam) {
+      setBrandFilters([brandParam]);
+    } else {
+      setBrandFilters([]);
+    }
+  }, [brandParam]);
+
+  useEffect(() => {
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    } else {
+      setSearchQuery('');
+    }
+  }, [searchParam, setSearchQuery]);
+
   useEffect(() => {
     if (typeof fetchCategories === 'function') {
       fetchCategories({ rawQuery: 'skip=0&limit=50' });
@@ -51,9 +83,10 @@ export const Shop = () => {
   useEffect(() => {
     if (typeof fetchProducts !== 'function') return;
 
-    const categoryFilter = selectedCategoryUI && selectedCategoryUI !== 'All' ? `&category=${encodeURIComponent(selectedCategoryUI)}` : '';
+    const categoryFilter = selectedCategory && selectedCategory !== 'All' ? `&category=${encodeURIComponent(selectedCategory)}` : '';
     const brandFilter = brandFilters.length === 1 ? `&brand=${encodeURIComponent(brandFilters[0])}` : '';
-    const rawQuery = `skip=0&limit=20&sort=${sortOrder}${categoryFilter}${brandFilter}`;
+    const searchFilter = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+    const rawQuery = `skip=0&limit=20&sort=${sortOrder}${categoryFilter}${brandFilter}${searchFilter}`;
 
     const loadProducts = async () => {
       setIsLoadingProducts(true);
@@ -65,15 +98,36 @@ export const Shop = () => {
     };
 
     loadProducts();
-  }, [fetchProducts, selectedCategoryUI, brandFilters, sortOrder]);
+  }, [fetchProducts, selectedCategory, brandFilters, searchQuery, sortOrder]);
 
   const handleBrandToggle = (brandSlug) => {
-    setBrandFilters((prev) => {
-      if (prev.includes(brandSlug)) {
-        return prev.filter((item) => item !== brandSlug);
+    const params = new URLSearchParams(searchParams);
+    if (brandSlug === 'All') {
+      params.delete('brand');
+    } else {
+      if (brandParam === brandSlug) {
+        params.delete('brand');
+      } else {
+        params.set('brand', brandSlug);
       }
-      return [...prev, brandSlug];
-    });
+    }
+    setSearchParams(params);
+  };
+
+  const handleCategorySelect = (categorySlug) => {
+    const params = new URLSearchParams(searchParams);
+    if (categorySlug === 'All') {
+      params.delete('category');
+    } else {
+      params.set('category', categorySlug);
+    }
+    setSearchParams(params);
+  };
+
+  const handleClearBrands = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('brand');
+    setSearchParams(params);
   };
 
   return (
@@ -110,9 +164,9 @@ export const Shop = () => {
                   {categoryOptions.map((category) => (
                     <button
                       key={category.id || category.slug}
-                      onClick={() => setSelectedCategoryUI(category.slug)}
+                      onClick={() => handleCategorySelect(category.slug)}
                       className={`w-full text-left px-4 py-3 rounded-sm text-xs transition-all border ${
-                        selectedCategoryUI === category.slug
+                        selectedCategory === category.slug
                           ? 'border-gold bg-gold/10 text-gold font-semibold'
                           : 'border-white/10 text-zinc-400 hover:border-gold/30 hover:text-white'
                       }`}
@@ -131,8 +185,8 @@ export const Shop = () => {
                   <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Brands</span>
                   <button
                     type="button"
-                    onClick={() => setBrandFilters([])}
-                    className="text-[10px] uppercase tracking-wide text-gold hover:underline"
+                    onClick={handleClearBrands}
+                    className="text-[10px] uppercase tracking-wide text-gold hover:underline animate-fade-in"
                   >
                     Clear
                   </button>
@@ -219,7 +273,11 @@ export const Shop = () => {
                 </div>
                 {searchQuery && (
                   <button
-                    onClick={() => setSearchQuery('')}
+                    onClick={() => {
+                      const params = new URLSearchParams(searchParams);
+                      params.delete('search');
+                      setSearchParams(params);
+                    }}
                     className="text-[10px] uppercase tracking-widest text-gold hover:underline font-mono"
                   >
                     Clear search: "{searchQuery}"

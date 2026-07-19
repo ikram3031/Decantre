@@ -112,6 +112,63 @@ export const products = [
     image: '/src/assets/images/perfume_for_her_1784311895919.jpg',
     isBestSeller: false,
     isFeatured: false
+  },
+  {
+    id: 'miniatures-set',
+    name: 'MINIATURE RESERVE SET',
+    tagline: 'The Ultimate Discovery Quintet',
+    category: 'Miniatures',
+    basePrice: 95,
+    description: 'A magnificent curation of five 10ml signature vials from our royal line. Housed in a leatherette travel coffret with velvet insert, this set allows you to experience our full range of master formulations.',
+    scentFamily: 'Diverse Master Curation',
+    notes: {
+      top: ['Oud Imperial 10ml', 'Saffron Mystique 10ml'],
+      heart: ['Nectar De Saphir 10ml', 'Ambre Nuit 10ml'],
+      base: ['Rose Absolue 10ml', 'Velvet Coffret Case']
+    },
+    longevity: 5,
+    sillage: 4,
+    image: '/src/assets/images/perfume_unisex_1784311906469.jpg',
+    isBestSeller: true,
+    isFeatured: true
+  },
+  {
+    id: 'elite-travel-atomizer',
+    name: 'ELITE GOLD TRAVEL ATOMIZER',
+    tagline: 'Refillable Luxury On The Go',
+    category: 'Decant Accessories',
+    basePrice: 35,
+    description: 'Crafted in polished brass and gold plating, our pocket-sized 10ml travel atomizer provides a fine mist spray. Designed with a leak-proof bottom fill valve for instant decant refills.',
+    scentFamily: 'Luxury Hardware',
+    notes: {
+      top: ['Polished Gold Finish', 'Inner Glass Vial'],
+      heart: ['Leak-Proof Bottom Fill', '10ml Reservoir'],
+      base: ['Velvet Protective Pouch']
+    },
+    longevity: 5,
+    sillage: 5,
+    image: '/src/assets/images/perfume_for_him_1784311883603.jpg',
+    isBestSeller: true,
+    isFeatured: false
+  },
+  {
+    id: 'crystal-decant-kit',
+    name: 'CRYSTAL DECANTING INSTRUMENTS',
+    tagline: 'Precision Tools For Scent Curators',
+    category: 'Decant Accessories',
+    basePrice: 25,
+    description: 'An essential high-grade toolkit featuring one crystal funnel, two medical-grade transfer syringes with luxury nozzles, and three blank gold-gilt label cards for custom decanting.',
+    scentFamily: 'Boutique Apparatus',
+    notes: {
+      top: ['Glass Funnel', 'Precision Syringes'],
+      heart: ['Soft Transfer Nozzles', 'Dust-Free Case'],
+      base: ['Gold Gilt Label Sheets']
+    },
+    longevity: 5,
+    sillage: 5,
+    image: '/src/assets/images/perfume_unisex_1784311906469.jpg',
+    isBestSeller: false,
+    isFeatured: false
   }
 ];
 

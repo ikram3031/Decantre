@@ -1,9 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export const CategoryNav = ({ setSelectedCategory }) => {
+  const navigate = useNavigate();
+
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
-    document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+    navigate(`/shop?category=${encodeURIComponent(category)}`);
   };
 
   return (

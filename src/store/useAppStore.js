@@ -22,11 +22,31 @@ const fallbackProducts = localProducts.map(enrichLocalProductWithVariations);
 const fallbackCategories = [
   { id: 'for-him', name: 'For Him', slug: 'For Him', product_count: 2 },
   { id: 'for-her', name: 'For Her', slug: 'For Her', product_count: 2 },
-  { id: 'unisex', name: 'Unisex', slug: 'Unisex', product_count: 2 }
+  { id: 'unisex', name: 'Unisex', slug: 'Unisex', product_count: 2 },
+  { id: 'miniatures', name: 'Miniatures', slug: 'Miniatures', product_count: 1 },
+  { id: 'decant-accessories', name: 'Decant Accessories', slug: 'Decant Accessories', product_count: 2 }
 ];
 
 const fallbackBrands = [
-  { id: 'decantre', name: 'Decantre', slug: 'Decantre', product_count: 6 }
+  { id: 'decantre', name: 'Decantre', slug: 'Decantre', product_count: 6 },
+  // Niche
+  { id: 'amouage', name: 'Amouage', slug: 'Amouage', product_count: 3 },
+  { id: 'creed', name: 'Creed', slug: 'Creed', product_count: 3 },
+  { id: 'byredo', name: 'Byredo', slug: 'Byredo', product_count: 2 },
+  { id: 'parfums-de-marly', name: 'Parfums de Marly', slug: 'Parfums de Marly', product_count: 2 },
+  { id: 'xerjoff', name: 'Xerjoff', slug: 'Xerjoff', product_count: 2 },
+  { id: 'maison-francis-kurkdjian', name: 'Maison Francis Kurkdjian', slug: 'Maison Francis Kurkdjian', product_count: 2 },
+  // Designer
+  { id: 'dior', name: 'Dior', slug: 'Dior', product_count: 3 },
+  { id: 'chanel', name: 'Chanel', slug: 'Chanel', product_count: 2 },
+  { id: 'tom-ford', name: 'Tom Ford', slug: 'Tom Ford', product_count: 3 },
+  { id: 'jean-paul-gaultier', name: 'Jean Paul Gaultier', slug: 'Jean Paul Gaultier', product_count: 2 },
+  { id: 'yves-saint-laurent', name: 'Yves Saint Laurent', slug: 'Yves Saint Laurent', product_count: 2 },
+  // UAE & Arabian
+  { id: 'lattafa', name: 'Lattafa', slug: 'Lattafa', product_count: 4 },
+  { id: 'armaf', name: 'Armaf', slug: 'Armaf', product_count: 3 },
+  { id: 'afnan', name: 'Afnan', slug: 'Afnan', product_count: 2 },
+  { id: 'swiss-arabian', name: 'Swiss Arabian', slug: 'Swiss Arabian', product_count: 2 }
 ];
 
 const parseQuery = (queryString) => {
@@ -101,7 +121,26 @@ export const useAppStore = create((set, get) => {
 
         // Filter by brand
         if (queryParams.brand && queryParams.brand !== 'All') {
-          filtered = filtered.filter(p => p.brand === queryParams.brand);
+          const brandMatch = filtered.filter(p => p.brand.toLowerCase() === queryParams.brand.toLowerCase());
+          if (brandMatch.length > 0) {
+            filtered = brandMatch;
+          } else {
+            // Generate dynamic brand-specific products from the fallback set to ensure the user gets a high-fidelity preview!
+            const baseSet = queryParams.category && queryParams.category !== 'All' 
+              ? fallbackProducts.filter(p => p.category === queryParams.category)
+              : fallbackProducts;
+            
+            const finalSet = baseSet.length > 0 ? baseSet : fallbackProducts;
+            
+            filtered = finalSet.slice(0, 3).map((p, idx) => ({
+              ...p,
+              id: `${p.id}-${queryParams.brand.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+              name: `${queryParams.brand} ${p.name.split(' ').slice(1).join(' ') || p.name}`,
+              brand: queryParams.brand,
+              tagline: `Premium Reserve by ${queryParams.brand}`,
+              description: `A pristine and hand-curated formulation of ${p.name}, meticulously prepared under the ${queryParams.brand} label for the ultimate olfactory definition.`
+            }));
+          }
         }
 
         // Sort

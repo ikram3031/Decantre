@@ -44,22 +44,22 @@ export const CartDrawer = ({
         </div>
 
         {/* Header */}
-        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-luxury-black">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="w-4 h-4 text-gold" />
-            <h2 className="text-sm font-sans font-semibold tracking-widest text-luxury-white uppercase">
+        <div className="p-4 sm:p-6 border-b border-white/5 flex items-center justify-between bg-luxury-black">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold shrink-0" />
+            <h2 className="text-[10px] sm:text-sm font-sans font-semibold tracking-wide sm:tracking-widest text-luxury-white uppercase truncate">
               Your Fragrance Chest
             </h2>
-            <span className="bg-gold/10 text-gold text-[10px] font-sans font-semibold rounded-sm px-2.5 py-0.5 ml-1 border border-gold/20">
+            <span className="bg-gold/10 text-gold text-[9px] sm:text-[10px] font-sans font-semibold rounded-sm px-2 sm:px-2.5 py-0.5 ml-0.5 sm:ml-1 border border-gold/20 shrink-0">
               {cart.reduce((sum, item) => sum + item.quantity, 0)}
             </span>
           </div>
           <button 
             onClick={() => { setIsCartOpen(false); setIsCheckoutMode(false); }}
-            className="p-1.5 text-zinc-400 hover:text-gold rounded-full bg-luxury-dark border border-white/5 transition-colors"
+            className="p-1.5 text-zinc-400 hover:text-gold rounded-full bg-luxury-dark border border-white/5 transition-colors shrink-0"
             title="Close chest"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 

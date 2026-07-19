@@ -6,7 +6,8 @@ import {
   Loader2 as IconLoader,
   Award as IconAward,
   Lock as IconLock,
-  Calendar as IconCalendar
+  Calendar as IconCalendar,
+  ChevronDown
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatBDT as fmtBDT } from '../utils/formatCurrency';
@@ -36,6 +37,9 @@ export const Checkout = () => {
   } = useApp();
 
   const navigate = useNavigate();
+
+  const [isDistrictOpen, setIsDistrictOpen] = React.useState(false);
+  const [isShipDistrictOpen, setIsShipDistrictOpen] = React.useState(false);
 
   const {
     fullName,
@@ -231,21 +235,51 @@ export const Checkout = () => {
                     />
                   </div>
 
-                  <div>
+                  <div className="relative">
                     <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">District</label>
-                    <input
-                      list="district-options"
-                      required
-                      placeholder="Dhaka"
-                      value={district}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, district: e.target.value })}
-                      className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
-                    />
-                    <datalist id="district-options">
-                      {districtData.map((district) => (
-                        <option key={district.id} value={district.name} />
-                      ))}
-                    </datalist>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Dhaka"
+                        value={district}
+                        onFocus={() => setIsDistrictOpen(true)}
+                        onBlur={() => setIsDistrictOpen(false)}
+                        onChange={(e) => {
+                          setShippingInfo({ ...shippingInfo, district: e.target.value });
+                          setIsDistrictOpen(true);
+                        }}
+                        className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans pr-10"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    {isDistrictOpen && (
+                      <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-zinc-950 border border-white/10 rounded-sm z-50 py-1 shadow-2xl divide-y divide-white/5 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+                        {districtData
+                          .filter(d => d.name.toLowerCase().includes((district || '').toLowerCase()))
+                          .map((d) => (
+                            <button
+                              key={d.id}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setShippingInfo({ ...shippingInfo, district: d.name });
+                                setIsDistrictOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2 text-zinc-300 hover:text-white hover:bg-gold/15 text-xs transition-colors font-sans cursor-pointer"
+                            >
+                              {d.name}
+                            </button>
+                          ))}
+                        {districtData.filter(d => d.name.toLowerCase().includes((district || '').toLowerCase())).length === 0 && (
+                          <div className="px-4 py-2 text-zinc-500 text-xs font-sans">
+                            No districts found
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -303,16 +337,51 @@ export const Checkout = () => {
                         />
                       </div>
 
-                      <div>
+                      <div className="relative">
                         <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">District</label>
-                        <input
-                          list="district-options"
-                          required
-                          placeholder="Dhaka"
-                          value={shippingAddress.district}
-                          onChange={(e) => setShippingAddress({ ...shippingAddress, district: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            placeholder="Dhaka"
+                            value={shippingAddress.district}
+                            onFocus={() => setIsShipDistrictOpen(true)}
+                            onBlur={() => setIsShipDistrictOpen(false)}
+                            onChange={(e) => {
+                              setShippingAddress({ ...shippingAddress, district: e.target.value });
+                              setIsShipDistrictOpen(true);
+                            }}
+                            className="w-full bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans pr-10"
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                        {isShipDistrictOpen && (
+                          <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-zinc-950 border border-white/10 rounded-sm z-50 py-1 shadow-2xl divide-y divide-white/5 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+                            {districtData
+                              .filter(d => d.name.toLowerCase().includes((shippingAddress.district || '').toLowerCase()))
+                              .map((d) => (
+                                <button
+                                  key={d.id}
+                                  type="button"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setShippingAddress({ ...shippingAddress, district: d.name });
+                                    setIsShipDistrictOpen(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-zinc-300 hover:text-white hover:bg-gold/15 text-xs transition-colors font-sans cursor-pointer"
+                                >
+                                  {d.name}
+                                </button>
+                              ))}
+                            {districtData.filter(d => d.name.toLowerCase().includes((shippingAddress.district || '').toLowerCase())).length === 0 && (
+                              <div className="px-4 py-2 text-zinc-500 text-xs font-sans">
+                                No districts found
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div>
