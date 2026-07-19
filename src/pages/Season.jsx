@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Sun, Wind, CloudSnow, Leaf, Sparkles } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { products } from '../data';
 import { ProductCard } from '../components/ProductCard';
 
 export const Season = () => {
   const {
+    products,
     cardSelections,
     setCardSelections,
     wishlist,

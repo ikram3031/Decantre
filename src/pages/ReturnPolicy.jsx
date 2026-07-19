@@ -26,7 +26,7 @@ export const ReturnPolicy = () => {
             </h3>
           </div>
           <p>
-            At L'Élixir, we recognize that purchasing natural raw perfumes online is a deeply sensory and personal decision. If, upon first spray contact, the fragrance does not perfectly dialogue with your skin chemistry or fails to meet your high standard of sillage, we will issue a secure replacement bottle.
+            At Decantre, we recognize that purchasing natural raw perfumes online is a deeply sensory and personal decision. If, upon first spray contact, the fragrance does not perfectly dialogue with your skin chemistry or fails to meet your high standard of sillage, we will issue a secure replacement bottle.
           </p>
 
           <div className="flex items-center gap-3 border-b border-white/5 pb-4 pt-4">
@@ -46,7 +46,7 @@ export const ReturnPolicy = () => {
             </h3>
           </div>
           <p>
-            Please contact our client concierge bureau at <span className="text-gold font-mono">returns@lelelixir-atelier.com</span> to request a prepaid secure return shipping label. Every return package is fully insured and tracked. Our team will verify bottle status within 3 business days of receipt before finalizing credit.
+            Please contact our client concierge bureau at <span className="text-gold font-mono">returns@decantre.com</span> to request a prepaid secure return shipping label. Every return package is fully insured and tracked. Our team will verify bottle status within 3 business days of receipt before finalizing credit.
           </p>
 
           <div className="flex items-center gap-3 border-b border-white/5 pb-4 pt-4">

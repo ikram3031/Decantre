@@ -13,7 +13,7 @@ export const PrivacyPolicy = () => {
             PRIVACY CHARTER
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-xl mx-auto leading-relaxed">
-            Please read our official guidelines regarding how L'Élixir protects confidential client purchase history, delivery logs, and premium credentials.
+            Please read our official guidelines regarding how Decantre protects confidential client purchase history, delivery logs, and premium credentials.
           </p>
         </div>
 
@@ -26,7 +26,7 @@ export const PrivacyPolicy = () => {
             </h3>
           </div>
           <p>
-            At L'Élixir Perfume Atelier, our clients' privacy is paramount. We maintain high-end secure servers and localized, physical ledger backups in our Paris headquarters. Your digital logs, private consult requests, and olfactory quiz results are strictly used to curate custom decant recommendations.
+            At Decantre Perfume Atelier, our clients' privacy is paramount. We maintain high-end secure servers and localized, physical ledger backups in our Paris headquarters. Your digital logs, private consult requests, and olfactory quiz results are strictly used to curate custom decant recommendations.
           </p>
 
           <div className="flex items-center gap-3 border-b border-white/5 pb-4 pt-4">
@@ -36,7 +36,7 @@ export const PrivacyPolicy = () => {
             </h3>
           </div>
           <p>
-            All financial transactions are routed through fully encrypted 256-bit secure gateway sockets. L'Élixir does not save raw credit card files or CVV hashes in its database. All transaction keys are tokens stored in premium merchant bank vaults complying with standard PCI-DSS guidelines.
+            All financial transactions are routed through fully encrypted 256-bit secure gateway sockets. Decantre does not save raw credit card files or CVV hashes in its database. All transaction keys are tokens stored in premium merchant bank vaults complying with standard PCI-DSS guidelines.
           </p>
 
           <div className="flex items-center gap-3 border-b border-white/5 pb-4 pt-4">
@@ -56,7 +56,7 @@ export const PrivacyPolicy = () => {
             </h3>
           </div>
           <p>
-            Distinguished members have the absolute sovereign right to request complete erasure of their transaction profiles, billing addresses, and digital correspondances. Please contact our private concierge bureau at <span className="text-gold font-mono">discretion@lelelixir-atelier.com</span> to execute a total data dispersion protocol.
+            Distinguished members have the absolute sovereign right to request complete erasure of their transaction profiles, billing addresses, and digital correspondances. Please contact our private concierge bureau at <span className="text-gold font-mono">discretion@decantre.com</span> to execute a total data dispersion protocol.
           </p>
         </div>
 

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Compass, Heart, ShoppingBag, Search, Menu, X } from 'lucide-react';
-import { Logo } from './Logo';
 
 export const Header = ({
   startQuiz,
@@ -42,8 +41,11 @@ export const Header = ({
         </button>
 
         {/* Logo and branding */}
-        <Link to="/" className="hover:opacity-90 transition-opacity">
-          <Logo className="w-12 h-12" showText={true} />
+        <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <span className="text-2xl font-serif tracking-[0.3em] text-gold font-light">
+            DECANTRE
+          </span>
+          {/* <span className="hidden sm:inline-block h-4 w-[1px] bg-gold/30 mx-2"></span> */}
         </Link>
 
         {/* Quick links */}

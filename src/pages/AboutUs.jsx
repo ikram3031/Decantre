@@ -13,7 +13,7 @@ export const AboutUs = () => {
             OUR ROYAL HERITAGE
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-xl mx-auto leading-relaxed">
-            Unveiling L'Élixir—an continuous search for olfactory perfection. How we resurrected ancient French decant standards for the modern connoisseur.
+            Unveiling Decantre—an ongoing search for olfactory perfection. How we resurrected ancient French decant standards for the modern connoisseur.
           </p>
         </div>
 
@@ -26,7 +26,7 @@ export const AboutUs = () => {
             </h2>
             <div className="h-[1px] w-16 bg-gold/40"></div>
             <p className="text-zinc-400 text-sm font-sans font-light leading-relaxed">
-              L'Élixir was founded with a fierce, uncompromising mandate: to refuse synthetic short-cuts. We treat fragrance as a majestic piece of liquid art, capable of adapting, blending, and projecting a client's private identity into their surrounding atmosphere.
+              Decantre was founded with a fierce, uncompromising mandate: to refuse synthetic short-cuts. We treat fragrance as a majestic piece of liquid art, capable of adapting, blending, and projecting a client's private identity into their surrounding atmosphere.
             </p>
             <p className="text-zinc-400 text-sm font-sans font-light leading-relaxed">
               Our raw materials are ethically harvested in complete harmony with natural solar cycles. From the misty high-altitude rose fields of Turkey to the ancient resin woodlands of Cambodia, we safeguard agricultural families to ensure pure, unadulterated botanical essences.

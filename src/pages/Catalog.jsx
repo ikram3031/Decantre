@@ -26,7 +26,7 @@ export const Catalog = () => {
         {/* Header Hero Banner for Catalog */}
         <div className="text-center space-y-4 mb-16 relative py-12 border border-gold/15 bg-luxury-dark/30 rounded-sm">
           <div className="absolute -inset-px bg-gradient-to-r from-transparent via-gold/5 to-transparent pointer-events-none"></div>
-          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">The Sovereign Atelier</span>
+          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">The Sovereign Decantre</span>
           <h1 className="text-3xl sm:text-5xl font-serif font-light text-luxury-white tracking-wide">
             THE SIGNATURE CATALOGUE
           </h1>

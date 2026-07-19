@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
-import { SlidersHorizontal, Sparkles, Heart, Search, HelpCircle, ArrowRight } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { SlidersHorizontal, Sparkles, Search } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { products } from '../data';
+import { formatBDT } from '../utils/formatCurrency';
 import { ProductCard } from '../components/ProductCard';
 
 export const Shop = () => {
   const {
-    selectedCategory,
-    setSelectedCategory,
     searchQuery,
     setSearchQuery,
     cardSelections,
@@ -17,21 +15,66 @@ export const Shop = () => {
     handleOpenProductDetail,
     handleAddToCart,
     calculateItemPrice,
-    filteredProducts
+    products,
+    categories,
+    brands,
+    fetchProducts,
+    fetchCategories,
+    fetchBrands
   } = useApp();
 
-  const [scentFamilyFilter, setScentFamilyFilter] = useState('All');
+  const [selectedCategoryUI, setSelectedCategoryUI] = useState('All');
   const [maxPrice, setMaxPrice] = useState(200);
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [brandFilters, setBrandFilters] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
-  // Get unique scent families for extra filtering
-  const scentFamilies = ['All', ...new Set(products.map(p => p.scentFamily.split(' ')[0]))];
+  const categoryOptions = useMemo(
+    () => [{ id: 'all', name: 'All', slug: 'All', product_count: products.length }, ...categories],
+    [categories, products]
+  );
 
-  // Apply extra interactive filters on top of search and category
-  const finalFilteredProducts = filteredProducts.filter(p => {
-    const matchesFamily = scentFamilyFilter === 'All' || p.scentFamily.toLowerCase().includes(scentFamilyFilter.toLowerCase());
-    const matchesPrice = p.basePrice <= maxPrice;
-    return matchesFamily && matchesPrice;
-  });
+  const brandOptions = useMemo(
+    () => [{ id: 'all', name: 'All', slug: 'All', product_count: products.length }, ...brands],
+    [brands, products]
+  );
+
+  useEffect(() => {
+    if (typeof fetchCategories === 'function') {
+      fetchCategories({ rawQuery: 'skip=0&limit=50' });
+    }
+    if (typeof fetchBrands === 'function') {
+      fetchBrands({ rawQuery: 'skip=0&limit=50' });
+    }
+  }, [fetchCategories, fetchBrands]);
+
+  useEffect(() => {
+    if (typeof fetchProducts !== 'function') return;
+
+    const categoryFilter = selectedCategoryUI && selectedCategoryUI !== 'All' ? `&category=${encodeURIComponent(selectedCategoryUI)}` : '';
+    const brandFilter = brandFilters.length === 1 ? `&brand=${encodeURIComponent(brandFilters[0])}` : '';
+    const rawQuery = `skip=0&limit=20&sort=${sortOrder}${categoryFilter}${brandFilter}`;
+
+    const loadProducts = async () => {
+      setIsLoadingProducts(true);
+      try {
+        await fetchProducts({ rawQuery });
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    loadProducts();
+  }, [fetchProducts, selectedCategoryUI, brandFilters, sortOrder]);
+
+  const handleBrandToggle = (brandSlug) => {
+    setBrandFilters((prev) => {
+      if (prev.includes(brandSlug)) {
+        return prev.filter((item) => item !== brandSlug);
+      }
+      return [...prev, brandSlug];
+    });
+  };
 
   return (
     <div className="py-12 sm:py-20 bg-luxury-black animate-fade-in text-left">
@@ -40,9 +83,9 @@ export const Shop = () => {
         {/* Banner */}
         <div className="text-center space-y-4 mb-16 relative py-12 border border-gold/15 bg-luxury-dark/20 rounded-sm">
           <div className="absolute -inset-px bg-gradient-to-r from-transparent via-gold/5 to-transparent pointer-events-none"></div>
-          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">The Royal Decanter Boutique</span>
+          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">The Decantre Boutique</span>
           <h1 className="text-3xl sm:text-5xl font-serif font-light text-luxury-white tracking-wide">
-            THE ATELIER SHOP
+            THE DECANTRE SHOP
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-xl mx-auto leading-relaxed px-4">
             Browse our curated reserves. Customize bottle volume and concentration. Each order is meticulously hand-packed in a velvet presentation chest.
@@ -60,68 +103,82 @@ export const Shop = () => {
               <div className="h-[1px] w-full bg-gold/15 mb-6"></div>
             </div>
 
-            {/* Scent Categories */}
-            <div className="space-y-3">
-              <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Client Intention</span>
-              <div className="flex flex-col gap-1">
-                {['All', 'For Him', 'For Her', 'Unisex'].map((cat) => (
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Category</span>
+                <div className="space-y-2">
+                  {categoryOptions.map((category) => (
+                    <button
+                      key={category.id || category.slug}
+                      onClick={() => setSelectedCategoryUI(category.slug)}
+                      className={`w-full text-left px-4 py-3 rounded-sm text-xs transition-all border ${
+                        selectedCategoryUI === category.slug
+                          ? 'border-gold bg-gold/10 text-gold font-semibold'
+                          : 'border-white/10 text-zinc-400 hover:border-gold/30 hover:text-white'
+                      }`}
+                    >
+                      {category.name}
+                      {category.product_count !== undefined && category.slug !== 'All' ? (
+                        <span className="text-[10px] text-zinc-500 ml-2">({category.product_count})</span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Brands</span>
                   <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`text-left py-2 px-3 text-xs transition-all duration-300 rounded-sm ${
-                      selectedCategory === cat 
-                        ? 'bg-gold/10 text-gold border-l-2 border-gold font-medium' 
-                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                    }`}
+                    type="button"
+                    onClick={() => setBrandFilters([])}
+                    className="text-[10px] uppercase tracking-wide text-gold hover:underline"
                   >
-                    {cat}
+                    Clear
                   </button>
-                ))}
+                </div>
+                <div className="space-y-2">
+                  {brandOptions.map((brand) => (
+                    <label key={brand.id || brand.slug} className="flex items-center gap-3 text-xs text-zinc-300">
+                      <input
+                        type="checkbox"
+                        checked={brand.slug === 'All' ? brandFilters.length === 0 : brandFilters.includes(brand.slug)}
+                        onChange={() => {
+                          if (brand.slug === 'All') {
+                            setBrandFilters([]);
+                            return;
+                          }
+                          handleBrandToggle(brand.slug);
+                        }}
+                        className="h-4 w-4 accent-gold rounded-sm border border-white/10 bg-luxury-dark"
+                      />
+                      <span>{brand.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Maximum Price</span>
+                  <span className="text-xs font-mono text-gold font-semibold">{formatBDT(maxPrice)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="140"
+                  max="200"
+                  step="5"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full accent-gold bg-zinc-800 h-1 rounded-sm cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-zinc-600 font-mono">
+                  <span>{formatBDT(140)}</span>
+                  <span>{formatBDT(200)}</span>
+                </div>
               </div>
             </div>
 
-            {/* Scent Families */}
-            <div className="space-y-3">
-              <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Olfactory Families</span>
-              <div className="flex flex-wrap gap-1.5">
-                {scentFamilies.map((fam) => (
-                  <button
-                    key={fam}
-                    onClick={() => setScentFamilyFilter(fam)}
-                    className={`px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-wider transition-all border ${
-                      scentFamilyFilter === fam 
-                        ? 'border-gold bg-gold/5 text-gold' 
-                        : 'border-white/5 bg-luxury-dark text-zinc-400 hover:border-gold/30 hover:text-white'
-                    }`}
-                  >
-                    {fam}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Interactive Price Range */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Maximum Base Price</span>
-                <span className="text-xs font-mono text-gold font-semibold">${maxPrice}</span>
-              </div>
-              <input
-                type="range"
-                min="140"
-                max="200"
-                step="5"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(Number(e.target.value))}
-                className="w-full accent-gold bg-zinc-800 h-1 rounded-sm cursor-pointer"
-              />
-              <div className="flex justify-between text-[9px] text-zinc-600 font-mono">
-                <span>$140</span>
-                <span>$200</span>
-              </div>
-            </div>
-
-            {/* Quick Scent Consultation */}
             <div className="p-5 border border-gold/15 bg-luxury-dark/30 rounded-sm space-y-4">
               <Sparkles className="w-5 h-5 text-gold" />
               <h4 className="text-xs font-sans font-bold uppercase tracking-wider text-zinc-200">Personal Scent finder</h4>
@@ -130,7 +187,6 @@ export const Shop = () => {
               </p>
               <button
                 onClick={() => {
-                  // Scent finder quiz is bound globally
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                   const startQuizBtn = document.querySelector('#main-header button');
                   if (startQuizBtn) startQuizBtn.click();
@@ -144,40 +200,74 @@ export const Shop = () => {
 
           {/* Product Grid Area */}
           <div className="lg:col-span-3 space-y-8">
-            <div className="flex justify-between items-center border-b border-white/5 pb-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-white/5 pb-4">
               <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">
-                Displaying {finalFilteredProducts.length} Premium Formulations
+                Displaying {products.length} Premium Formulations
               </span>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-[10px] uppercase tracking-widest text-gold hover:underline font-mono"
-                >
-                  Clear search: "{searchQuery}"
-                </button>
-              )}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">
+                  <span>Sort</span>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="bg-luxury-dark border border-white/10 text-zinc-200 text-xs rounded-sm py-2 px-3 outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                  >
+                    <option value="newest">Newest first</option>
+                    <option value="price-asc">Price low to high</option>
+                    <option value="price-desc">Price high to low</option>
+                  </select>
+                </div>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="text-[10px] uppercase tracking-widest text-gold hover:underline font-mono"
+                  >
+                    Clear search: "{searchQuery}"
+                  </button>
+                )}
+              </div>
             </div>
 
+            {/* Loading skeleton */}
+            {isLoadingProducts && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-center gap-3 text-zinc-300">
+                  <div className="w-10 h-10 rounded-full border-4 border-gold border-r-transparent animate-spin" />
+                  <span className="text-xs uppercase tracking-[0.4em] text-zinc-400">Loading products...</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="rounded-sm border border-white/10 bg-luxury-dark/70 p-6 animate-pulse"
+                    >
+                      <div className="h-56 bg-zinc-900 rounded-sm mb-4" />
+                      <div className="h-4 bg-zinc-800 rounded-full mb-3" />
+                      <div className="h-4 bg-zinc-800 rounded-full w-5/6 mb-3" />
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="h-3 bg-zinc-800 rounded-full w-1/3" />
+                        <div className="h-3 bg-zinc-800 rounded-full w-1/4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Empty search fallback */}
-            {finalFilteredProducts.length === 0 && (
+            {!isLoadingProducts && products.length === 0 && (
               <div className="text-center py-24 border border-dashed border-gold/15 rounded-sm bg-luxury-dark/10">
                 <Search className="w-12 h-12 text-gold/40 mx-auto mb-4" />
-                <h3 className="text-lg font-serif font-light text-zinc-300 mb-2">No Fragrances Match Filters</h3>
+                <h3 className="text-lg font-serif font-light text-zinc-300 mb-2">No Products Found</h3>
                 <p className="text-zinc-500 text-xs font-sans font-light max-w-xs mx-auto">
-                  Try relaxing your price scale or clearing your search queries to see the full royal selection.
+                  The shop is waiting for products from the API. Please check back shortly.
                 </p>
-                <button 
-                  onClick={() => { setSearchQuery(''); setSelectedCategory('All'); setScentFamilyFilter('All'); setMaxPrice(200); }}
-                  className="mt-6 border border-gold/40 px-6 py-2.5 text-[9px] font-bold uppercase tracking-widest text-gold hover:bg-gold hover:text-black transition-all duration-300 rounded-sm"
-                >
-                  Reset All Filters
-                </button>
               </div>
             )}
 
             {/* Perfume list */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {finalFilteredProducts.map((prod) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {!isLoadingProducts && products.map((prod) => {
                 const currentSel = cardSelections[prod.id] || { size: '100ml', concentration: 'Eau de Parfum' };
                 return (
                   <ProductCard 

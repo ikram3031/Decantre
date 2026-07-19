@@ -10,12 +10,36 @@ import {
 } from 'lucide-react';
 
 import { useApp } from '../context/AppContext';
-import { products, slides } from '../data';
 
 import { HeroSlider } from '../components/HeroSlider';
+
+const slides = [
+  {
+    title: "DECANTRE DE MAJESTÉ",
+    subtitle: "The Sovereign Golden Oud",
+    description: "A breathtaking encounter between golden royal saffron, deep Cambodian oud, and burnished leather. Experience the peak of luxurious scent chemistry.",
+    bgImage: '/src/assets/images/luxury_perfume_hero_1784311872347.jpg',
+    productId: 'oud-imperial'
+  },
+  {
+    title: "SAFFRON MYSTIQUE",
+    subtitle: "A Sacred Alchemy",
+    description: "A modern classic designed in collaboration with elite French master perfumers. Deeply sophisticated, intensely persistent, and proudly unisex.",
+    bgImage: '/src/assets/images/perfume_unisex_1784311906469.jpg',
+    productId: 'saffron-mystique'
+  },
+  {
+    title: "NECTAR DE SAPHIR",
+    subtitle: "Unmatched Feminine Grace",
+    description: "Crystalline rose buds drenched in sweet golden nectar and vanilla orchid. A vibrant aura that leaves an unforgettable trail of absolute elegance.",
+    bgImage: '/src/assets/images/perfume_for_her_1784311895919.jpg',
+    productId: 'nectar-de-saphir'
+  }
+];
 import { TrustBadges } from '../components/TrustBadges';
 import { CategoryNav } from '../components/CategoryNav';
 import { ProductCard } from '../components/ProductCard';
+import NewArrival from '../components/sections/NewArrival';
 
 export const Home = () => {
   const {
@@ -33,8 +57,17 @@ export const Home = () => {
     handleAddToCart,
     calculateItemPrice,
     filteredProducts,
-    startQuiz
+    startQuiz,
+    products,
+    fetchProducts
   } = useApp();
+
+  // fetch remote products on mount
+  useEffect(() => {
+    if (typeof fetchProducts === 'function') {
+      fetchProducts();
+    }
+  }, [fetchProducts]);
 
   // Hero slider auto interval
   useEffect(() => {
@@ -64,99 +97,8 @@ export const Home = () => {
       {/* Olfactory category cards */}
       <CategoryNav setSelectedCategory={setSelectedCategory} />
 
-      {/* Live Perfume Atelier Spotlight / Catalog */}
-      <section id="catalog-section" className="py-20 bg-luxury-dark/40 border-y border-gold/20 scroll-mt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div className="space-y-2 text-left">
-              <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium">Spotlight Masterpieces</span>
-              <h2 className="text-3xl sm:text-4xl font-serif font-light text-luxury-white tracking-wide">
-                L'ÉLIXIR HIGHLIGHTS
-              </h2>
-              <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-lg">
-                Indulge in liquid art. Hand-poured signature essences formulated with rare, rich, natural ingredients.
-              </p>
-            </div>
-
-            {/* Quick Filters */}
-            <div className="flex flex-wrap items-center gap-2">
-              {['All', 'For Him', 'For Her', 'Unisex'].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-5 py-2.5 rounded-sm text-[9px] font-sans font-semibold tracking-widest uppercase transition-all duration-300 ${
-                    selectedCategory === cat 
-                      ? 'bg-gold text-black shadow-lg' 
-                      : 'bg-luxury-dark border border-white/5 hover:border-gold/40 text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Empty search fallback */}
-          {spotlightProducts.length === 0 && (
-            <div className="text-center py-16 border border-dashed border-gold/15 rounded-sm">
-              <SlidersHorizontal className="w-10 h-10 text-gold/50 mx-auto mb-4" />
-              <p className="text-zinc-400 text-sm font-sans font-light">No majestic fragrances found in this category.</p>
-              <button 
-                onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
-                className="mt-4 text-[10px] font-bold uppercase tracking-widest text-gold underline hover:text-gold/80"
-              >
-                Clear Filters
-              </button>
-            </div>
-          )}
-
-          {/* Perfume catalog cards list */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {spotlightProducts.map((prod) => {
-              const currentSel = cardSelections[prod.id] || { size: '100ml', concentration: 'Eau de Parfum' };
-              return (
-                <ProductCard 
-                  key={prod.id}
-                  product={prod}
-                  currentSel={currentSel}
-                  onSizeChange={(size) => {
-                    setCardSelections(prev => ({
-                      ...prev,
-                      [prod.id]: { ...currentSel, size }
-                    }));
-                  }}
-                  onConcentrationChange={(concentration) => {
-                    setCardSelections(prev => ({
-                      ...prev,
-                      [prod.id]: { ...currentSel, concentration }
-                    }));
-                  }}
-                  wishlist={wishlist}
-                  toggleWishlist={toggleWishlist}
-                  handleOpenProductDetail={handleOpenProductDetail}
-                  handleAddToCart={handleAddToCart}
-                  calculateItemPrice={calculateItemPrice}
-                />
-              );
-            })}
-          </div>
-
-          {/* View All CTA */}
-          {filteredProducts.length > 3 && (
-            <div className="mt-12 text-center">
-              <Link
-                to="/catalog"
-                className="inline-flex items-center gap-2 border border-white/10 px-8 py-3.5 text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-300 hover:text-gold hover:border-gold/40 rounded-sm transition-all duration-300 bg-black/30 backdrop-blur-md"
-              >
-                <span>Discover All {filteredProducts.length} Fragrances</span>
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-          )}
-
-        </div>
-      </section>
+      {/* New Arrivals (moved to its own section component) */}
+      <NewArrival />
 
       {/* Scent finder guidance CTA */}
       <section id="scent-finder-banner" className="py-20 bg-luxury-black relative overflow-hidden border-b border-gold/20">
@@ -167,7 +109,7 @@ export const Home = () => {
           <div className="w-12 h-12 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center mx-auto mb-4">
             <Compass className="w-5 h-5 text-gold" />
           </div>
-          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">Scent Guidance Atelier</span>
+          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">Scent Guidance Decantre</span>
           <h2 className="text-3xl sm:text-4xl font-serif font-light tracking-wide text-luxury-white">
             FIND YOUR PERFECT SIGNATURE AURA
           </h2>
@@ -229,7 +171,7 @@ export const Home = () => {
                   ))}
                 </div>
                 <p className="text-zinc-300 text-xs sm:text-sm italic font-light font-serif leading-relaxed">
-                  "I was skeptic about ordering L'Élixir online but Nectar de Saphir has changed everything. The champagne rose and warm Madagascar vanilla is soft yet incredibly hypnotic. It persists past 24 hours on my coat."
+                  "I was skeptic about ordering Decantre online but Nectar de Saphir has changed everything. The champagne rose and warm Madagascar vanilla is soft yet incredibly hypnotic. It persists past 24 hours on my coat."
                 </p>
               </div>
               <div className="pt-6 border-t border-white/5 flex items-center justify-between text-left">
@@ -283,7 +225,7 @@ export const Home = () => {
             <span className="text-base font-serif font-bold tracking-[0.2em]">VOGUE ELITE</span>
             <span className="text-base font-serif font-bold tracking-[0.25em]">GQ LUXE</span>
             <span className="text-base font-serif font-bold tracking-[0.15em]">ELLE COUTURE</span>
-            <span className="text-base font-serif font-bold tracking-[0.3em]">HARPER'S ATELIER</span>
+            <span className="text-base font-serif font-bold tracking-[0.3em]">HARPER'S DECANTRE</span>
           </div>
         </div>
       </div>

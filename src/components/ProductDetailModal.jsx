@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShoppingCart } from 'lucide-react';
+import { formatBDT } from '../utils/formatCurrency';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 
 export const ProductDetailModal = ({
@@ -74,7 +75,7 @@ export const ProductDetailModal = ({
               <span className="text-[9px] uppercase tracking-[0.25em] text-gold font-semibold bg-gold/10 border border-gold/25 px-2.5 py-0.5 rounded-none font-sans">
                 {selectedProduct.category}
               </span>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-sans font-light">Atelier Formula</span>
+              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-sans font-light">Decantre Formula</span>
             </div>
 
             <h2 className="text-2xl font-serif font-light tracking-wide text-luxury-white uppercase">
@@ -132,7 +133,7 @@ export const ProductDetailModal = ({
                       }`}
                     >
                       <span className="block text-[10px] font-sans font-bold uppercase tracking-widest">{size}</span>
-                      <span className="text-[10px] text-zinc-500 font-sans">${calculatedPrice} est.</span>
+                      <span className="text-[10px] text-zinc-500 font-sans">{formatBDT(calculatedPrice)} est.</span>
                     </button>
                   );
                 })}
@@ -170,7 +171,7 @@ export const ProductDetailModal = ({
               <div>
                 <span className="text-[9px] text-zinc-500 uppercase block tracking-widest font-sans">Configured Value</span>
                 <span className="text-2xl font-serif font-light text-gold">
-                  ${calculateItemPrice(selectedProduct.basePrice, modalSize, modalConcentration)}
+                  {formatBDT(calculateItemPrice(selectedProduct.basePrice, modalSize, modalConcentration))}
                 </span>
               </div>
 

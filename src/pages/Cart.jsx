@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShoppingBag, Trash2, Minus, Plus, CreditCard, ArrowRight, Sparkles, Gift } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { formatBDT } from '../utils/formatCurrency';
 import { useApp } from '../context/AppContext';
 
 export const Cart = () => {
@@ -83,14 +84,14 @@ export const Cart = () => {
                       </div>
                       
                       {/* Price per unit */}
-                      <span className="text-[10px] text-zinc-500 font-mono block">${item.unitPrice} per flacon</span>
+                      <span className="text-[10px] text-zinc-500 font-mono block">{formatBDT(item.unitPrice)} per flacon</span>
                     </div>
                   </div>
 
                   {/* Quantity & Actions and Total */}
                   <div className="flex flex-col items-end gap-3 text-right">
                     <span className="text-sm font-mono text-gold font-semibold">
-                      ${item.unitPrice * item.quantity}
+                      {formatBDT(item.unitPrice * item.quantity)}
                     </span>
 
                     <div className="flex items-center gap-2">
@@ -144,26 +145,26 @@ export const Cart = () => {
               <div className="space-y-3 font-sans text-xs">
                 <div className="flex justify-between text-zinc-400 font-light">
                   <span>Cart Subtotal</span>
-                  <span className="font-mono text-zinc-300">${cartSubtotal}</span>
+                  <span className="font-mono text-zinc-300">{formatBDT(cartSubtotal)}</span>
                 </div>
 
                 {appliedDiscount > 0 && (
                   <div className="flex justify-between text-emerald-400 font-light">
                     <span>Exclusive Coupon Discount</span>
-                    <span className="font-mono">-${discountAmount}</span>
+                    <span className="font-mono">-{formatBDT(discountAmount)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between text-zinc-400 font-light">
                   <span>Sovereign Delivery Courier</span>
                   <span className="font-mono text-zinc-300">
-                    {shippingFee === 0 ? 'Complimentary' : `$${shippingFee}`}
+                    {shippingFee === 0 ? 'Complimentary' : formatBDT(shippingFee)}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-zinc-400 font-light">
                   <span>Luxury Product Duties (8%)</span>
-                  <span className="font-mono text-zinc-300">${luxuryTax}</span>
+                  <span className="font-mono text-zinc-300">{formatBDT(luxuryTax)}</span>
                 </div>
 
                 {/* Optional gift wrapping selection in Cart */}
@@ -177,12 +178,12 @@ export const Cart = () => {
                     />
                     <span>Velvet Gift Box wrap</span>
                   </label>
-                  <span className="font-mono text-gold/80 font-semibold">+$15</span>
+                  <span className="font-mono text-gold/80 font-semibold">+{formatBDT(15)}</span>
                 </div>
 
                 <div className="border-t border-gold/20 pt-4 flex justify-between items-end">
                   <span className="text-xs font-sans font-bold uppercase text-zinc-300 tracking-wider">Estimated Total</span>
-                  <span className="text-xl font-serif text-gold font-semibold font-mono">${cartTotal}</span>
+                  <span className="text-xl font-serif text-gold font-semibold font-mono">{formatBDT(cartTotal)}</span>
                 </div>
               </div>
 
