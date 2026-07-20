@@ -65,7 +65,7 @@ export const Home = () => {
       <CategoryNav setSelectedCategory={setSelectedCategory} />
 
       {/* Featured Products Slider (Moved from main banner slot) */}
-      <FeaturedProductSlider />
+      {/* <FeaturedProductSlider /> */}
 
       {/* New Arrivals (moved to its own section component) */}
       <NewArrival />
