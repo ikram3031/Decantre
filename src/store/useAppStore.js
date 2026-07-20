@@ -1,53 +1,5 @@
 import { create } from 'zustand';
 import { mapRemoteProduct } from './productHelpers';
-import { products as localProducts } from '../data';
-
-// Helper to enrich local products with variations so that size / concentration prices work perfectly
-const enrichLocalProductWithVariations = (p) => {
-  return {
-    ...p,
-    brand: p.brand || 'Decantre',
-    scentFamily: p.scentFamily || 'Luxury Scent',
-    variations: p.variations || [
-      { id: `${p.id}-50ml`, name: `${p.name} 50ml`, size: '50ml', price: Math.round(p.basePrice * 0.75), stock_status: 'instock' },
-      { id: `${p.id}-100ml`, name: `${p.name} 100ml`, size: '100ml', price: p.basePrice, stock_status: 'instock' },
-      { id: `${p.id}-200ml`, name: `${p.name} 200ml`, size: '200ml', price: Math.round(p.basePrice * 1.6), stock_status: 'instock' }
-    ],
-    badges: p.badges || (p.isBestSeller ? [{ name: 'best-seller', text: 'BESTSELLER', color: 'gold', priority: 0 }] : [])
-  };
-};
-
-const fallbackProducts = localProducts.map(enrichLocalProductWithVariations);
-
-const fallbackCategories = [
-  { id: 'for-him', name: 'For Him', slug: 'For Him', product_count: 2 },
-  { id: 'for-her', name: 'For Her', slug: 'For Her', product_count: 2 },
-  { id: 'unisex', name: 'Unisex', slug: 'Unisex', product_count: 2 },
-  { id: 'miniatures', name: 'Miniatures', slug: 'Miniatures', product_count: 1 },
-  { id: 'decant-accessories', name: 'Decant Accessories', slug: 'Decant Accessories', product_count: 2 }
-];
-
-const fallbackBrands = [
-  { id: 'decantre', name: 'Decantre', slug: 'Decantre', product_count: 6 },
-  // Niche
-  { id: 'amouage', name: 'Amouage', slug: 'Amouage', product_count: 3 },
-  { id: 'creed', name: 'Creed', slug: 'Creed', product_count: 3 },
-  { id: 'byredo', name: 'Byredo', slug: 'Byredo', product_count: 2 },
-  { id: 'parfums-de-marly', name: 'Parfums de Marly', slug: 'Parfums de Marly', product_count: 2 },
-  { id: 'xerjoff', name: 'Xerjoff', slug: 'Xerjoff', product_count: 2 },
-  { id: 'maison-francis-kurkdjian', name: 'Maison Francis Kurkdjian', slug: 'Maison Francis Kurkdjian', product_count: 2 },
-  // Designer
-  { id: 'dior', name: 'Dior', slug: 'Dior', product_count: 3 },
-  { id: 'chanel', name: 'Chanel', slug: 'Chanel', product_count: 2 },
-  { id: 'tom-ford', name: 'Tom Ford', slug: 'Tom Ford', product_count: 3 },
-  { id: 'jean-paul-gaultier', name: 'Jean Paul Gaultier', slug: 'Jean Paul Gaultier', product_count: 2 },
-  { id: 'yves-saint-laurent', name: 'Yves Saint Laurent', slug: 'Yves Saint Laurent', product_count: 2 },
-  // UAE & Arabian
-  { id: 'lattafa', name: 'Lattafa', slug: 'Lattafa', product_count: 4 },
-  { id: 'armaf', name: 'Armaf', slug: 'Armaf', product_count: 3 },
-  { id: 'afnan', name: 'Afnan', slug: 'Afnan', product_count: 2 },
-  { id: 'swiss-arabian', name: 'Swiss Arabian', slug: 'Swiss Arabian', product_count: 2 }
-];
 
 const parseQuery = (queryString) => {
   const params = {};
@@ -85,10 +37,10 @@ export const useAppStore = create((set, get) => {
   })();
 
   return {
-    // products can be loaded from remote API; initialize with fallback catalog
-    products: fallbackProducts,
-    categories: fallbackCategories,
-    brands: fallbackBrands,
+    // Dynamic lists populated from API on mount
+    products: [],
+    categories: [],
+    brands: [],
 
     setProducts: (newProducts) => set({ products: newProducts }),
     setCategories: (newCategories) => set({ categories: newCategories }),
@@ -96,7 +48,7 @@ export const useAppStore = create((set, get) => {
 
     fetchProducts: async (opts = {}) => {
       try {
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
         const base = `${apiBaseUrl}/api/wp/products`;
         const url = opts && opts.rawQuery ? `${base}?${opts.rawQuery}` : base;
         const res = await fetch(url);
@@ -110,60 +62,15 @@ export const useAppStore = create((set, get) => {
         set({ products: mapped });
         return mapped;
       } catch (err) {
-        console.warn('Network error fetching products: falling back to high-fidelity offline catalog.', err);
-        const queryParams = parseQuery(opts.rawQuery);
-        let filtered = [...fallbackProducts];
-
-        // Filter by category
-        if (queryParams.category && queryParams.category !== 'All') {
-          filtered = filtered.filter(p => p.category === queryParams.category);
-        }
-
-        // Filter by brand
-        if (queryParams.brand && queryParams.brand !== 'All') {
-          const brandMatch = filtered.filter(p => p.brand.toLowerCase() === queryParams.brand.toLowerCase());
-          if (brandMatch.length > 0) {
-            filtered = brandMatch;
-          } else {
-            // Generate dynamic brand-specific products from the fallback set to ensure the user gets a high-fidelity preview!
-            const baseSet = queryParams.category && queryParams.category !== 'All' 
-              ? fallbackProducts.filter(p => p.category === queryParams.category)
-              : fallbackProducts;
-            
-            const finalSet = baseSet.length > 0 ? baseSet : fallbackProducts;
-            
-            filtered = finalSet.slice(0, 3).map((p, idx) => ({
-              ...p,
-              id: `${p.id}-${queryParams.brand.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-              name: `${queryParams.brand} ${p.name.split(' ').slice(1).join(' ') || p.name}`,
-              brand: queryParams.brand,
-              tagline: `Premium Reserve by ${queryParams.brand}`,
-              description: `A pristine and hand-curated formulation of ${p.name}, meticulously prepared under the ${queryParams.brand} label for the ultimate olfactory definition.`
-            }));
-          }
-        }
-
-        // Sort
-        const sort = queryParams.sort || 'newest';
-        if (sort === 'price-asc') {
-          filtered.sort((a, b) => a.basePrice - b.basePrice);
-        } else if (sort === 'price-desc') {
-          filtered.sort((a, b) => b.basePrice - a.basePrice);
-        } else if (sort === 'alphabetical') {
-          filtered.sort((a, b) => a.name.localeCompare(b.name));
-        } else {
-          // Default: Bestseller priority first
-          filtered.sort((a, b) => (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0));
-        }
-
-        set({ products: filtered });
-        return filtered;
+        console.error('Network error fetching products from API:', err);
+        set({ products: [] });
+        return [];
       }
     },
 
     fetchCategories: async (opts = {}) => {
       try {
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
         const base = `${apiBaseUrl}/api/wp/taxonomies/categories`;
         const rawQuery = opts && opts.rawQuery ? opts.rawQuery : 'skip=0&limit=50';
         const res = await fetch(`${base}?${rawQuery}`);
@@ -173,15 +80,15 @@ export const useAppStore = create((set, get) => {
         set({ categories: list });
         return list;
       } catch (err) {
-        console.warn('Network error fetching categories: falling back to local categories.', err);
-        set({ categories: fallbackCategories });
-        return fallbackCategories;
+        console.error('Network error fetching categories from API:', err);
+        set({ categories: [] });
+        return [];
       }
     },
 
     fetchBrands: async (opts = {}) => {
       try {
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
         const base = `${apiBaseUrl}/api/wp/taxonomies/brands`;
         const rawQuery = opts && opts.rawQuery ? opts.rawQuery : 'skip=0&limit=50';
         const res = await fetch(`${base}?${rawQuery}`);
@@ -191,9 +98,9 @@ export const useAppStore = create((set, get) => {
         set({ brands: list });
         return list;
       } catch (err) {
-        console.warn('Network error fetching brands: falling back to local brands.', err);
-        set({ brands: fallbackBrands });
-        return fallbackBrands;
+        console.error('Network error fetching brands from API:', err);
+        set({ brands: [] });
+        return [];
       }
     },
     // 1. Core States
@@ -510,7 +417,7 @@ export const useAppStore = create((set, get) => {
           }))
         };
 
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
         const res = await fetch(`${apiBaseUrl}/api/v1/orders/new-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
