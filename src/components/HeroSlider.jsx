@@ -59,7 +59,7 @@ export const HeroSlider = () => {
 
           {/* Centered Content overlay */}
           <div className="absolute inset-0 flex items-center justify-center text-center p-4">
-            <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+            <div className="max-w-[75%] sm:max-w-4xl mx-auto space-y-6 sm:space-y-8">
               
               <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.45em] text-zinc-300 font-sans font-medium block animate-fade-in drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                 {slide.tagline}
@@ -69,7 +69,7 @@ export const HeroSlider = () => {
                 {slide.title}
               </h1>
 
-              <div className="pt-2 flex justify-center">
+              <div className="pt-8 sm:pt-12 flex justify-center">
                 <button 
                   onClick={() => navigate('/shop')}
                   className="inline-flex items-center justify-center w-[220px] sm:w-[260px] h-12 sm:h-13 bg-white text-black hover:bg-gold hover:text-black text-[10px] sm:text-[11px] uppercase tracking-[0.25em] sm:tracking-[0.35em] font-sans font-bold rounded-none transition-all duration-300 shadow-xl border border-white hover:border-gold cursor-pointer"
@@ -83,14 +83,14 @@ export const HeroSlider = () => {
         </div>
       ))}
 
-      {/* Slider Controls (Bottom Dot Indicators) */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/5">
+      {/* Slider Controls (Bottom Dot Indicators with elegant long active pills) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
         {bannerSlides.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrentSlide(idx)}
-            className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
-              idx === currentSlide ? 'bg-gold scale-125' : 'bg-white/40 hover:bg-white/70'
+            className={`h-2 rounded-full transition-all duration-500 cursor-pointer ${
+              idx === currentSlide ? 'bg-gold w-6' : 'bg-white/40 hover:bg-white/70 w-2'
             }`}
             title={`Slide ${idx + 1}`}
           />

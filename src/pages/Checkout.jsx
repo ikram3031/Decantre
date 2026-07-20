@@ -7,7 +7,10 @@ import {
   Award as IconAward,
   Lock as IconLock,
   Calendar as IconCalendar,
-  ChevronDown
+  ChevronDown,
+  AlertTriangle as IconAlert,
+  Video as IconVideo,
+  Info as IconInfo
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatBDT as fmtBDT } from '../utils/formatCurrency';
@@ -25,6 +28,8 @@ export const Checkout = () => {
     setPaymentMethod,
     sameAsBilling,
     setSameAsBilling,
+    paymentDetails,
+    setPaymentDetails,
     isProcessingOrder,
     handleCheckoutSubmit,
     orderCompleted,
@@ -177,9 +182,9 @@ export const Checkout = () => {
                   2. Preferred Handover Method
                 </h3>
 
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className={`cursor-pointer rounded-sm border px-4 py-3 text-[10px] uppercase tracking-widest font-semibold ${paymentMethod === 'cod' ? 'border-gold bg-gold/10 text-gold' : 'border-white/10 bg-black/40 text-zinc-300'}`}>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    <label className={`cursor-pointer rounded-sm border p-3 text-[9px] uppercase tracking-wider font-semibold text-center flex items-center justify-center min-h-[44px] ${paymentMethod === 'cod' ? 'border-gold bg-gold/10 text-gold font-bold' : 'border-white/10 bg-black/40 text-zinc-300 hover:border-white/20'}`}>
                       <input
                         type="radio"
                         name="paymentMethod"
@@ -188,9 +193,9 @@ export const Checkout = () => {
                         onChange={() => setPaymentMethod('cod')}
                         className="sr-only"
                       />
-                      Cash on Delivery
+                      COD
                     </label>
-                    <label className={`cursor-pointer rounded-sm border px-4 py-3 text-[10px] uppercase tracking-widest font-semibold ${paymentMethod === 'instore' ? 'border-gold bg-gold/10 text-gold' : 'border-white/10 bg-black/40 text-zinc-300'}`}>
+                    <label className={`cursor-pointer rounded-sm border p-3 text-[9px] uppercase tracking-wider font-semibold text-center flex items-center justify-center min-h-[44px] ${paymentMethod === 'instore' ? 'border-gold bg-gold/10 text-gold font-bold' : 'border-white/10 bg-black/40 text-zinc-300 hover:border-white/20'}`}>
                       <input
                         type="radio"
                         name="paymentMethod"
@@ -199,16 +204,197 @@ export const Checkout = () => {
                         onChange={() => setPaymentMethod('instore')}
                         className="sr-only"
                       />
-                      Instore Pickup
+                      Pickup
+                    </label>
+                    <label className={`cursor-pointer rounded-sm border p-3 text-[9px] uppercase tracking-wider font-semibold text-center flex items-center justify-center min-h-[44px] ${paymentMethod === 'bkash' ? 'border-pink-500 bg-pink-500/10 text-pink-400 font-bold' : 'border-white/10 bg-black/40 text-zinc-300 hover:border-pink-500/20'}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="bkash"
+                        checked={paymentMethod === 'bkash'}
+                        onChange={() => setPaymentMethod('bkash')}
+                        className="sr-only"
+                      />
+                      bKash
+                    </label>
+                    <label className={`cursor-pointer rounded-sm border p-3 text-[9px] uppercase tracking-wider font-semibold text-center flex items-center justify-center min-h-[44px] ${paymentMethod === 'nagad' ? 'border-orange-500 bg-orange-500/10 text-orange-400 font-bold' : 'border-white/10 bg-black/40 text-zinc-300 hover:border-orange-500/20'}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="nagad"
+                        checked={paymentMethod === 'nagad'}
+                        onChange={() => setPaymentMethod('nagad')}
+                        className="sr-only"
+                      />
+                      Nagad
+                    </label>
+                    <label className={`cursor-pointer col-span-2 sm:col-span-1 rounded-sm border p-3 text-[9px] uppercase tracking-wider font-semibold text-center flex items-center justify-center min-h-[44px] ${paymentMethod === 'bank_transfer' ? 'border-gold bg-gold/10 text-gold font-bold' : 'border-white/10 bg-black/40 text-zinc-300 hover:border-white/20'}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="bank_transfer"
+                        checked={paymentMethod === 'bank_transfer'}
+                        onChange={() => setPaymentMethod('bank_transfer')}
+                        className="sr-only"
+                      />
+                      Bank
                     </label>
                   </div>
 
                   <p className="text-[10px] text-zinc-500 leading-relaxed">
-                    {paymentMethod === 'cod'
-                      ? 'Select Cash on Delivery to receive your order directly at your address. A shipping fee applies unless the order qualifies for complimentary courier transport.'
-                      : 'Select Instore Pickup to collect your order from our boutique. Courier shipping is waived and you will receive pickup details by email.'}
+                    {paymentMethod === 'cod' && 'Select Cash on Delivery to receive your order directly at your address. A delivery charge applies based on your district.'}
+                    {paymentMethod === 'instore' && 'Select Instore Pickup to collect your order from our boutique. Courier shipping is waived and you will receive pickup details by email.'}
+                    {paymentMethod === 'bkash' && 'Select bKash to pre-pay using the most popular mobile financial service in Bangladesh.'}
+                    {paymentMethod === 'nagad' && 'Select Nagad to pre-pay using your digital financial service account.'}
+                    {paymentMethod === 'bank_transfer' && 'Select Bank Transfer to securely wire the payment from your bank account.'}
                   </p>
                 </div>
+
+                {/* Mobile financial service: bKash */}
+                {paymentMethod === 'bkash' && (
+                  <div className="p-4 bg-pink-950/20 border border-pink-500/15 rounded-sm space-y-4">
+                    <div className="text-[10px] uppercase tracking-wider text-pink-400 font-semibold">
+                      bKash Payment Instructions
+                    </div>
+                    <p className="text-[11px] text-zinc-400 font-sans font-light leading-relaxed">
+                      Please make payment to our Merchant bKash Wallet: <strong className="text-pink-300 font-medium">01700-000000</strong>. Enter your sender number, Transaction ID, and amount paid below to complete verification.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Sender Number</label>
+                        <input
+                          type="tel"
+                          required
+                          placeholder="017XXXXXXXX"
+                          value={paymentDetails?.bkashNumber || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, bkashNumber: e.target.value })}
+                          className="w-full bg-black/50 border border-pink-500/20 focus:border-pink-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Transaction ID (TxnID)</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="BK12345678"
+                          value={paymentDetails?.bkashTxnId || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, bkashTxnId: e.target.value })}
+                          className="w-full bg-black/50 border border-pink-500/20 focus:border-pink-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Amount Paid (BDT)</label>
+                        <input
+                          type="number"
+                          required
+                          placeholder={cartTotal.toString()}
+                          value={paymentDetails?.bkashAmount || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, bkashAmount: e.target.value })}
+                          className="w-full bg-black/50 border border-pink-500/20 focus:border-pink-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mobile financial service: Nagad */}
+                {paymentMethod === 'nagad' && (
+                  <div className="p-4 bg-orange-950/20 border border-orange-500/15 rounded-sm space-y-4">
+                    <div className="text-[10px] uppercase tracking-wider text-orange-400 font-semibold">
+                      Nagad Payment Instructions
+                    </div>
+                    <p className="text-[11px] text-zinc-400 font-sans font-light leading-relaxed">
+                      Please make payment to our Merchant Nagad Wallet: <strong className="text-orange-300 font-medium">01800-000000</strong>. Enter your sender number, Transaction ID, and amount paid below to complete verification.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Sender Number</label>
+                        <input
+                          type="tel"
+                          required
+                          placeholder="018XXXXXXXX"
+                          value={paymentDetails?.nagadNumber || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, nagadNumber: e.target.value })}
+                          className="w-full bg-black/50 border border-orange-500/20 focus:border-orange-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Transaction ID (TxnID)</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="NG12345678"
+                          value={paymentDetails?.nagadTxnId || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, nagadTxnId: e.target.value })}
+                          className="w-full bg-black/50 border border-orange-500/20 focus:border-orange-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Amount Paid (BDT)</label>
+                        <input
+                          type="number"
+                          required
+                          placeholder={cartTotal.toString()}
+                          value={paymentDetails?.nagadAmount || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, nagadAmount: e.target.value })}
+                          className="w-full bg-black/50 border border-orange-500/20 focus:border-orange-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bank Transfer */}
+                {paymentMethod === 'bank_transfer' && (
+                  <div className="p-4 bg-zinc-950/20 border border-gold/15 rounded-sm space-y-4">
+                    <div className="text-[10px] uppercase tracking-wider text-gold font-semibold">
+                      Bank Transfer Instructions
+                    </div>
+                    <div className="text-[11px] text-zinc-400 font-sans font-light leading-relaxed space-y-1">
+                      <p>Please wire transfer the amount to our official corporate account:</p>
+                      <div className="bg-black/30 p-2.5 rounded-sm space-y-1 text-zinc-300 font-mono text-[10px]">
+                        <div>Bank Name: <strong className="text-gold">Standard Chartered Bank</strong></div>
+                        <div>Account Name: <strong className="text-zinc-200">Decantre Scent Reserve Ltd.</strong></div>
+                        <div>Account Number: <strong className="text-zinc-200">01-234567-89</strong></div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Bank Account Number</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Your Account No."
+                          value={paymentDetails?.bankAccountNumber || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, bankAccountNumber: e.target.value })}
+                          className="w-full bg-black/50 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Specify Your Bank Name</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. City Bank, SCB"
+                          value={paymentDetails?.bankName || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, bankName: e.target.value })}
+                          className="w-full bg-black/50 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-1.5 font-semibold">Amount Transferred (BDT)</label>
+                        <input
+                          type="number"
+                          required
+                          placeholder={cartTotal.toString()}
+                          value={paymentDetails?.bankAmount || ''}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, bankAmount: e.target.value })}
+                          className="w-full bg-black/50 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-sans font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
@@ -295,7 +481,7 @@ export const Checkout = () => {
                   </div>
                 </div>
 
-                {paymentMethod === 'cod' && (
+                {paymentMethod !== 'instore' && (
                   <div className="pt-4 border-t border-white/10">
                     <label className="flex items-center gap-3 text-xs text-zinc-300">
                       <input
@@ -309,7 +495,7 @@ export const Checkout = () => {
                   </div>
                 )}
 
-                {paymentMethod === 'cod' && !sameAsBilling && (
+                {paymentMethod !== 'instore' && !sameAsBilling && (
                   <div className="pt-4 border-t border-white/10 space-y-4">
                     <div className="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Shipping Address</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -520,6 +706,73 @@ export const Checkout = () => {
             </div>
           </div>
 
+        </div>
+
+        {/* Return & Refund Policy Section */}
+        <div className="mt-16 border-t border-gold/15 pt-12 space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-sans font-medium block">Return & Refund Policy</span>
+            <h2 className="text-2xl font-serif font-light text-white tracking-widest uppercase">
+              TERMS OF DISPENSATION
+            </h2>
+            <p className="text-zinc-500 text-xs font-sans font-light">
+              Please read carefully before placing your order.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Box 1: Important Warning */}
+            <div className="p-5 border border-amber-500/10 bg-amber-950/5 rounded-none space-y-4">
+              <div className="flex items-center gap-2.5 text-amber-400">
+                <IconAlert className="w-5 h-5 shrink-0" />
+                <h3 className="text-xs font-sans font-bold uppercase tracking-wider">⚠️ Important Note</h3>
+              </div>
+              <div className="space-y-3 text-[11px] text-zinc-400 font-sans font-light leading-relaxed">
+                <p>
+                  If you are unsure about a fragrance, we <strong className="text-gold font-medium">highly recommend trying a 2ml tester</strong> first before purchasing a larger size.
+                </p>
+                <p className="border-t border-white/5 pt-3 text-zinc-500 italic">
+                  Please note that disliking a perfume’s scent profile is not considered a valid reason for return or refund. Fragrance preference is subjective and may vary from person to person.
+                </p>
+              </div>
+            </div>
+
+            {/* Box 2: When Your Parcel Arrives */}
+            <div className="p-5 border border-gold/10 bg-zinc-950/50 rounded-none space-y-4">
+              <div className="flex items-center gap-2.5 text-gold">
+                <IconVideo className="w-5 h-5 shrink-0" />
+                <h3 className="text-xs font-sans font-bold uppercase tracking-wider">When Your Parcel Arrives</h3>
+              </div>
+              <ul className="space-y-2.5 text-[11px] text-zinc-400 font-sans font-light list-disc list-inside leading-relaxed">
+                <li>Please record a clear unboxing video</li>
+                <li>Start recording before opening the outer packaging</li>
+                <li>The video must clearly show the sealed package being opened</li>
+                <li className="text-gold font-medium">An unboxing video is mandatory for any damage or missing item claim</li>
+              </ul>
+            </div>
+
+            {/* Box 3: Eligible Return Criteria */}
+            <div className="p-5 border border-white/5 bg-zinc-950/20 rounded-none space-y-4">
+              <div className="flex items-center gap-2.5 text-zinc-300">
+                <IconShield className="w-5 h-5 shrink-0 text-gold" />
+                <h3 className="text-xs font-sans font-bold uppercase tracking-wider">Eligible for Return / Refund</h3>
+              </div>
+              <div className="space-y-3 text-[11px] text-zinc-400 font-sans font-light leading-relaxed">
+                <p>
+                  Returns or refunds are accepted only if the issue occurs from our side, such as:
+                </p>
+                <ul className="list-disc list-inside space-y-1 pl-1 text-zinc-300 font-medium">
+                  <li>Broken bottle</li>
+                  <li>Leakage during delivery</li>
+                  <li>Incorrect item sent</li>
+                </ul>
+                <div className="border-t border-white/5 pt-3">
+                  <span className="text-[10px] uppercase font-bold text-zinc-300 block mb-1">How to Report:</span>
+                  <p>Please report the issue within <strong className="text-white">24 hours</strong> of delivery with the unboxing video. After verification, you may choose a <strong className="text-gold font-bold">Replacement</strong> or <strong className="text-gold font-bold">Full Refund</strong>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>

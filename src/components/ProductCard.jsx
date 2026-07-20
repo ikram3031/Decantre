@@ -1,5 +1,6 @@
-import React from 'react';
-import { Star, Heart, Eye, ShoppingCart } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Heart, Eye, ShoppingCart } from 'lucide-react';
 import { formatBDT } from '../utils/formatCurrency';
 
 export const ProductCard = ({
@@ -13,6 +14,8 @@ export const ProductCard = ({
   handleAddToCart,
   calculateItemPrice
 }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   // determine base price from selected variation if available
   const variationPrice = (product.variations && product.variations.find(v => v.size === currentSel.size))
     ? product.variations.find(v => v.size === currentSel.size).price
@@ -22,7 +25,7 @@ export const ProductCard = ({
   return (
     <div 
       id={`product-card-${product.id}`}
-      className="group flex flex-col bg-luxury-dark border border-gold/15 hover:border-gold/45 rounded-sm p-5 transition-all duration-500 shadow-2xl relative"
+      className="group flex flex-col h-full bg-luxury-dark border border-gold/15 hover:border-gold/45 rounded-sm p-5 transition-all duration-500 shadow-2xl relative"
     >
       {/* Badge Row */}
       <div className="absolute top-8 left-8 z-20 flex flex-col gap-1.5">
@@ -62,18 +65,28 @@ export const ProductCard = ({
         />
       </button>
 
-      {/* Image container */}
-      <div className="relative aspect-square rounded-sm overflow-hidden bg-black/40 mb-6">
-        <img
-          src={product.image || (product.raw && product.raw.image) || '/src/assets/images/perfume_for_him_1784311883603.jpg'}
-          alt={product.name}
-          className="w-full h-full object-cover object-center scale-95 group-hover:scale-100 transition-all duration-700"
-          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/src/assets/images/perfume_for_him_1784311883603.jpg'; }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-luxury-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-center pb-6">
+      {/* Image container with high-fidelity skeleton loading state */}
+      <div className="relative aspect-square rounded-sm overflow-hidden bg-[#0a0a0a] mb-6 flex-shrink-0">
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-zinc-900/80 animate-pulse z-10" />
+        )}
+        <Link to={`/product?did=${product.id}`} className="block w-full h-full">
+          <img
+            src={product.image || (product.raw && product.raw.image) || '/src/assets/images/perfume_for_him_1784311883603.jpg'}
+            alt={product.name}
+            className={`w-full h-full object-cover object-center scale-95 group-hover:scale-100 transition-all duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
+            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/src/assets/images/perfume_for_him_1784311883603.jpg'; setImageLoaded(true); }}
+          />
+        </Link>
+        <div className="absolute inset-0 bg-gradient-to-t from-luxury-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-center pb-6 pointer-events-none">
           <button 
-            onClick={() => handleOpenProductDetail(product)}
-            className="bg-luxury-dark border border-gold/40 text-gold hover:text-black hover:bg-gold text-[10px] font-sans font-bold uppercase tracking-widest py-2.5 px-6 rounded-sm transition-all flex items-center gap-2 shadow-2xl"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleOpenProductDetail(product);
+            }}
+            className="bg-luxury-dark border border-gold/40 text-gold hover:text-black hover:bg-gold text-[10px] font-sans font-bold uppercase tracking-widest py-2.5 px-6 rounded-sm transition-all flex items-center gap-2 shadow-2xl pointer-events-auto"
           >
             <Eye className="w-4 h-4" />
             Quick Atelier View
@@ -81,33 +94,33 @@ export const ProductCard = ({
         </div>
       </div>
 
-      {/* Details */}
-      <div className="flex-1 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[9px] uppercase tracking-[0.25em] text-gold font-sans font-medium">
-            {product.category} • {product.scentFamily}
-          </span>
-          {/* Interactive Rating */}
-          <div className="flex items-center gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <Star 
-                key={i} 
-                className={`w-3 h-3 ${i < product.longevity ? 'fill-gold text-gold' : 'text-zinc-800'}`} 
-              />
-            ))}
+      {/* Details (with flex-grow to push footer elements to bottom alignment) */}
+      <div className="flex-1 flex flex-col justify-between mb-4">
+        <div className="space-y-1.5">
+          {/* Category Display Justified-Between */}
+          <div className="flex items-center justify-between gap-2 text-[9px] uppercase tracking-[0.2em] font-sans font-medium w-full">
+            <span className="text-gold truncate max-w-[48%]" title={product.category || 'Luxury'}>
+              {product.category || 'Luxury'}
+            </span>
+            <span className="text-zinc-500 truncate max-w-[48%] text-right" title={product.scentFamily || 'Scent'}>
+              {product.scentFamily || 'Scent'}
+            </span>
           </div>
-        </div>
 
-        <h3 className="text-xl font-serif font-light text-luxury-white tracking-wider">
-          {product.name}
-        </h3>
+          {/* Centered Product Name */}
+          <Link to={`/product?did=${product.id}`} className="block hover:opacity-80 transition-opacity">
+            <h3 className="text-lg sm:text-xl font-serif font-light text-luxury-white hover:text-gold tracking-wider truncate w-full block text-center transition-colors" title={product.name}>
+              {product.name}
+            </h3>
+          </Link>
+        </div>
       </div>
 
       {/* SELECTION CONTROLS (Size & Concentration) */}
-      <div className="border-t border-white/5 pt-4 mt-4 space-y-3">
+      <div className="border-t border-white/5 pt-4 space-y-3 flex-shrink-0">
         
         {/* Size selector pills */}
-        <div className="flex flex-wrap justify-center gap-3 text-xs">
+        <div className="flex flex-wrap justify-center gap-1.5">
           {Array.from(new Set(
             (product.variations && product.variations.length > 0
               ? product.variations.map(v => v.size)
@@ -117,7 +130,7 @@ export const ProductCard = ({
               <button
                 key={size}
                 onClick={() => onSizeChange(size)}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-sans font-medium transition-all duration-300 border ${
+                className={`px-2.5 py-1 rounded-md text-[14px] font-sans font-medium transition-all duration-300 border ${
                   currentSel.size === size
                     ? 'bg-black text-gold border-gold shadow-[0_0_12px_rgba(197,160,89,0.15)]'
                     : 'bg-[#0d0d0d]/90 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
@@ -131,7 +144,7 @@ export const ProductCard = ({
       </div>
 
       {/* Add to Cart & Price Row */}
-      <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/5">
+      <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/5 flex-shrink-0">
         <div className="text-left">
           <span className="text-[9px] font-sans uppercase text-zinc-500 block tracking-wider">Price Estimate</span>
           <span className="text-2xl font-serif font-light text-gold">

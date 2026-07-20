@@ -441,12 +441,6 @@ export const CartDrawer = ({
                   <span>View Full Chest Cart</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
-                <button
-                  onClick={() => setIsCheckoutMode(true)}
-                  className="w-full bg-transparent border border-gold/40 text-gold hover:bg-gold/10 font-sans font-semibold uppercase tracking-[0.25em] text-[10px] py-2.5 rounded-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <span>Instant Drawer Checkout</span>
-                </button>
               </div>
             ) : null}
 

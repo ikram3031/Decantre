@@ -35,22 +35,25 @@ export const CategoryNav = ({ setSelectedCategory }) => {
             <img 
               src="/src/assets/images/perfume_for_him_1784311883603.jpg" 
               alt="For Him Category" 
-              className="w-full h-full object-cover object-center opacity-40 group-hover:scale-105 transition-transform duration-700"
+              className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/40 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/25 to-transparent"></div>
           </div>
           
-          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-2">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-sans font-medium">Woody, Smoky, Fresh</span>
+          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-4">
             <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">FOR HIM</h3>
             <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
-            <p className="text-xs text-zinc-400 font-sans font-light opacity-0 group-hover:opacity-100 transition-opacity duration-500 pt-2">
-              Bold obsidian shapes, rich leather notes, and rugged mountain cedarwood.
-            </p>
-            <button className="text-[10px] text-gold tracking-widest uppercase font-bold pt-2 block mx-auto group-hover:underline font-sans">
-              Explore Collection
-            </button>
+            
+            <div className="relative inline-block group/btn mx-auto">
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-zinc-950 border border-gold/40 text-[9px] uppercase tracking-widest text-gold opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-30">
+                Discover masculine olfactory masterpieces
+              </div>
+              <button className="text-[10px] text-gold tracking-widest uppercase font-bold py-1.5 px-4 border border-gold/20 hover:border-gold/60 bg-black/40 hover:bg-gold/10 transition-all font-sans">
+                Explore Collection
+              </button>
+            </div>
           </div>
         </div>
 
@@ -64,22 +67,25 @@ export const CategoryNav = ({ setSelectedCategory }) => {
             <img 
               src="/src/assets/images/perfume_for_her_1784311895919.jpg" 
               alt="For Her Category" 
-              className="w-full h-full object-cover object-center opacity-40 group-hover:scale-105 transition-transform duration-700"
+              className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/40 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/25 to-transparent"></div>
           </div>
           
-          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-2">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-sans font-medium">Floral, Rose, Sweet Nectar</span>
+          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-4">
             <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">FOR HER</h3>
             <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
-            <p className="text-xs text-zinc-400 font-sans font-light opacity-0 group-hover:opacity-100 transition-opacity duration-500 pt-2">
-              Rose absolute extracts, honeyed orchards, and delicate crystalline caps.
-            </p>
-            <button className="text-[10px] text-gold tracking-widest uppercase font-bold pt-2 block mx-auto group-hover:underline font-sans">
-              Explore Collection
-            </button>
+            
+            <div className="relative inline-block group/btn mx-auto">
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-zinc-950 border border-gold/40 text-[9px] uppercase tracking-widest text-gold opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-30">
+                Discover feminine olfactory masterpieces
+              </div>
+              <button className="text-[10px] text-gold tracking-widest uppercase font-bold py-1.5 px-4 border border-gold/20 hover:border-gold/60 bg-black/40 hover:bg-gold/10 transition-all font-sans">
+                Explore Collection
+              </button>
+            </div>
           </div>
         </div>
 
@@ -93,22 +99,25 @@ export const CategoryNav = ({ setSelectedCategory }) => {
             <img 
               src="/src/assets/images/perfume_unisex_1784311906469.jpg" 
               alt="Unisex Category" 
-              className="w-full h-full object-cover object-center opacity-40 group-hover:scale-105 transition-transform duration-700"
+              className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/40 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/25 to-transparent"></div>
           </div>
           
-          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-2">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-sans font-medium">Saffron, Spices, Amber Resins</span>
+          <div className="absolute inset-x-0 bottom-0 p-8 text-center space-y-4">
             <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">UNISEX</h3>
             <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
-            <p className="text-xs text-zinc-400 font-sans font-light opacity-0 group-hover:opacity-100 transition-opacity duration-500 pt-2">
-              Intricate blends of high-altitude saffron, dark rum, and golden cashmeran.
-            </p>
-            <button className="text-[10px] text-gold tracking-widest uppercase font-bold pt-2 block mx-auto group-hover:underline font-sans">
-              Explore Collection
-            </button>
+            
+            <div className="relative inline-block group/btn mx-auto">
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-zinc-950 border border-gold/40 text-[9px] uppercase tracking-widest text-gold opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-30">
+                Discover shared olfactory masterpieces
+              </div>
+              <button className="text-[10px] text-gold tracking-widest uppercase font-bold py-1.5 px-4 border border-gold/20 hover:border-gold/60 bg-black/40 hover:bg-gold/10 transition-all font-sans">
+                Explore Collection
+              </button>
+            </div>
           </div>
         </div>
 

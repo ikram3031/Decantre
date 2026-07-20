@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Compass, Heart, ShoppingBag, Search, Menu, X, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
+import { Compass, Heart, ShoppingBag, Search, Menu, X, ChevronDown, ChevronUp, ChevronRight, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 
@@ -75,7 +75,7 @@ export const Header = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setSelectedCategory } = useApp();
+  const { setSelectedCategory, user, setAuthModal } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isMobileShopExpanded, setIsMobileShopExpanded] = React.useState(false);
   const [isMobileBrandExpanded, setIsMobileBrandExpanded] = React.useState(false);
@@ -138,7 +138,7 @@ export const Header = ({
 
   return (
     <header id="main-header" className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-gold/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between relative">
         
         {/* Mobile menu toggle (left side on small screens) */}
         <button 
@@ -156,12 +156,12 @@ export const Header = ({
               <img 
                 src="https://decantrebd.com/wp-content/uploads/2026/03/decantre-color-logo-transparent.webp" 
                 alt="DECANTRE" 
-                className="h-14 sm:h-18 w-auto object-contain max-w-[200px] sm:max-w-[260px]"
+                className="h-20 sm:h-24 md:h-26 w-auto object-contain max-w-[260px] sm:max-w-[340px] md:max-w-[380px]"
                 onError={() => setLogoFailed(true)}
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <span className="text-xl sm:text-2xl font-serif tracking-[0.3em] text-gold font-light">
+              <span className="text-2xl sm:text-3xl font-serif tracking-[0.3em] text-gold font-light">
                 DECANTRE
               </span>
             )}
@@ -205,7 +205,7 @@ export const Header = ({
                       navigate(`/shop?category=${encodeURIComponent(item.val)}`);
                       setActiveDropdown(null);
                     }}
-                    className="w-full text-left px-6 py-3.5 text-black hover:text-gold hover:bg-zinc-50 font-sans text-xs tracking-widest uppercase transition-colors font-semibold border-b border-zinc-100 last:border-b-0 cursor-pointer"
+                    className="w-full text-left px-6 py-3.5 text-zinc-700 hover:text-gold hover:bg-zinc-50/50 font-sans text-xs tracking-widest uppercase transition-colors font-semibold border-b border-zinc-100 last:border-b-0 cursor-pointer"
                   >
                     {item.name}
                   </button>
@@ -243,7 +243,7 @@ export const Header = ({
                         className={`w-full text-left px-5 py-4 font-sans text-xs tracking-widest uppercase transition-all flex items-center justify-between cursor-pointer border-b border-zinc-100 last:border-b-0 ${
                           isActive 
                             ? 'text-gold bg-white border-l-2 border-l-gold font-bold' 
-                            : 'text-zinc-700 hover:bg-zinc-100/70 hover:text-black font-medium'
+                            : 'text-zinc-700 hover:bg-zinc-100/70 hover:text-gold font-semibold'
                         }`}
                       >
                         <span>{brandHierarchy[catId].name}</span>
@@ -264,7 +264,7 @@ export const Header = ({
                         className={`w-full text-left px-6 py-4 font-sans text-xs tracking-widest uppercase transition-all flex items-center justify-between cursor-pointer border-b border-zinc-100/50 last:border-b-0 ${
                           isActive 
                             ? 'text-gold bg-white font-bold' 
-                            : 'text-zinc-500 hover:bg-zinc-100/70 hover:text-black font-medium'
+                            : 'text-zinc-500 hover:bg-zinc-100/70 hover:text-gold font-semibold'
                         }`}
                       >
                         <span>{range}</span>
@@ -284,7 +284,7 @@ export const Header = ({
                       <button
                         key={brand}
                         onClick={() => handleBrandClick(brand)}
-                        className="text-left text-zinc-600 hover:text-gold hover:translate-x-1 text-[11px] font-sans font-light tracking-wider py-1.5 border-b border-zinc-50 last:border-b-0 transition-all uppercase duration-200 cursor-pointer truncate"
+                        className="text-left text-zinc-700 hover:text-gold hover:translate-x-1 text-xs font-sans font-semibold tracking-widest py-2 border-b border-zinc-50 last:border-b-0 transition-all uppercase duration-200 cursor-pointer truncate"
                       >
                         {brand}
                       </button>
@@ -324,7 +324,7 @@ export const Header = ({
                       navigate(`/shop?category=${encodeURIComponent(item.val)}`);
                       setActiveDropdown(null);
                     }}
-                    className="w-full text-left px-6 py-3.5 text-black hover:text-gold hover:bg-zinc-50 font-sans text-xs tracking-widest uppercase transition-colors font-semibold border-b border-zinc-100 last:border-b-0 cursor-pointer"
+                    className="w-full text-left px-6 py-3.5 text-zinc-700 hover:text-gold hover:bg-zinc-50/50 font-sans text-xs tracking-widest uppercase transition-colors font-semibold border-b border-zinc-100 last:border-b-0 cursor-pointer"
                   >
                     {item.name}
                   </button>
@@ -335,11 +335,11 @@ export const Header = ({
         </nav>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-4 z-10">
-          {/* Search Trigger Icon on header - Desktop & Tablet */}
+        <div className="flex items-center gap-1.5 sm:gap-4 z-10">
+          {/* Search Trigger Icon on header - Desktop & Mobile (Left of the cart icon) */}
           <button 
             onClick={() => setIsSearchPanelOpen(true)}
-            className="p-2 text-zinc-400 hover:text-gold transition-colors relative hidden md:block cursor-pointer"
+            className="p-2 text-zinc-400 hover:text-gold transition-colors relative cursor-pointer"
             title="Search catalog"
           >
             <Search className="w-5 h-5 text-gold" />
@@ -360,37 +360,40 @@ export const Header = ({
             </button>
           </div>
 
-          {/* Cart Trigger Button - Always visible on Right */}
+          {/* Cart Trigger Button - Desktop (md and up) */}
           <button 
-            id="header-cart-btn"
+            id="header-cart-btn-desktop"
             onClick={() => setIsCartOpen(true)}
-            className="p-2 bg-gradient-to-b from-[#080808] to-black border border-gold/30 hover:border-gold rounded-sm text-zinc-200 hover:text-gold transition-all duration-300 flex items-center gap-2 px-3 sm:px-3.5 cursor-pointer"
+            className="hidden md:flex p-2 bg-gradient-to-b from-[#080808] to-black border border-gold/30 hover:border-gold rounded-sm text-zinc-200 hover:text-gold transition-all duration-300 items-center gap-2 px-3.5 cursor-pointer"
           >
             <ShoppingBag className="w-4 h-4 text-gold" />
-            <span className="text-[10px] font-sans font-medium tracking-widest hidden sm:inline text-gold">BAG</span>
+            <span className="text-[10px] font-sans font-medium tracking-widest text-gold">BAG</span>
             <span className="bg-gold text-black rounded-sm text-[10px] w-5 h-5 font-bold flex items-center justify-center">
               {cart.reduce((sum, item) => sum + item.quantity, 0)}
             </span>
+          </button>
+
+          {/* Cart Trigger Icon - Mobile (below md) - Just an icon without borders, badge above it */}
+          <button 
+            id="header-cart-btn-mobile"
+            onClick={() => setIsCartOpen(true)}
+            className="md:hidden p-2 text-zinc-400 hover:text-gold transition-colors relative cursor-pointer flex items-center justify-center"
+            title="Open Cart"
+          >
+            <ShoppingBag className="w-6 h-6 text-gold" />
+            {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-gold text-black rounded-full text-[9px] w-4.5 h-4.5 font-bold flex items-center justify-center border border-black shadow-lg animate-pulse">
+                {cart.reduce((sum, item) => sum + item.quantity, 0)}
+              </span>
+            )}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gold/10 bg-black/95 backdrop-blur-lg absolute top-20 left-0 right-0 py-6 px-4 space-y-4 animate-fade-in z-50">
+        <div className="md:hidden border-t border-gold/10 bg-black/95 backdrop-blur-lg absolute top-24 left-0 right-0 py-6 px-4 space-y-4 animate-fade-in z-50">
           <nav className="flex flex-col gap-4 text-xs uppercase tracking-[0.25em] font-sans text-zinc-300">
-            {/* Search Input inside Mobile Menu */}
-            <div className="relative mb-2">
-              <input 
-                type="text"
-                placeholder="Search scents..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full bg-[#080808]/90 border border-gold/30 rounded-sm py-3 pl-10 pr-4 text-xs font-sans font-light text-white placeholder-zinc-500 focus:outline-none focus:border-gold/60 transition-all"
-              />
-              <Search className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
-            </div>
-
             <Link to="/" onClick={handleNavLinkClick} className="hover:text-gold py-2 transition-colors border-b border-white/5">Home</Link>
             <Link to="/season" onClick={handleNavLinkClick} className="hover:text-gold py-2 transition-colors border-b border-white/5">Season</Link>
             <div>
@@ -539,6 +542,51 @@ export const Header = ({
                 <span className="text-zinc-500 text-[10px]">EMPTY</span>
               )}
             </button>
+
+            {/* Profile or Login/Register side-by-side buttons in Mobile Menu */}
+            {user ? (
+              <button 
+                onClick={() => {
+                  setAuthModal(true, 'profile');
+                  handleNavLinkClick();
+                }} 
+                className="flex items-center justify-between hover:text-gold py-2 transition-colors border-b border-white/5 text-left uppercase text-xs tracking-[0.25em] cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <User className="w-4.5 h-4.5 text-gold" />
+                  Profile ({user.name})
+                </span>
+                <span className="text-[10px] uppercase tracking-widest px-2.5 py-0.5 bg-gold/10 border border-gold/30 text-gold font-bold">
+                  {user.tier}
+                </span>
+              </button>
+            ) : (
+              <div className="pt-2 border-b border-white/5 pb-4 space-y-2">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 font-bold block mb-1">
+                  Atelier Credentials
+                </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      setAuthModal(true, 'login');
+                      handleNavLinkClick();
+                    }}
+                    className="py-3 text-center border border-gold/30 hover:border-gold/60 bg-[#050505] text-gold text-[10px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAuthModal(true, 'register');
+                      handleNavLinkClick();
+                    }}
+                    className="py-3 text-center bg-gold hover:bg-gold/90 text-black text-[10px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer border-none"
+                  >
+                    Register
+                  </button>
+                </div>
+              </div>
+            )}
           </nav>
         </div>
       )}

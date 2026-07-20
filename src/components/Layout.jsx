@@ -9,6 +9,7 @@ import { ScentFinderQuiz } from './ScentFinderQuiz';
 import { ProductDetailModal } from './ProductDetailModal';
 import { CartDrawer } from './CartDrawer';
 import { Toast } from './Toast';
+import { AuthModal } from './AuthModal';
 
 export const Layout = () => {
   const {
@@ -133,6 +134,9 @@ export const Layout = () => {
         luxuryTax={luxuryTax}
         cartTotal={cartTotal}
       />
+
+      {/* User credentials & profile session overlay */}
+      <AuthModal />
 
       {/* Footnote */}
       <Footer />

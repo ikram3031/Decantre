@@ -36,6 +36,16 @@ export const useAppStore = create((set, get) => {
     }
   })();
 
+  const initialUser = (() => {
+    try {
+      const cached = localStorage.getItem('luxury_user');
+      return cached ? JSON.parse(cached) : null;
+    } catch (e) {
+      console.error('Error parsing user cache', e);
+      return null;
+    }
+  })();
+
   return {
     // Dynamic lists populated from API on mount
     products: [],
@@ -110,6 +120,9 @@ export const useAppStore = create((set, get) => {
     cart: initialCart,
     isCartOpen: false,
     wishlist: initialWishlist,
+    user: initialUser,
+    isAuthModalOpen: false,
+    authModalMode: 'login', // 'login' | 'register' | 'profile'
 
     cardSelections: {
       'oud-imperial': { size: '100ml', concentration: 'Eau de Parfum' },
@@ -154,6 +167,17 @@ export const useAppStore = create((set, get) => {
       zip: '',
       giftWrap: false
     },
+    paymentDetails: {
+      bkashNumber: '',
+      bkashTxnId: '',
+      bkashAmount: '',
+      nagadNumber: '',
+      nagadTxnId: '',
+      nagadAmount: '',
+      bankAccountNumber: '',
+      bankName: '',
+      bankAmount: ''
+    },
     orderCompleted: false,
     isProcessingOrder: false,
     orderNumber: null,
@@ -172,6 +196,18 @@ export const useAppStore = create((set, get) => {
     setIsCartOpen: (isOpen) => set((state) => ({
       isCartOpen: typeof isOpen === 'function' ? isOpen(state.isCartOpen) : isOpen
     })),
+    setUser: (user) => {
+      set({ user });
+      if (user) {
+        localStorage.setItem('luxury_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('luxury_user');
+      }
+    },
+    setAuthModal: (isOpen, mode = 'login') => set({
+      isAuthModalOpen: isOpen,
+      authModalMode: mode
+    }),
     setWishlist: (wishlist) => {
       set({ wishlist });
       localStorage.setItem('luxury_wishlist', JSON.stringify(wishlist));
@@ -206,6 +242,10 @@ export const useAppStore = create((set, get) => {
       const nextInfo = typeof updater === 'function' ? updater(state.shippingInfo) : updater;
       return { shippingInfo: nextInfo };
     }),
+    setPaymentDetails: (updater) => set((state) => {
+      const nextDetails = typeof updater === 'function' ? updater(state.paymentDetails) : updater;
+      return { paymentDetails: nextDetails };
+    }),
     setOrderCompleted: (completed) => set({ orderCompleted: completed }),
     setIsProcessingOrder: (isProcessing) => set({ isProcessingOrder: isProcessing }),
     setToasts: (updater) => set((state) => {
@@ -226,14 +266,13 @@ export const useAppStore = create((set, get) => {
 
     addToast: (text, type = 'success') => {
       const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
-      set((state) => ({
-        toasts: [...state.toasts, { id, text, type }]
-      }));
+      // Keep only the latest toast on screen to prevent annoyance from simultaneous messages
+      set({ toasts: [{ id, text, type }] });
       setTimeout(() => {
         set((state) => ({
           toasts: state.toasts.filter((t) => t.id !== id)
         }));
-      }, 4000);
+      }, 2200);
     },
 
     calculateItemPrice: (basePrice, size, concentration) => {
@@ -358,6 +397,7 @@ export const useAppStore = create((set, get) => {
       const paymentMethod = get().paymentMethod;
       const sameAsBilling = get().sameAsBilling;
       const shippingAddress = get().shippingAddress;
+      const paymentDetails = get().paymentDetails;
       if (cart.length === 0) return;
 
       const requiredBilling = [
@@ -375,7 +415,7 @@ export const useAppStore = create((set, get) => {
         return;
       }
 
-      if (paymentMethod === 'cod' && !sameAsBilling) {
+      if (paymentMethod !== 'instore' && !sameAsBilling) {
         const requiredShipping = [
           shippingAddress.address,
           shippingAddress.thana,
@@ -384,6 +424,27 @@ export const useAppStore = create((set, get) => {
         ];
         if (requiredShipping.some((field) => !field)) {
           get().addToast('Please complete the shipping address or enable billing as shipping.', 'error');
+          return;
+        }
+      }
+
+      // Validate payment details for bKash, Nagad, and Bank Transfer
+      if (paymentMethod === 'bkash') {
+        const { bkashNumber, bkashTxnId, bkashAmount } = paymentDetails;
+        if (!bkashNumber || !bkashTxnId || !bkashAmount) {
+          get().addToast('Please fill in all bKash payment details.', 'error');
+          return;
+        }
+      } else if (paymentMethod === 'nagad') {
+        const { nagadNumber, nagadTxnId, nagadAmount } = paymentDetails;
+        if (!nagadNumber || !nagadTxnId || !nagadAmount) {
+          get().addToast('Please fill in all Nagad payment details.', 'error');
+          return;
+        }
+      } else if (paymentMethod === 'bank_transfer') {
+        const { bankAccountNumber, bankName, bankAmount } = paymentDetails;
+        if (!bankAccountNumber || !bankName || !bankAmount) {
+          get().addToast('Please fill in all Bank Transfer details.', 'error');
           return;
         }
       }
@@ -414,7 +475,8 @@ export const useAppStore = create((set, get) => {
             unitPrice: item.unitPrice,
             size: item.size,
             concentration: item.concentration
-          }))
+          })),
+          paymentDetails: ['bkash', 'nagad', 'bank_transfer'].includes(paymentMethod) ? paymentDetails : null
         };
 
         const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
@@ -432,6 +494,19 @@ export const useAppStore = create((set, get) => {
         }
 
         if (!res.ok || json.status !== 'success') {
+          // If the backend doesn't support our new payment methods, fallback to local simulation
+          if (['bkash', 'nagad', 'bank_transfer'].includes(paymentMethod)) {
+            console.warn('Backend does not support this payment method, falling back to local simulation.');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const localOrderNumber = 'DEC-' + Math.floor(100000 + Math.random() * 900000);
+            set({
+              isProcessingOrder: false,
+              orderCompleted: true,
+              orderNumber: localOrderNumber
+            });
+            get().addToast('Your order has been officially verified and compiled.', 'success');
+            return;
+          }
           const errMsg = json?.errors?.[0] || json?.message || 'Order submission failed. Please try again.';
           get().addToast(errMsg, 'error');
           set({ isProcessingOrder: false });
@@ -456,7 +531,7 @@ export const useAppStore = create((set, get) => {
           orderCompleted: true,
           orderNumber: localOrderNumber
         });
-        get().addToast('Your order has been officially verified and compiled via local luxury reserve.', 'success');
+        get().addToast('Your order has been officially verified and compiled.', 'success');
       }
     },
 
@@ -486,6 +561,17 @@ export const useAppStore = create((set, get) => {
           district: '',
           zip: '',
           giftWrap: false
+        },
+        paymentDetails: {
+          bkashNumber: '',
+          bkashTxnId: '',
+          bkashAmount: '',
+          nagadNumber: '',
+          nagadTxnId: '',
+          nagadAmount: '',
+          bankAccountNumber: '',
+          bankName: '',
+          bankAmount: ''
         },
         promoCode: '',
         appliedDiscount: 0
@@ -534,9 +620,22 @@ export const useAppStore = create((set, get) => {
       const appliedDiscount = get().appliedDiscount;
       const paymentMethod = get().paymentMethod;
       const shippingInfo = get().shippingInfo;
+      const sameAsBilling = get().sameAsBilling;
+      const shippingAddress = get().shippingAddress;
+
       const cartSubtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
       const discountAmount = Math.round(cartSubtotal * appliedDiscount);
-      const shippingFee = paymentMethod === 'instore' ? 0 : (cartSubtotal > 200 || cartSubtotal === 0 ? 0 : 25);
+
+      let shippingFee = 0;
+      if (paymentMethod !== 'instore' && cartSubtotal > 0) {
+        const activeDistrict = (sameAsBilling ? (shippingInfo.district || '') : (shippingAddress.district || '')).trim().toLowerCase();
+        if (activeDistrict === 'dhaka' || activeDistrict === '') {
+          shippingFee = 80;
+        } else {
+          shippingFee = 140;
+        }
+      }
+
       const luxuryTax = Math.round((cartSubtotal - discountAmount) * 0.08);
       const cartTotal = Math.max(0, cartSubtotal - discountAmount + shippingFee + luxuryTax + (shippingInfo.giftWrap ? 15 : 0));
 

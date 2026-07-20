@@ -4,6 +4,7 @@ import { SlidersHorizontal, Sparkles, Search } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatBDT } from '../utils/formatCurrency';
 import { ProductCard } from '../components/ProductCard';
+import { ProductGridSkeleton } from '../components/Skeleton';
 
 export const Shop = () => {
   const {
@@ -31,10 +32,35 @@ export const Shop = () => {
   const brandParam = searchParams.get('brand');
   const searchParam = searchParams.get('search');
 
-  const [maxPrice, setMaxPrice] = useState(200);
+  const [maxPrice, setMaxPrice] = useState(25000);
   const [sortOrder, setSortOrder] = useState('newest');
   const [brandFilters, setBrandFilters] = useState([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
+  // Compute dynamic min/max price boundaries from currently fetched products
+  const priceLimits = useMemo(() => {
+    const prices = products.map((p) => p.basePrice).filter((p) => p > 0);
+    if (prices.length === 0) return { min: 140, max: 25000 };
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    };
+  }, [products]);
+
+  // Sync initial max price selection with loaded products range
+  useEffect(() => {
+    if (products.length > 0) {
+      const prices = products.map((p) => p.basePrice).filter((p) => p > 0);
+      if (prices.length > 0) {
+        setMaxPrice(Math.max(...prices));
+      }
+    }
+  }, [products]);
+
+  // Mapped client-side filter for the price range
+  const displayedProducts = useMemo(() => {
+    return products.filter((prod) => prod.basePrice <= maxPrice);
+  }, [products, maxPrice]);
 
   const categoryOptions = useMemo(
     () => [{ id: 'all', name: 'All', slug: 'All', product_count: products.length }, ...categories],
@@ -219,16 +245,16 @@ export const Shop = () => {
                 </div>
                 <input
                   type="range"
-                  min="140"
-                  max="200"
-                  step="5"
+                  min={priceLimits.min}
+                  max={priceLimits.max}
+                  step={Math.max(1, Math.ceil((priceLimits.max - priceLimits.min) / 100))}
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
                   className="w-full accent-gold bg-zinc-800 h-1 rounded-sm cursor-pointer"
                 />
                 <div className="flex justify-between text-[9px] text-zinc-600 font-mono">
-                  <span>{formatBDT(140)}</span>
-                  <span>{formatBDT(200)}</span>
+                  <span>{formatBDT(priceLimits.min)}</span>
+                  <span>{formatBDT(priceLimits.max)}</span>
                 </div>
               </div>
             </div>
@@ -256,7 +282,7 @@ export const Shop = () => {
           <div className="lg:col-span-3 space-y-8">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-white/5 pb-4">
               <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">
-                Displaying {products.length} Premium Formulations
+                Displaying {displayedProducts.length} Premium Formulations
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
                 <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">
@@ -288,44 +314,23 @@ export const Shop = () => {
 
             {/* Loading skeleton */}
             {isLoadingProducts && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-center gap-3 text-zinc-300">
-                  <div className="w-10 h-10 rounded-full border-4 border-gold border-r-transparent animate-spin" />
-                  <span className="text-xs uppercase tracking-[0.4em] text-zinc-400">Loading products...</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="rounded-sm border border-white/10 bg-luxury-dark/70 p-6 animate-pulse"
-                    >
-                      <div className="h-56 bg-zinc-900 rounded-sm mb-4" />
-                      <div className="h-4 bg-zinc-800 rounded-full mb-3" />
-                      <div className="h-4 bg-zinc-800 rounded-full w-5/6 mb-3" />
-                      <div className="flex items-center justify-between mt-4">
-                        <div className="h-3 bg-zinc-800 rounded-full w-1/3" />
-                        <div className="h-3 bg-zinc-800 rounded-full w-1/4" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ProductGridSkeleton count={6} />
             )}
 
             {/* Empty search fallback */}
-            {!isLoadingProducts && products.length === 0 && (
-              <div className="text-center py-24 border border-dashed border-gold/15 rounded-sm bg-luxury-dark/10">
+            {!isLoadingProducts && displayedProducts.length === 0 && (
+              <div className="text-center py-24 border border-dashed border-gold/15 rounded-sm bg-luxury-dark/10 animate-fade-in">
                 <Search className="w-12 h-12 text-gold/40 mx-auto mb-4" />
                 <h3 className="text-lg font-serif font-light text-zinc-300 mb-2">No Products Found</h3>
                 <p className="text-zinc-500 text-xs font-sans font-light max-w-xs mx-auto">
-                  The shop is waiting for products from the API. Please check back shortly.
+                  No formulations match your selected filters. Try broadening your criteria or resetting the price filter.
                 </p>
               </div>
             )}
 
             {/* Perfume list */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {!isLoadingProducts && products.map((prod) => {
+              {!isLoadingProducts && displayedProducts.map((prod) => {
                 const currentSel = cardSelections[prod.id] || { size: '100ml', concentration: 'Eau de Parfum' };
                 return (
                   <ProductCard 

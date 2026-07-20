@@ -64,9 +64,6 @@ export const Home = () => {
       {/* Olfactory category cards */}
       <CategoryNav setSelectedCategory={setSelectedCategory} />
 
-      {/* Featured Products Slider (Moved from main banner slot) */}
-      {/* <FeaturedProductSlider /> */}
-
       {/* New Arrivals (moved to its own section component) */}
       <NewArrival />
 

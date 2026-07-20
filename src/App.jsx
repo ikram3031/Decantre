@@ -19,6 +19,7 @@ import { AboutUs } from './pages/AboutUs';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsAndCondition } from './pages/TermsAndCondition';
 import { ReturnPolicy } from './pages/ReturnPolicy';
+import { ProductDetail } from './pages/ProductDetail';
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
             {/* Newly added routes */}
             <Route path="season" element={<Season />} />
             <Route path="shop" element={<Shop />} />
+            <Route path="product" element={<ProductDetail />} />
             <Route path="cart" element={<Cart />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="thank-you" element={<ThankYou />} />
