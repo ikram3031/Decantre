@@ -182,8 +182,14 @@ export const useAppStore = create((set, get) => {
     isProcessingOrder: false,
     orderNumber: null,
     toasts: [],
+    currentTheme: localStorage.getItem('luxury_theme') || 'dark',
 
     // 2. Direct State Setters
+    toggleTheme: () => set((state) => {
+      const nextTheme = state.currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('luxury_theme', nextTheme);
+      return { currentTheme: nextTheme };
+    }),
     setCurrentSlide: (slide) => set((state) => ({
       currentSlide: typeof slide === 'function' ? slide(state.currentSlide) : slide
     })),

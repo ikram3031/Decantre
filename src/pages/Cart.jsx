@@ -115,8 +115,7 @@ export const Cart = () => {
                       {/* Remove Button */}
                       <button 
                         onClick={() => handleRemoveFromCart(item.id)}
-                        className="p-1.5 border border-white/5 hover:border-red-500/30 text-zinc-500 hover:text-red-400 rounded-sm transition-all bg-black/20"
-                        title="Remove decant"
+                        className="p-1.5 border border-white/5 hover:border-red-500/30 text-zinc-500 hover:text-red-400 rounded-sm transition-all bg-black/20 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

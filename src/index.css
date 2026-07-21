@@ -144,6 +144,17 @@ a, button {
   cursor: pointer;
 }
 
+/* Force 4px border radius for all buttons and input elements */
+button,
+input,
+select,
+textarea,
+.rounded-sm,
+.rounded-md,
+.rounded-lg {
+  border-radius: 4px !important;
+}
+
 /* Custom scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -158,4 +169,30 @@ a, button {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #b59049;
+}
+
+/* Global input field styling - light silver border, gold on focus */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+  border-color: rgba(192, 192, 192, 0.22) !important;
+  transition: border-color 0.25s ease-out, box-shadow 0.25s ease-out;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+textarea:focus,
+select:focus {
+  border-color: #C5A059 !important;
+  box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.15) !important;
+  outline: none !important;
 }

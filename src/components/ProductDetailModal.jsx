@@ -77,8 +77,7 @@ export const ProductDetailModal = ({
         {/* Fixed Top-Left Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 z-50 p-2.5 bg-luxury-black/90 hover:bg-black border border-gold/20 hover:border-gold rounded-full text-zinc-300 hover:text-gold transition-all duration-300 shadow-xl cursor-pointer"
-          title="Close"
+          className="absolute top-4 left-4 z-50 p-2.5 bg-luxury-black/90 hover:bg-black border border-gold/50 hover:border-gold rounded-full text-zinc-300 hover:text-gold transition-all duration-300 shadow-xl cursor-pointer"
         >
           <XIcon className="w-4 h-4" />
         </button>

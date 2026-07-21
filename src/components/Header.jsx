@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Compass, Heart, ShoppingBag, Search, Menu, X, ChevronDown, ChevronUp, ChevronRight, User } from 'lucide-react';
+import { Compass, Heart, ShoppingBag, Search, Menu, X, ChevronDown, ChevronUp, ChevronRight, User, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 
@@ -75,13 +75,26 @@ export const Header = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setSelectedCategory, user, setAuthModal } = useApp();
+  const { setSelectedCategory, user, setAuthModal, currentTheme, toggleTheme } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isMobileShopExpanded, setIsMobileShopExpanded] = React.useState(false);
   const [isMobileBrandExpanded, setIsMobileBrandExpanded] = React.useState(false);
   const [isMobileCatalogExpanded, setIsMobileCatalogExpanded] = React.useState(false);
   const [activeDropdown, setActiveDropdown] = React.useState(null);
   const [logoFailed, setLogoFailed] = React.useState(false);
+
+  const [isScrolled, setIsScrolled] = React.useState(false);
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 40) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // States for desktop cascading brand dropdown
   const [hoveredCategory, setHoveredCategory] = React.useState('niche');
@@ -110,6 +123,43 @@ export const Header = ({
   const [localSearchVal, setLocalSearchVal] = React.useState('');
   const [selectedSearchCategory, setSelectedSearchCategoryState] = React.useState('All');
 
+  // Typewriter/Moving suggestion text inside search placeholder
+  const searchSuggestions = React.useMemo(() => [
+    "Gucci Flora",
+    "Bleu de Chanel",
+    "Creed Aventus",
+    "Baccarat Rouge 540",
+    "Tom Ford Lost Cherry"
+  ], []);
+
+  const [suggestionIdx, setSuggestionIdx] = React.useState(0);
+  const [placeholderText, setPlaceholderText] = React.useState('');
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  React.useEffect(() => {
+    let timer;
+    const fullText = searchSuggestions[suggestionIdx];
+
+    if (isDeleting) {
+      timer = setTimeout(() => {
+        setPlaceholderText((prev) => prev.slice(0, -1));
+      }, 50);
+    } else {
+      timer = setTimeout(() => {
+        setPlaceholderText(fullText.slice(0, placeholderText.length + 1));
+      }, 100);
+    }
+
+    if (!isDeleting && placeholderText === fullText) {
+      timer = setTimeout(() => setIsDeleting(true), 1500);
+    } else if (isDeleting && placeholderText === '') {
+      setIsDeleting(false);
+      setSuggestionIdx((prev) => (prev + 1) % searchSuggestions.length);
+    }
+
+    return () => clearTimeout(timer);
+  }, [placeholderText, isDeleting, suggestionIdx, searchSuggestions]);
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchQuery(val);
@@ -137,8 +187,8 @@ export const Header = ({
   };
 
   return (
-    <header id="main-header" className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-gold/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between relative">
+    <header id="main-header" className={`sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'bg-black/95 shadow-lg border-b border-gold/35' : 'bg-black/80 backdrop-blur-md border-b border-gold/20'}`}>
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${isScrolled ? 'h-16 md:h-20' : 'h-20 md:h-24'} flex items-center justify-between relative`}>
         
         {/* Mobile menu toggle (left side on small screens) */}
         <button 
@@ -150,18 +200,18 @@ export const Header = ({
         </button>
 
         {/* Logo and branding - Centered on mobile, Left-aligned on desktop */}
-        <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 z-0">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+        <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 z-0 max-w-[50%] xs:max-w-[60%] sm:max-w-[70%] md:max-w-none w-full flex justify-center">
+          <Link to="/" className="flex items-center justify-center gap-2 hover:opacity-90 transition-opacity w-full">
             {!logoFailed ? (
               <img 
                 src="https://decantrebd.com/wp-content/uploads/2026/03/decantre-color-logo-transparent.webp" 
                 alt="DECANTRE" 
-                className="h-20 sm:h-24 md:h-26 w-auto object-contain max-w-[260px] sm:max-w-[340px] md:max-w-[380px]"
+                className={`w-auto max-w-full object-contain transition-all duration-300 ${isScrolled ? 'h-14 md:h-18' : 'h-20 md:h-24 lg:h-26'}`}
                 onError={() => setLogoFailed(true)}
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <span className="text-2xl sm:text-3xl font-serif tracking-[0.3em] text-gold font-light">
+              <span className="text-xl xs:text-2xl sm:text-3xl font-serif tracking-[0.3em] text-gold font-light truncate">
                 DECANTRE
               </span>
             )}
@@ -336,11 +386,18 @@ export const Header = ({
 
         {/* Action buttons */}
         <div className="flex items-center gap-1.5 sm:gap-4 z-10">
+          {/* Theme Switcher Button */}
+          <button 
+            onClick={toggleTheme}
+            className="hidden md:block p-2 text-zinc-400 hover:text-gold transition-colors relative cursor-pointer"
+          >
+            {currentTheme === 'dark' ? <Sun className="w-5 h-5 text-gold" /> : <Moon className="w-5 h-5 text-gold" />}
+          </button>
+
           {/* Search Trigger Icon on header - Desktop & Mobile (Left of the cart icon) */}
           <button 
             onClick={() => setIsSearchPanelOpen(true)}
             className="p-2 text-zinc-400 hover:text-gold transition-colors relative cursor-pointer"
-            title="Search catalog"
           >
             <Search className="w-5 h-5 text-gold" />
           </button>
@@ -348,10 +405,10 @@ export const Header = ({
           {/* Wishlist Indicator - Desktop only */}
           <div className="relative group hidden md:block">
             <button 
-              onClick={() => addToast(`You have ${wishlist.length} item(s) in your private vanity wishlist. Check the catalog to review or customize.`, 'info')}
-              className="p-2 text-zinc-400 hover:text-gold transition-colors relative"
+              onClick={() => navigate('/wishlist')}
+              className="p-2 text-[#C5A059] hover:text-[#e0b86c] transition-colors relative cursor-pointer"
             >
-              <Heart className="w-5 h-5" />
+              <Heart className={`w-5 h-5 ${wishlist.length > 0 ? 'fill-[#C5A059]' : ''} text-[#C5A059]`} />
               {wishlist.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-gold text-black rounded-full text-[9px] w-4 h-4 font-semibold flex items-center justify-center border border-zinc-950 animate-pulse">
                   {wishlist.length}
@@ -378,7 +435,6 @@ export const Header = ({
             id="header-cart-btn-mobile"
             onClick={() => setIsCartOpen(true)}
             className="md:hidden p-2 text-zinc-400 hover:text-gold transition-colors relative cursor-pointer flex items-center justify-center"
-            title="Open Cart"
           >
             <ShoppingBag className="w-6 h-6 text-gold" />
             {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
@@ -599,48 +655,31 @@ export const Header = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -80 }}
             transition={{ type: 'tween', duration: 0.35, ease: 'easeInOut' }}
-            className="fixed top-0 inset-x-0 bg-white text-zinc-900 z-50 shadow-[0_15px_40px_rgba(0,0,0,0.18)] py-14 px-4 sm:px-6 border-b border-zinc-200"
+            className="fixed top-0 inset-x-0 bg-white text-zinc-900 z-50 shadow-[0_15px_40px_rgba(0,0,0,0.18)] py-6 sm:py-14 px-4 sm:px-6 border-b border-zinc-200"
           >
             <div className="max-w-4xl mx-auto relative">
               {/* Close Button */}
               <button 
                 onClick={() => setIsSearchPanelOpen(false)}
-                className="absolute top-[-20px] right-2 sm:right-0 p-2 text-zinc-400 hover:text-black transition-colors cursor-pointer"
+                className="absolute top-[-10px] sm:top-[-20px] right-1 sm:right-0 p-1.5 text-zinc-400 hover:text-black hover:bg-zinc-50 border border-zinc-300 rounded-full transition-colors cursor-pointer"
                 aria-label="Close search"
               >
-                <X className="w-8 h-8 stroke-[1.25]" />
+                <X className="w-6 h-6 sm:w-8 sm:h-8 stroke-[1.25]" />
               </button>
 
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Title */}
-                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-serif text-center font-light tracking-wide text-zinc-900">
-                  What Are You Looking For?
+                <h3 className="hidden sm:block text-2xl sm:text-3xl lg:text-4xl font-serif text-center font-light tracking-wide text-zinc-900">
+                  What you are searching for
                 </h3>
 
                 {/* Form Row */}
-                <div className="flex flex-col sm:flex-row items-stretch border border-zinc-300 rounded-none overflow-hidden max-w-3xl mx-auto shadow-sm">
-                  {/* Category Dropdown */}
-                  <div className="relative min-w-[170px] border-b sm:border-b-0 sm:border-r border-zinc-200 bg-zinc-50 flex items-center shrink-0">
-                    <select
-                      value={selectedSearchCategory}
-                      onChange={(e) => setSelectedSearchCategoryState(e.target.value)}
-                      className="w-full bg-transparent pl-4 pr-10 py-4 text-xs font-sans uppercase tracking-[0.15em] text-zinc-700 focus:outline-none appearance-none cursor-pointer font-medium"
-                    >
-                      <option value="All">All categories</option>
-                      <option value="For Him">For Him</option>
-                      <option value="For Her">For Her</option>
-                      <option value="Unisex">Unisex</option>
-                      <option value="Miniatures">Miniatures</option>
-                      <option value="Decant Accessories">Decant Accessories</option>
-                    </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-3 pointer-events-none" />
-                  </div>
-
+                <div className="flex flex-row items-stretch border border-zinc-300 rounded-none overflow-hidden max-w-3xl mx-auto shadow-sm">
                   {/* Search Input */}
-                  <div className="relative flex-grow flex items-center">
+                  <div className="relative flex-grow flex items-center bg-white">
                     <input 
                       type="text"
-                      placeholder="Search for products"
+                      placeholder={`Search "${placeholderText || 'Search'}"...`}
                       value={localSearchVal}
                       onChange={(e) => setLocalSearchVal(e.target.value)}
                       onKeyDown={(e) => {
@@ -648,22 +687,22 @@ export const Header = ({
                           handlePerformSearch();
                         }
                       }}
-                      className="w-full px-5 py-4 text-xs sm:text-sm font-sans font-light placeholder-zinc-400 focus:outline-none bg-white text-zinc-900 border-none"
+                      className="w-full px-5 py-3.5 sm:py-4 text-xs sm:text-sm font-sans font-light placeholder-zinc-400 focus:outline-none bg-white text-zinc-900 border-none"
                     />
                   </div>
 
                   {/* Search Button */}
                   <button
                     onClick={handlePerformSearch}
-                    className="bg-black hover:bg-gold text-white hover:text-black transition-all px-8 py-4 flex items-center justify-center gap-2 text-xs uppercase tracking-[0.25em] font-sans font-bold cursor-pointer shrink-0 border-none"
+                    className="bg-black hover:bg-gold text-white hover:text-black transition-all px-4 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center gap-2 text-xs uppercase tracking-[0.25em] font-sans font-bold cursor-pointer shrink-0 border-none"
                   >
                     <Search className="w-4 h-4 shrink-0" />
-                    <span>Search</span>
+                    <span className="hidden sm:inline">Search</span>
                   </button>
                 </div>
 
                 {/* Trending Searches */}
-                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs pt-1.5">
+                <div className="hidden sm:flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs pt-1.5">
                   <span className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-sans font-bold mr-1">
                     TRENDING SEARCHES:
                   </span>

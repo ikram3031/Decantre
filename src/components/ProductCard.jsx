@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Eye, ShoppingCart } from 'lucide-react';
 import { formatBDT } from '../utils/formatCurrency';
+import { useApp } from '../context/AppContext';
 
 export const ProductCard = ({
   product,
@@ -15,6 +16,8 @@ export const ProductCard = ({
   calculateItemPrice
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { currentTheme } = useApp();
+  const isLight = currentTheme === 'light';
 
   // determine base price from selected variation if available
   const variationPrice = (product.variations && product.variations.find(v => v.size === currentSel.size))
@@ -25,7 +28,9 @@ export const ProductCard = ({
   return (
     <div 
       id={`product-card-${product.id}`}
-      className="group flex flex-col h-full bg-luxury-dark border border-gold/15 hover:border-gold/45 rounded-sm p-5 transition-all duration-500 shadow-2xl relative"
+      className={`group flex flex-col h-full ${
+        isLight ? 'bg-white border-zinc-200 hover:border-gold/60 text-black shadow-md' : 'bg-luxury-dark border-gold/15 hover:border-gold/45 text-white shadow-2xl'
+      } rounded-[4px] pt-13 pb-1.5 px-5 transition-all duration-500 relative`}
     >
       {/* Badge Row */}
       <div className="absolute top-8 left-8 z-20 flex flex-col gap-1.5">
@@ -35,7 +40,7 @@ export const ProductCard = ({
           return (
             <span
               key={`${badge.name || badge.text}-${badge.priority || 0}`}
-              className={`${badgeClass} text-black font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-sm shadow-md font-sans ${badgeClass === 'bg-gold' ? 'text-black' : 'text-white'}`}
+              className={`${badgeClass} text-black font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-[4px] shadow-md font-sans ${badgeClass === 'bg-gold' ? 'text-black' : 'text-white'}`}
               style={badgeStyle}
             >
               {badge.text || badge.name}
@@ -43,12 +48,12 @@ export const ProductCard = ({
           );
         })}
         {(!product.badges || product.badges.length === 0) && product.isBestSeller && (
-          <span className="bg-gold text-black font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-sm shadow-md font-sans">
+          <span className="bg-gold text-black font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-[4px] shadow-md font-sans">
             BESTSELLER
           </span>
         )}
         {(!product.badges || product.badges.length === 0) && product.isFeatured && (
-          <span className="bg-luxury-black border border-gold/40 text-gold font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-sm shadow-md font-sans">
+          <span className="bg-luxury-black border border-gold/40 text-gold font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-[4px] shadow-md font-sans">
             DECANTRE CHOICE
           </span>
         )}
@@ -57,8 +62,7 @@ export const ProductCard = ({
       {/* Wishlist toggle */}
       <button 
         onClick={() => toggleWishlist(product.id)}
-        className="absolute top-8 right-8 z-20 p-2 bg-black/60 border border-white/5 hover:border-gold rounded-full text-zinc-400 hover:text-gold transition-all shadow-md"
-        title="Add to Vanity List"
+        className="absolute top-8 right-8 z-20 p-2 bg-black/60 border border-gold/40 hover:border-gold rounded-full text-zinc-400 hover:text-gold transition-all shadow-md cursor-pointer"
       >
         <Heart 
           className={`w-4 h-4 ${wishlist.includes(product.id) ? 'fill-gold text-gold' : ''}`} 
@@ -86,7 +90,7 @@ export const ProductCard = ({
               e.stopPropagation();
               handleOpenProductDetail(product);
             }}
-            className="bg-luxury-dark border border-gold/40 text-gold hover:text-black hover:bg-gold text-[10px] font-sans font-bold uppercase tracking-widest py-2.5 px-6 rounded-sm transition-all flex items-center gap-2 shadow-2xl pointer-events-auto"
+            className="bg-luxury-dark border border-gold/40 text-gold hover:text-black hover:bg-gold text-[10px] font-sans font-bold uppercase tracking-widest py-2.5 px-6 rounded-[4px] transition-all flex items-center gap-2 shadow-2xl pointer-events-auto cursor-pointer"
           >
             <Eye className="w-4 h-4" />
             Quick Atelier View
@@ -109,7 +113,7 @@ export const ProductCard = ({
 
           {/* Centered Product Name */}
           <Link to={`/product?did=${product.id}`} className="block hover:opacity-80 transition-opacity">
-            <h3 className="text-lg sm:text-xl font-serif font-light text-luxury-white hover:text-gold tracking-wider truncate w-full block text-center transition-colors" title={product.name}>
+            <h3 className={`text-lg sm:text-xl font-serif font-light ${isLight ? 'text-zinc-900' : 'text-luxury-white'} hover:text-gold tracking-wider truncate w-full block text-center transition-colors`} title={product.name}>
               {product.name}
             </h3>
           </Link>
@@ -117,7 +121,7 @@ export const ProductCard = ({
       </div>
 
       {/* SELECTION CONTROLS (Size & Concentration) */}
-      <div className="border-t border-white/5 pt-4 space-y-3 flex-shrink-0">
+      <div className="hidden sm:block border-t border-white/5 pt-4 space-y-3 flex-shrink-0">
         
         {/* Size selector pills */}
         <div className="flex flex-wrap justify-center gap-1.5">
@@ -130,10 +134,10 @@ export const ProductCard = ({
               <button
                 key={size}
                 onClick={() => onSizeChange(size)}
-                className={`px-2.5 py-1 rounded-md text-[14px] font-sans font-medium transition-all duration-300 border ${
+                className={`px-2.5 py-1 rounded-[4px] text-[14px] font-sans font-medium transition-all duration-300 border ${
                   currentSel.size === size
-                    ? 'bg-black text-gold border-gold shadow-[0_0_12px_rgba(197,160,89,0.15)]'
-                    : 'bg-[#0d0d0d]/90 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
+                    ? (isLight ? 'bg-black text-white border-black shadow-sm' : 'bg-black text-gold border-gold shadow-[0_0_12px_rgba(197,160,89,0.15)]')
+                    : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200' : 'bg-[#0d0d0d]/90 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700')
                 }`}
               >
                 {size}
@@ -144,21 +148,40 @@ export const ProductCard = ({
       </div>
 
       {/* Add to Cart & Price Row */}
-      <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/5 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 mt-3 border-t border-white/5 flex-shrink-0">
         <div className="text-left">
-          <span className="text-[9px] font-sans uppercase text-zinc-500 block tracking-wider">Price Estimate</span>
-          <span className="text-2xl font-serif font-light text-gold">
+          <span className="text-[8px] sm:text-[9px] font-sans uppercase text-zinc-500 block tracking-wider font-light">Price Estimate</span>
+          <span className="text-base sm:text-2xl font-serif font-light text-gold">
             {formatBDT(currentPrice)}
           </span>
         </div>
 
-        <button
-          onClick={() => handleAddToCart(product, currentSel.size, currentSel.concentration, 1)}
-          className="border border-gold hover:bg-gold hover:text-black bg-transparent text-gold font-bold uppercase tracking-widest text-[9px] px-4 py-2.5 rounded-sm transition-all flex items-center gap-1.5 font-sans"
-        >
-          <ShoppingCart className="w-3.5 h-3.5" />
-          Add to Chest
-        </button>
+        <div className="w-full sm:w-auto">
+          {/* Mobile: Select Option button */}
+          <button
+            onClick={() => handleOpenProductDetail(product)}
+            className={`sm:hidden font-bold uppercase tracking-widest text-[9px] px-3 py-2.5 rounded-[4px] transition-all flex items-center justify-center gap-1 font-sans border w-full cursor-pointer ${
+              isLight 
+                ? 'bg-black text-white hover:bg-zinc-800 border-black' 
+                : 'border-[#C5A059] hover:bg-[#C5A059] hover:text-black bg-transparent text-[#C5A059]'
+            }`}
+          >
+            Select Option
+          </button>
+
+          {/* Desktop: Add to Chest button */}
+          <button
+            onClick={() => handleAddToCart(product, currentSel.size, currentSel.concentration, 1)}
+            className={`hidden sm:flex font-bold uppercase tracking-widest text-[9px] px-4 py-2.5 rounded-[4px] transition-all items-center gap-1.5 font-sans border cursor-pointer ${
+              isLight 
+                ? 'bg-black text-white hover:bg-zinc-800 border-black' 
+                : 'border-[#C5A059] hover:bg-[#C5A059] hover:text-black bg-transparent text-[#C5A059]'
+            }`}
+          >
+            <ShoppingCart className="w-3.5 h-3.5" />
+            Add to Chest
+          </button>
+        </div>
       </div>
 
     </div>

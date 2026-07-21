@@ -18,6 +18,7 @@ import { CategoryNav } from '../components/CategoryNav';
 import { ProductCard } from '../components/ProductCard';
 import NewArrival from '../components/sections/NewArrival';
 import ScentFinder from '../components/sections/ScentFinder';
+import BestSelling from '../components/sections/BestSelling';
 import Testimonials from '../components/sections/Testimonials';
 
 export const Home = () => {
@@ -69,6 +70,9 @@ export const Home = () => {
 
       {/* Scent finder guidance CTA section */}
       <ScentFinder />
+
+      {/* Our Bestsellers section */}
+      <BestSelling />
 
       {/* Reviews Section */}
       <Testimonials />

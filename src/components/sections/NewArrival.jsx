@@ -6,7 +6,7 @@ import { ProductCard } from '../ProductCard';
 import { ProductGridSkeleton } from '../Skeleton';
 
 export const NewArrival = () => {
-    const { fetchProducts, filteredProducts, cardSelections, setCardSelections, wishlist, toggleWishlist, handleOpenProductDetail, handleAddToCart, calculateItemPrice } = useApp();
+    const { fetchProducts, filteredProducts, cardSelections, setCardSelections, wishlist, toggleWishlist, handleOpenProductDetail, handleAddToCart, calculateItemPrice, currentTheme } = useApp();
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [visibleCount, setVisibleCount] = useState(4);
@@ -64,26 +64,35 @@ export const NewArrival = () => {
         }
     }, [maxIndex, currentIndex]);
 
-    return (
-        <section id="catalog-section" className="py-20 bg-luxury-dark/40 border-y border-gold/20 scroll-mt-24 select-none">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-                    <div className="space-y-2 text-left">
-                        <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium">Spotlight Masterpieces</span>
-                        <h2 className="text-3xl sm:text-4xl font-serif font-light text-luxury-white tracking-wide">New Arrivals</h2>
-                        <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-lg">Indulge in liquid art. Hand-poured signature essences formulated with rare, rich, natural ingredients.</p>
-                    </div>
+    const isLight = currentTheme === 'light';
 
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                            to="/shop"
-                            aria-label="See more on shop"
-                            className="border border-gold hover:bg-gold hover:text-black bg-transparent text-gold font-bold uppercase tracking-widest text-[9px] px-4 py-2.5 rounded-sm transition-all flex items-center gap-2 font-sans"
-                        >
-                            See More
-                            <ChevronRight className="w-4 h-4" />
-                        </Link>
+    return (
+        <section id="catalog-section" className={`py-20 ${isLight ? 'bg-white border-y border-zinc-200 text-black' : 'bg-luxury-dark/40 border-y border-gold/20'} scroll-mt-24 select-none`}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col gap-4 mb-12">
+                    <div className="flex items-baseline justify-between gap-4 w-full border-b border-gold/10 pb-4">
+                        <div className="space-y-1.5 text-left">
+                            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-semibold">Spotlight Masterpieces</span>
+                            <h2 className="text-2xl sm:text-4xl font-serif font-light tracking-wide">New Arrivals</h2>
+                        </div>
+                        <div className="shrink-0">
+                            <Link
+                                to="/shop"
+                                aria-label="See more on shop"
+                                className={`font-sans transition-all flex items-center gap-1 uppercase font-bold text-xs ${
+                                    isLight 
+                                        ? 'bg-black text-white hover:bg-zinc-800 text-[10px] sm:text-xs px-4 py-2.5 rounded-sm' 
+                                        : 'text-gold hover:text-gold/80 tracking-[0.15em] sm:tracking-widest underline underline-offset-4 decoration-gold/40 hover:decoration-gold/90 sm:border sm:border-gold/30 sm:hover:border-gold sm:no-underline sm:px-4 sm:py-2.5 sm:hover:bg-gold/10'
+                                }`}
+                            >
+                                <span>See More</span>
+                                <ChevronRight className="w-3.5 h-3.5" />
+                            </Link>
+                        </div>
                     </div>
+                    <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-lg text-left">
+                        Indulge in liquid art. Hand-poured signature essences formulated with rare, rich, natural ingredients.
+                    </p>
                 </div>
 
                 {items.length === 0 ? (
@@ -154,15 +163,13 @@ export const NewArrival = () => {
                             <>
                                 <button 
                                     onClick={prevSlide}
-                                    className="absolute -left-2 sm:-left-5 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-2.5 bg-black/85 hover:bg-gold text-white hover:text-black rounded-full border border-white/10 hover:border-gold transition-all duration-300 cursor-pointer shadow-lg shadow-black/50"
-                                    title="Previous"
+                                    className="absolute -left-2 sm:-left-5 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-2.5 bg-black/85 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer shadow-lg shadow-black/50"
                                 >
                                     <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>
                                 <button 
                                     onClick={nextSlide}
-                                    className="absolute -right-2 sm:-right-5 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-2.5 bg-black/85 hover:bg-gold text-white hover:text-black rounded-full border border-white/10 hover:border-gold transition-all duration-300 cursor-pointer shadow-lg shadow-black/50"
-                                    title="Next"
+                                    className="absolute -right-2 sm:-right-5 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-2.5 bg-black/85 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer shadow-lg shadow-black/50"
                                 >
                                     <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>

@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from './ui/button';
 
 const bannerSlides = [
   {
     bgImage: "https://decantrebd.com/wp-content/uploads/2025/12/main-bannerJPG-scaled-1.jpg",
     tagline: "Enchanting aromas for every unique moment",
     title: "INDULGE IN LUXURY",
-    buttonText: "SHOP OUR COLLECTION"
+    buttonText: "SHOP NOW"
   },
   {
     bgImage: "https://decantrebd.com/wp-content/uploads/2026/07/main_banner-2.jpg",
     tagline: "Elevate your olfactory signature",
     title: "CRAFT IN ELEGANCE",
-    buttonText: "DISCOVER THE ART"
+    buttonText: "SHOP NOW"
   },
   {
     bgImage: "https://decantrebd.com/wp-content/uploads/2026/07/main_banner-1.jpg",
     tagline: "Exquisite rare ingredients hand-poured with mastery",
     title: "ROYAL SIGNATURES",
-    buttonText: "EXPLORE THE SELECTIONS"
+    buttonText: "SHOP NOW"
   }
 ];
 
@@ -36,7 +37,7 @@ export const HeroSlider = () => {
   }, []);
 
   return (
-    <section id="hero-slider" className="relative h-[80vh] bg-[#050505] overflow-hidden border-b border-gold/15">
+    <section id="hero-slider" className="relative h-[70vh] sm:h-[80vh] bg-[#050505] overflow-hidden border-b border-gold/15">
       {bannerSlides.map((slide, index) => (
         <div 
           key={index}
@@ -69,13 +70,15 @@ export const HeroSlider = () => {
                 {slide.title}
               </h1>
 
-              <div className="pt-8 sm:pt-12 flex justify-center">
-                <button 
+              <div className="pt-6 sm:pt-8 flex justify-center">
+                <Button 
+                  variant="primary"
+                  size="sm"
                   onClick={() => navigate('/shop')}
-                  className="inline-flex items-center justify-center w-[220px] sm:w-[260px] h-12 sm:h-13 bg-white text-black hover:bg-gold hover:text-black text-[10px] sm:text-[11px] uppercase tracking-[0.25em] sm:tracking-[0.35em] font-sans font-bold rounded-none transition-all duration-300 shadow-xl border border-white hover:border-gold cursor-pointer"
+                  className="w-[140px] sm:w-[160px] h-10 text-[10px]"
                 >
                   {slide.buttonText}
-                </button>
+                </Button>
               </div>
 
             </div>
@@ -92,7 +95,6 @@ export const HeroSlider = () => {
             className={`h-2 rounded-full transition-all duration-500 cursor-pointer ${
               idx === currentSlide ? 'bg-gold w-6' : 'bg-white/40 hover:bg-white/70 w-2'
             }`}
-            title={`Slide ${idx + 1}`}
           />
         ))}
       </div>
@@ -100,15 +102,13 @@ export const HeroSlider = () => {
       {/* Left & Right Arrows */}
       <button 
         onClick={() => setCurrentSlide((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-white/10 hover:border-gold transition-all duration-300 cursor-pointer"
-        title="Previous slide"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer"
       >
         <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
       <button 
         onClick={() => setCurrentSlide((prev) => (prev + 1) % bannerSlides.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-white/10 hover:border-gold transition-all duration-300 cursor-pointer"
-        title="Next slide"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer"
       >
         <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>

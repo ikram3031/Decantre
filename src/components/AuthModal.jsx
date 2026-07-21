@@ -129,7 +129,7 @@ export const AuthModal = () => {
           {/* Close Button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 p-1.5 text-zinc-500 hover:text-gold transition-colors hover:bg-white/5 cursor-pointer"
+            className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-gold border border-gold rounded-full transition-colors hover:bg-white/5 cursor-pointer"
             aria-label="Close credentials panel"
           >
             <X className="w-5 h-5" />

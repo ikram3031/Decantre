@@ -402,7 +402,6 @@ export const ProductDetail = () => {
                         ? 'border-gold text-gold bg-gold/10'
                         : 'border-white/10 text-zinc-400 hover:border-gold hover:text-gold'
                     }`}
-                    title={wishlist.includes(product.id) ? 'Remove from Vanity' : 'Add to Vanity'}
                   >
                     <Heart className={`w-4 h-4 ${wishlist.includes(product.id) ? 'fill-gold' : ''}`} />
                   </button>

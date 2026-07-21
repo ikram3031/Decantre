@@ -10,6 +10,7 @@ import { ProductDetailModal } from './ProductDetailModal';
 import { CartDrawer } from './CartDrawer';
 import { Toast } from './Toast';
 import { AuthModal } from './AuthModal';
+import { BottomNav } from './BottomNav';
 
 export const Layout = () => {
   const {
@@ -57,11 +58,14 @@ export const Layout = () => {
     setSearchQuery,
     addToast,
     wishlist,
-    startQuiz
+    startQuiz,
+    currentTheme
   } = useApp();
 
+  const themeConfig = currentTheme === 'light' ? 'bg-white text-black' : 'bg-[#050505] text-[#f5f5f5]';
+
   return (
-    <div id="landing-container" className="min-h-screen bg-luxury-black text-luxury-white font-sans antialiased selection:bg-gold selection:text-luxury-black overflow-x-hidden">
+    <div id="landing-container" className={`min-h-screen ${themeConfig} font-sans antialiased selection:bg-gold selection:text-luxury-black overflow-x-hidden transition-colors duration-500`}>
       {/* Dynamic Toast Feedback */}
       <Toast toasts={toasts} onClose={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
 
@@ -137,6 +141,9 @@ export const Layout = () => {
 
       {/* User credentials & profile session overlay */}
       <AuthModal />
+
+      {/* Persistent floating bottom menu */}
+      <BottomNav />
 
       {/* Footnote */}
       <Footer />

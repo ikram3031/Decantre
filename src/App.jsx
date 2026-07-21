@@ -10,6 +10,7 @@ import { Season } from './pages/Season';
 
 // New luxury pages
 import { Shop } from './pages/Shop';
+import { Wishlist } from './pages/Wishlist';
 import { Cart } from './pages/Cart';
 import { Checkout } from './pages/Checkout';
 import { ThankYou } from './pages/ThankYou';
@@ -35,6 +36,7 @@ export default function App() {
             {/* Newly added routes */}
             <Route path="season" element={<Season />} />
             <Route path="shop" element={<Shop />} />
+            <Route path="wishlist" element={<Wishlist />} />
             <Route path="product" element={<ProductDetail />} />
             <Route path="cart" element={<Cart />} />
             <Route path="checkout" element={<Checkout />} />

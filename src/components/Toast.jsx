@@ -24,8 +24,7 @@ export const Toast = ({ toasts, onClose }) => {
           </div>
           <button 
             onClick={() => onClose(toast.id)}
-            className="text-zinc-500 hover:text-white p-1 ml-4 cursor-pointer"
-            title="Dismiss notification"
+            className="text-zinc-500 hover:text-white p-1 ml-4 border border-zinc-800 hover:border-zinc-500 rounded-sm transition-all cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

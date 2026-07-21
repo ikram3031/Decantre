@@ -142,7 +142,6 @@ export const FeaturedProductSlider = () => {
             className={`h-[2px] transition-all duration-300 cursor-pointer ${
               idx === currentSlide ? 'w-10 bg-gold' : 'w-4 bg-white/20 hover:bg-white/40'
             }`}
-            title={`Slide ${idx + 1}`}
           />
         ))}
       </div>
@@ -150,15 +149,13 @@ export const FeaturedProductSlider = () => {
       {/* Prev & Next arrows */}
       <button 
         onClick={() => setCurrentSlide((prev) => (prev - 1 + featuredSlides.length) % featuredSlides.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/20 hover:border-gold transition-all cursor-pointer"
-        title="Previous slide"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all cursor-pointer"
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
       <button 
         onClick={() => setCurrentSlide((prev) => (prev + 1) % featuredSlides.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/20 hover:border-gold transition-all cursor-pointer"
-        title="Next slide"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all cursor-pointer"
       >
         <ChevronRight className="w-5 h-5" />
       </button>

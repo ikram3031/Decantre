@@ -56,8 +56,7 @@ export const CartDrawer = ({
           </div>
           <button 
             onClick={() => { setIsCartOpen(false); setIsCheckoutMode(false); }}
-            className="p-1.5 text-zinc-400 hover:text-gold rounded-full bg-luxury-dark border border-white/5 transition-colors shrink-0"
-            title="Close chest"
+            className="p-1.5 text-gold hover:text-white rounded-full bg-luxury-dark border-2 border-gold hover:border-gold transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
@@ -75,7 +74,7 @@ export const CartDrawer = ({
                 <p className="text-[10px] text-zinc-600">Select a signature scent from our list to fill your private collection.</p>
                 <button 
                   onClick={() => setIsCartOpen(false)}
-                  className="mt-6 bg-transparent hover:bg-gold text-gold hover:text-black border border-gold text-[10px] font-sans font-bold tracking-widest uppercase py-3 px-6 rounded-sm transition-all"
+                  className="mt-6 bg-transparent hover:bg-gold text-gold hover:text-black border border-gold text-[10px] font-sans font-bold tracking-widest uppercase py-3 px-6 rounded-sm transition-all cursor-pointer"
                 >
                   Browse Decants
                 </button>
@@ -91,8 +90,7 @@ export const CartDrawer = ({
                     {/* Remove item absolute x */}
                     <button
                       onClick={() => handleRemoveFromCart(item.id)}
-                      className="absolute top-3 right-3 text-zinc-600 hover:text-rose-400 p-1 rounded-sm hover:bg-black transition-colors"
-                      title="Erase decant"
+                      className="absolute top-3 right-3 text-zinc-400 hover:text-rose-400 p-1 border border-zinc-500 hover:border-rose-400 rounded-sm hover:bg-black transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -368,21 +366,21 @@ export const CartDrawer = ({
 
         {/* Bottom Footer Section: Pricing calculations (Hidden once order is complete) */}
         {!orderCompleted && cart.length > 0 && (
-          <div className="p-6 bg-luxury-black border-t border-white/5 space-y-4">
+          <div className="p-4 sm:p-6 bg-luxury-black border-t border-white/5 space-y-4 w-full max-w-full overflow-hidden">
             
             {/* Promo Code Input */}
             {!isCheckoutMode && (
-              <form onSubmit={applyPromoCode} className="flex gap-2">
+              <form onSubmit={applyPromoCode} className="flex gap-1.5 w-full items-stretch">
                 <input 
                   type="text" 
-                  placeholder="ENTER PROMO CODE (e.g. GOLDEN20)"
+                  placeholder="PROMO CODE"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
-                  className="flex-1 bg-black border border-white/5 rounded-sm px-3 py-2 text-xs font-light text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-gold/50 uppercase font-sans"
+                  className="flex-1 min-w-0 bg-black border border-white/5 rounded-sm px-2.5 py-2 text-xs font-light text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-gold/50 uppercase font-sans"
                 />
                 <button 
                   type="submit"
-                  className="bg-transparent hover:bg-gold hover:text-black text-gold border border-gold/40 px-4 rounded-sm text-xs uppercase font-sans font-semibold tracking-wider transition-colors"
+                  className="bg-transparent hover:bg-gold hover:text-black text-gold border border-gold/40 px-3 sm:px-4 rounded-sm text-xs uppercase font-sans font-semibold tracking-wider transition-colors shrink-0"
                 >
                   Apply
                 </button>
@@ -443,10 +441,6 @@ export const CartDrawer = ({
                 </button>
               </div>
             ) : null}
-
-            <p className="text-[10px] text-zinc-500 text-center">
-              Orders packed under secure live camera tracking. Pure authenticity guaranteed.
-            </p>
           </div>
         )}
       </SheetContent>

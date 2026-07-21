@@ -45,13 +45,9 @@ export const CategoryNav = ({ setSelectedCategory }) => {
             <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">FOR HIM</h3>
             <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
             
-            <div className="relative inline-block group/btn mx-auto">
-              {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-zinc-950 border border-gold/40 text-[9px] uppercase tracking-widest text-gold opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-30">
-                Discover masculine olfactory masterpieces
-              </div>
+            <div className="relative inline-block mx-auto">
               <button className="text-[10px] text-gold tracking-widest uppercase font-bold py-1.5 px-4 border border-gold/20 hover:border-gold/60 bg-black/40 hover:bg-gold/10 transition-all font-sans">
-                Explore Collection
+                Explore
               </button>
             </div>
           </div>
@@ -77,13 +73,9 @@ export const CategoryNav = ({ setSelectedCategory }) => {
             <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">FOR HER</h3>
             <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
             
-            <div className="relative inline-block group/btn mx-auto">
-              {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-zinc-950 border border-gold/40 text-[9px] uppercase tracking-widest text-gold opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-30">
-                Discover feminine olfactory masterpieces
-              </div>
+            <div className="relative inline-block mx-auto">
               <button className="text-[10px] text-gold tracking-widest uppercase font-bold py-1.5 px-4 border border-gold/20 hover:border-gold/60 bg-black/40 hover:bg-gold/10 transition-all font-sans">
-                Explore Collection
+                Explore
               </button>
             </div>
           </div>
@@ -109,13 +101,9 @@ export const CategoryNav = ({ setSelectedCategory }) => {
             <h3 className="text-2xl font-serif font-light tracking-widest text-luxury-white">UNISEX</h3>
             <div className="w-10 h-[1px] bg-gold/30 mx-auto group-hover:w-20 transition-all duration-500"></div>
             
-            <div className="relative inline-block group/btn mx-auto">
-              {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-zinc-950 border border-gold/40 text-[9px] uppercase tracking-widest text-gold opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-30">
-                Discover shared olfactory masterpieces
-              </div>
+            <div className="relative inline-block mx-auto">
               <button className="text-[10px] text-gold tracking-widest uppercase font-bold py-1.5 px-4 border border-gold/20 hover:border-gold/60 bg-black/40 hover:bg-gold/10 transition-all font-sans">
-                Explore Collection
+                Explore
               </button>
             </div>
           </div>
