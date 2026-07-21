@@ -13,7 +13,8 @@ export const ProductCard = ({
   toggleWishlist,
   handleOpenProductDetail,
   handleAddToCart,
-  calculateItemPrice
+  calculateItemPrice,
+  hideMobileVariations = false
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const { currentTheme } = useApp();
@@ -121,7 +122,7 @@ export const ProductCard = ({
       </div>
 
       {/* SELECTION CONTROLS (Size & Concentration) */}
-      <div className="hidden sm:block border-t border-white/5 pt-4 space-y-3 flex-shrink-0">
+      <div className={`${hideMobileVariations ? 'hidden sm:block' : 'block'} border-t border-white/5 pt-4 space-y-3 flex-shrink-0`}>
         
         {/* Size selector pills */}
         <div className="flex flex-wrap justify-center gap-1.5">
@@ -158,21 +159,19 @@ export const ProductCard = ({
 
         <div className="w-full sm:w-auto">
           {/* Mobile: Select Option button */}
-          <button
-            onClick={() => handleOpenProductDetail(product)}
-            className={`sm:hidden font-bold uppercase tracking-widest text-[9px] px-3 py-2.5 rounded-[4px] transition-all flex items-center justify-center gap-1 font-sans border w-full cursor-pointer ${
-              isLight 
-                ? 'bg-black text-white hover:bg-zinc-800 border-black' 
-                : 'border-[#C5A059] hover:bg-[#C5A059] hover:text-black bg-transparent text-[#C5A059]'
-            }`}
-          >
-            Select Option
-          </button>
+          {hideMobileVariations && (
+            <button
+              onClick={() => handleOpenProductDetail(product)}
+              className="sm:hidden font-bold uppercase tracking-widest text-[9px] px-3 py-2.5 rounded-[4px] transition-all flex items-center justify-center gap-1 font-sans border w-full cursor-pointer border-[#C5A059] hover:bg-[#C5A059] hover:text-black bg-transparent text-[#C5A059]"
+            >
+              Select Option
+            </button>
+          )}
 
-          {/* Desktop: Add to Chest button */}
+          {/* Add to Chest button */}
           <button
             onClick={() => handleAddToCart(product, currentSel.size, currentSel.concentration, 1)}
-            className={`hidden sm:flex font-bold uppercase tracking-widest text-[9px] px-4 py-2.5 rounded-[4px] transition-all items-center gap-1.5 font-sans border cursor-pointer ${
+            className={`${hideMobileVariations ? 'hidden sm:flex' : 'flex'} font-bold uppercase tracking-widest text-[9px] px-4 py-2.5 rounded-[4px] transition-all items-center justify-center gap-1.5 font-sans border w-full sm:w-auto cursor-pointer ${
               isLight 
                 ? 'bg-black text-white hover:bg-zinc-800 border-black' 
                 : 'border-[#C5A059] hover:bg-[#C5A059] hover:text-black bg-transparent text-[#C5A059]'

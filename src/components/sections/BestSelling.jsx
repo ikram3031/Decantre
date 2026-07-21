@@ -57,17 +57,17 @@ export const BestSelling = () => {
         </div>
 
         {/* Filter Buttons */}
-        <div className="flex justify-center gap-3">
+        <div className="flex justify-center gap-1.5 sm:gap-3">
           {['All', 'For Him', 'For Her'].map((type) => {
             const isActive = filter === type;
             return (
               <button
                 key={type}
                 onClick={() => setFilter(type)}
-                className={`px-6 py-2.5 rounded-[4px] text-xs font-sans font-bold uppercase tracking-widest transition-all duration-300 border cursor-pointer ${
+                className={`px-3 sm:px-6 py-2 sm:py-2.5 rounded-[4px] text-[10px] sm:text-xs font-sans font-bold uppercase tracking-widest transition-all duration-300 border cursor-pointer ${
                   isActive
                     ? (isLight ? 'bg-black text-white border-black' : 'bg-gold text-black border-gold')
-                    : (isLight ? 'border-zinc-200 text-zinc-500 hover:text-black hover:border-zinc-400' : 'border-gold/20 text-zinc-400 hover:text-gold hover:border-gold/60')
+                    : (isLight ? 'border-gold text-gold hover:bg-gold hover:text-white bg-transparent' : 'border-gold text-gold hover:bg-gold hover:text-black bg-transparent')
                 }`}
               >
                 {type}
@@ -77,7 +77,7 @@ export const BestSelling = () => {
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8 pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 pt-4">
           {filtered.map(p => {
             const currentSel = cardSelections[p.id] || { size: (p.variations && p.variations[0] && p.variations[0].size) || '100ml', concentration: 'Eau de Parfum' };
             return (

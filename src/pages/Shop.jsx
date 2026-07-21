@@ -385,7 +385,7 @@ export const Shop = () => {
             )}
 
             {/* Perfume list */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {!isLoadingProducts && displayedProducts.map((prod) => {
                 const currentSel = cardSelections[prod.id] || { size: '100ml', concentration: 'Eau de Parfum' };
                 return (
@@ -410,6 +410,7 @@ export const Shop = () => {
                     handleOpenProductDetail={handleOpenProductDetail}
                     handleAddToCart={handleAddToCart}
                     calculateItemPrice={calculateItemPrice}
+                    hideMobileVariations={true}
                   />
                 );
               })}

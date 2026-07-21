@@ -83,6 +83,26 @@ export const Header = ({
   const [activeDropdown, setActiveDropdown] = React.useState(null);
   const [logoFailed, setLogoFailed] = React.useState(false);
 
+  React.useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.height = '100vh';
+      document.documentElement.style.overflow = 'hidden';
+      document.documentElement.style.height = '100vh';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
+    };
+  }, [isMobileMenuOpen]);
+
   const [isScrolled, setIsScrolled] = React.useState(false);
   React.useEffect(() => {
     const handleScroll = () => {
@@ -193,10 +213,14 @@ export const Header = ({
         {/* Mobile menu toggle (left side on small screens) */}
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2 text-zinc-400 hover:text-gold transition-colors focus:outline-none z-10"
+          className={`md:hidden focus:outline-none z-50 transition-all ${
+            isMobileMenuOpen 
+              ? 'p-2 text-gold border border-gold rounded-full bg-black' 
+              : 'p-2 text-gold hover:text-gold/80'
+          }`}
           aria-label="Toggle navigation menu"
         >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMobileMenuOpen ? <X className="w-5 h-5 stroke-[2] text-gold" /> : <Menu className="w-6 h-6 text-gold" />}
         </button>
 
         {/* Logo and branding - Centered on mobile, Left-aligned on desktop */}
@@ -448,7 +472,7 @@ export const Header = ({
 
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gold/10 bg-black/95 backdrop-blur-lg absolute top-24 left-0 right-0 py-6 px-4 space-y-4 animate-fade-in z-50">
+        <div className={`md:hidden border-t border-gold/15 bg-black fixed ${isScrolled ? 'top-[64px]' : 'top-[80px]'} left-0 right-0 bottom-0 py-8 px-6 space-y-6 animate-fade-in z-40 overflow-y-auto pb-32`}>
           <nav className="flex flex-col gap-4 text-xs uppercase tracking-[0.25em] font-sans text-zinc-300">
             <Link to="/" onClick={handleNavLinkClick} className="hover:text-gold py-2 transition-colors border-b border-white/5">Home</Link>
             <Link to="/season" onClick={handleNavLinkClick} className="hover:text-gold py-2 transition-colors border-b border-white/5">Season</Link>

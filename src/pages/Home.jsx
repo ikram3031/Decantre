@@ -77,18 +77,6 @@ export const Home = () => {
       {/* Reviews Section */}
       <Testimonials />
 
-      {/* Editorials bar */}
-      <div id="editorial-mentions" className="bg-luxury-black py-12 border-t border-gold/20">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <span className="text-[10px] uppercase tracking-[0.35em] text-zinc-500 block mb-6">As Featured In Global Editorial Columns</span>
-          <div className="flex flex-wrap items-center justify-center gap-12 sm:gap-20 opacity-30 mix-blend-screen grayscale">
-            <span className="text-base font-serif font-bold tracking-[0.2em]">VOGUE ELITE</span>
-            <span className="text-base font-serif font-bold tracking-[0.25em]">GQ LUXE</span>
-            <span className="text-base font-serif font-bold tracking-[0.15em]">ELLE COUTURE</span>
-            <span className="text-base font-serif font-bold tracking-[0.3em]">HARPER'S DECANTRE</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
