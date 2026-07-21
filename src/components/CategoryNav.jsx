@@ -97,7 +97,7 @@ export const CategoryNav = ({ setSelectedCategory }) => {
         >
           <div className="absolute inset-0 bg-luxury-black">
             <img 
-              src="/src/assets/images/perfume_unisex_1784311906469.jpg" 
+              src="https://decantrebd.com/wp-content/uploads/2026/01/banner.jpg" 
               alt="Unisex Category" 
               className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
