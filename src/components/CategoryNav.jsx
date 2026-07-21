@@ -33,7 +33,7 @@ export const CategoryNav = ({ setSelectedCategory }) => {
         >
           <div className="absolute inset-0 bg-luxury-black">
             <img 
-              src="/src/assets/images/perfume_for_him_1784311883603.jpg" 
+              src="https://decantrebd.com/wp-content/uploads/2026/01/for-him.jpg" 
               alt="For Him Category" 
               className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
@@ -65,7 +65,7 @@ export const CategoryNav = ({ setSelectedCategory }) => {
         >
           <div className="absolute inset-0 bg-luxury-black">
             <img 
-              src="/src/assets/images/perfume_for_her_1784311895919.jpg" 
+              src="https://decantrebd.com/wp-content/uploads/2026/01/for-her.jpg" 
               alt="For Her Category" 
               className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
