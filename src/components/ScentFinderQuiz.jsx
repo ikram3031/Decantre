@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { formatBDT } from '../utils/formatCurrency';
@@ -10,9 +11,9 @@ export const ScentFinderQuiz = ({
   setQuizStep,
   quizRecommendation,
   handleQuizAnswer,
-  handleAddToCart,
-  handleOpenProductDetail
+  handleAddToCart
 }) => {
+  const navigate = useNavigate();
   return (
     <Dialog open={isQuizOpen} onOpenChange={setIsQuizOpen}>
       <DialogContent className="bg-luxury-black border border-gold/25 text-luxury-white p-6 sm:p-8 max-w-xl w-full shadow-[0_0_50px_rgba(197,160,89,0.05)] rounded-none text-center font-sans">
@@ -172,12 +173,12 @@ export const ScentFinderQuiz = ({
               </button>
               <button 
                 onClick={() => {
-                  handleOpenProductDetail(quizRecommendation);
+                  navigate(`/product?did=${quizRecommendation.id}`);
                   setIsQuizOpen(false);
                 }}
-                className="flex-1 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-900 text-[9px] font-bold uppercase tracking-widest py-3 rounded-none transition-all"
+                className="flex-1 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-900 text-[9px] font-bold uppercase tracking-widest py-3 rounded-none transition-all cursor-pointer"
               >
-                Configure Custom Scent
+                View Details
               </button>
             </div>
 

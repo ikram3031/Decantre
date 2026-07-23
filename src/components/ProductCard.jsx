@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Eye, ShoppingCart } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 import { formatBDT } from '../utils/formatCurrency';
 import { useApp } from '../context/AppContext';
 
@@ -14,7 +14,9 @@ export const ProductCard = ({
   handleOpenProductDetail,
   handleAddToCart,
   calculateItemPrice,
-  hideMobileVariations = false
+  hideMobileVariations = false,
+  isLargeCard = false,
+  showProductName = false
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const { currentTheme } = useApp();
@@ -26,159 +28,110 @@ export const ProductCard = ({
     : product.basePrice;
   const currentPrice = calculateItemPrice(variationPrice, currentSel.size, currentSel.concentration);
 
+  const descriptionText = product.description || product.tagline || product.scentFamily || '';
+
   return (
     <div 
       id={`product-card-${product.id}`}
       className={`group flex flex-col h-full ${
-        isLight ? 'bg-white border-zinc-200 hover:border-gold/60 text-black shadow-md' : 'bg-luxury-dark border-gold/15 hover:border-gold/45 text-white shadow-2xl'
-      } rounded-[4px] pt-13 pb-1.5 px-5 transition-all duration-500 relative`}
+        isLight ? 'bg-white border-zinc-200 hover:border-gold/60 text-black shadow-sm hover:shadow-md' : 'bg-luxury-dark/90 border-gold/20 hover:border-gold/60 text-white shadow-xl hover:shadow-gold/10'
+      } rounded-[6px] p-3.5 sm:p-4 transition-all duration-300 relative`}
     >
-      {/* Badge Row */}
-      <div className="absolute top-8 left-8 z-20 flex flex-col gap-1.5">
-        {(product.badges || []).map((badge) => {
-          const badgeClass = badge.color && badge.color.startsWith('bg-') ? badge.color : 'bg-gold';
-          const badgeStyle = badge.color && !badge.color.startsWith('bg-') ? { backgroundColor: badge.color } : undefined;
-          return (
-            <span
-              key={`${badge.name || badge.text}-${badge.priority || 0}`}
-              className={`${badgeClass} text-black font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-[4px] shadow-md font-sans ${badgeClass === 'bg-gold' ? 'text-black' : 'text-white'}`}
-              style={badgeStyle}
-            >
-              {badge.text || badge.name}
-            </span>
-          );
-        })}
-        {(!product.badges || product.badges.length === 0) && product.isBestSeller && (
-          <span className="bg-gold text-black font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-[4px] shadow-md font-sans">
-            BESTSELLER
-          </span>
-        )}
-        {(!product.badges || product.badges.length === 0) && product.isFeatured && (
-          <span className="bg-luxury-black border border-gold/40 text-gold font-semibold uppercase text-[8px] tracking-[0.2em] px-2.5 py-1 rounded-[4px] shadow-md font-sans">
-            DECANTRE CHOICE
-          </span>
-        )}
-      </div>
+
 
       {/* Wishlist toggle */}
       <button 
         onClick={() => toggleWishlist(product.id)}
-        className="absolute top-8 right-8 z-20 p-2 bg-black/60 border border-gold/40 hover:border-gold rounded-full text-zinc-400 hover:text-gold transition-all shadow-md cursor-pointer"
+        className="absolute top-5 right-5 z-20 p-1.5 bg-black/60 border border-gold/40 hover:border-gold rounded-full text-zinc-300 hover:text-gold transition-all shadow-md cursor-pointer"
+        aria-label="Toggle wishlist"
       >
         <Heart 
-          className={`w-4 h-4 ${wishlist.includes(product.id) ? 'fill-gold text-gold' : ''}`} 
+          className={`w-3.5 h-3.5 ${wishlist.includes(product.id) ? 'fill-gold text-gold' : ''}`} 
         />
       </button>
 
-      {/* Image container with high-fidelity skeleton loading state */}
-      <div className="relative aspect-square rounded-sm overflow-hidden bg-[#0a0a0a] mb-6 flex-shrink-0">
+      {/* Image container */}
+      <div className="relative aspect-square rounded-sm overflow-hidden bg-[#0a0a0a] mb-3 flex-shrink-0">
         {!imageLoaded && (
           <div className="absolute inset-0 bg-zinc-900/80 animate-pulse z-10" />
         )}
         <Link to={`/product?did=${product.id}`} className="block w-full h-full">
           <img
             src={product.image || (product.raw && product.raw.image) || '/src/assets/images/perfume_for_him_1784311883603.jpg'}
-            alt={product.name}
-            className={`w-full h-full object-cover object-center scale-95 group-hover:scale-100 transition-all duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            alt={product.brand || product.category || 'Perfume'}
+            className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImageLoaded(true)}
             onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/src/assets/images/perfume_for_him_1784311883603.jpg'; setImageLoaded(true); }}
           />
         </Link>
-        <div className="absolute inset-0 bg-gradient-to-t from-luxury-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-center pb-6 pointer-events-none">
-          <button 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleOpenProductDetail(product);
-            }}
-            className="bg-luxury-dark border border-gold/40 text-gold hover:text-black hover:bg-gold text-[10px] font-sans font-bold uppercase tracking-widest py-2.5 px-6 rounded-[4px] transition-all flex items-center gap-2 shadow-2xl pointer-events-auto cursor-pointer"
-          >
-            <Eye className="w-4 h-4" />
-            Quick Atelier View
-          </button>
-        </div>
       </div>
 
-      {/* Details (with flex-grow to push footer elements to bottom alignment) */}
-      <div className="flex-1 flex flex-col justify-between mb-4">
-        <div className="space-y-1.5">
-          {/* Category Display Justified-Between */}
-          <div className="flex items-center justify-between gap-2 text-[9px] uppercase tracking-[0.2em] font-sans font-medium w-full">
-            <span className="text-gold truncate max-w-[48%]" title={product.category || 'Luxury'}>
-              {product.category || 'Luxury'}
-            </span>
-            <span className="text-zinc-500 truncate max-w-[48%] text-right" title={product.scentFamily || 'Scent'}>
-              {product.scentFamily || 'Scent'}
-            </span>
+      {/* Details section */}
+      <div className="flex-1 flex flex-col justify-between mb-2">
+        <div className="space-y-1">
+          {/* Category / Brand Row */}
+          <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.15em] font-sans font-semibold text-gold">
+            <span className="truncate max-w-[60%]">{product.brand || product.category || 'Fragrance'}</span>
+            <span className="text-zinc-400 font-normal truncate max-w-[38%] text-right">{product.category || 'Luxury'}</span>
           </div>
 
-          {/* Centered Product Name */}
-          <Link to={`/product?did=${product.id}`} className="block hover:opacity-80 transition-opacity">
-            <h3 className={`text-lg sm:text-xl font-serif font-light ${isLight ? 'text-zinc-900' : 'text-luxury-white'} hover:text-gold tracking-wider truncate w-full block text-center transition-colors`} title={product.name}>
+          {/* Product Name - 3 lines reserved */}
+          <Link to={`/product?did=${product.id}`} className="block hover:opacity-80 transition-opacity my-1">
+            <h3 
+              className={`text-xs sm:text-sm font-serif font-medium leading-snug line-clamp-3 min-h-[3.6em] text-center ${isLight ? 'text-zinc-900' : 'text-zinc-100'} hover:text-gold`} 
+              title={product.name}
+            >
               {product.name}
             </h3>
           </Link>
         </div>
       </div>
 
-      {/* SELECTION CONTROLS (Size & Concentration) */}
-      <div className={`${hideMobileVariations ? 'hidden sm:block' : 'block'} border-t border-white/5 pt-4 space-y-3 flex-shrink-0`}>
-        
-        {/* Size selector pills */}
-        <div className="flex flex-wrap justify-center gap-1.5">
+      {/* SELECTION CONTROLS (Size / Variants - up to 6 or more) */}
+      <div className={`${hideMobileVariations ? 'hidden sm:block' : 'block'} border-t border-white/10 pt-2 flex-shrink-0`}>
+        <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5">
           {Array.from(new Set(
             (product.variations && product.variations.length > 0
               ? product.variations.map(v => v.size)
-              : ['50ml', '100ml', '200ml']
+              : ['3ml', '5ml', '10ml', '30ml', '50ml', '100ml']
             ).filter(Boolean)
           )).map((size) => (
-              <button
-                key={size}
-                onClick={() => onSizeChange(size)}
-                className={`px-2.5 py-1 rounded-[4px] text-[14px] font-sans font-medium transition-all duration-300 border ${
-                  currentSel.size === size
-                    ? (isLight ? 'bg-black text-white border-black shadow-sm' : 'bg-black text-gold border-gold shadow-[0_0_12px_rgba(197,160,89,0.15)]')
-                    : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200' : 'bg-[#0d0d0d]/90 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700')
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+            <button
+              key={size}
+              type="button"
+              onClick={() => onSizeChange(size)}
+              className={`px-1.5 sm:px-2 py-0.5 rounded-[3px] text-[10px] sm:text-[11px] font-sans font-medium transition-all duration-200 border cursor-pointer ${
+                currentSel.size === size
+                  ? (isLight ? 'bg-black text-white border-black' : 'bg-gold text-black border-gold font-bold')
+                  : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900' : 'bg-black/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700')
+              }`}
+            >
+              {size}
+            </button>
+          ))}
         </div>
-
       </div>
 
       {/* Add to Cart & Price Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 mt-3 border-t border-white/5 flex-shrink-0">
+      <div className="flex items-center justify-between gap-2 pt-2.5 mt-2 border-t border-white/10 flex-shrink-0">
         <div className="text-left">
-          <span className="text-[8px] sm:text-[9px] font-sans uppercase text-zinc-500 block tracking-wider font-light">Price Estimate</span>
-          <span className="text-base sm:text-2xl font-serif font-light text-gold">
+          <span className="text-[8px] font-sans uppercase text-zinc-400 block tracking-wider font-light">Price</span>
+          <span className="text-sm sm:text-base font-serif font-medium text-gold">
             {formatBDT(currentPrice)}
           </span>
         </div>
 
-        <div className="w-full sm:w-auto">
-          {/* Mobile: Select Option button */}
-          {hideMobileVariations && (
-            <button
-              onClick={() => handleOpenProductDetail(product)}
-              className="sm:hidden font-bold uppercase tracking-widest text-[9px] px-3 py-2.5 rounded-[4px] transition-all flex items-center justify-center gap-1 font-sans border w-full cursor-pointer border-[#C5A059] hover:bg-[#C5A059] hover:text-black bg-transparent text-[#C5A059]"
-            >
-              Select Option
-            </button>
-          )}
-
-          {/* Add to Chest button */}
+        <div>
           <button
             onClick={() => handleAddToCart(product, currentSel.size, currentSel.concentration, 1)}
-            className={`${hideMobileVariations ? 'hidden sm:flex' : 'flex'} font-bold uppercase tracking-widest text-[9px] px-4 py-2.5 rounded-[4px] transition-all items-center justify-center gap-1.5 font-sans border w-full sm:w-auto cursor-pointer ${
+            className={`font-bold uppercase tracking-wider text-[9px] px-3 py-1.5 rounded-[3px] transition-all flex items-center justify-center gap-1 font-sans border cursor-pointer ${
               isLight 
                 ? 'bg-black text-white hover:bg-zinc-800 border-black' 
-                : 'border-[#C5A059] hover:bg-[#C5A059] hover:text-black bg-transparent text-[#C5A059]'
+                : 'border-gold text-gold hover:bg-gold hover:text-black bg-transparent'
             }`}
           >
-            <ShoppingCart className="w-3.5 h-3.5" />
-            Add to Chest
+            <ShoppingCart className="w-3 h-3" />
+            <span className="hidden xs:inline">Add</span>
           </button>
         </div>
       </div>
@@ -186,3 +139,5 @@ export const ProductCard = ({
     </div>
   );
 };
+
+export default ProductCard;

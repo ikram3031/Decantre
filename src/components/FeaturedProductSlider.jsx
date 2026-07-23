@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -27,7 +28,8 @@ const featuredSlides = [
 ];
 
 export const FeaturedProductSlider = () => {
-  const { products, handleOpenProductDetail } = useApp();
+  const { products } = useApp();
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Auto interval rotation
@@ -96,7 +98,11 @@ export const FeaturedProductSlider = () => {
                   <button 
                     onClick={() => {
                       const targetProd = products.find(p => p.id === slide.productId);
-                      if (targetProd) handleOpenProductDetail(targetProd);
+                      if (targetProd) {
+                        navigate(`/product?did=${targetProd.id}`);
+                      } else {
+                        navigate('/shop');
+                      }
                     }}
                     className="px-8 py-3.5 border border-gold text-[10px] uppercase tracking-[0.3em] font-sans font-bold hover:bg-gold hover:text-black transition-all duration-300 bg-transparent text-gold cursor-pointer"
                   >

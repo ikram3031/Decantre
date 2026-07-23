@@ -8,10 +8,17 @@ export const OnSale = () => {
   const sale = products.filter(p => p.raw && p.raw.on_sale).slice(0, 6);
 
   return (
-    <section className="py-12">
+    <section className="py-8 border-t border-gold/10">
       <div className="max-w-7xl mx-auto px-4">
-        <h3 className="text-2xl font-serif text-luxury-white mb-6">On Sale</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Title - Reduced size and spacing */}
+        <div className="mb-4">
+          <span className="text-[9px] uppercase tracking-[0.2em] text-gold font-sans font-semibold block mb-0.5">
+            Special Formulations
+          </span>
+          <h3 className="text-xl sm:text-2xl font-serif text-luxury-white">On Sale</h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {sale.map(p => (
             <ProductCard
               key={p.id}
@@ -24,6 +31,7 @@ export const OnSale = () => {
               handleOpenProductDetail={handleOpenProductDetail}
               handleAddToCart={handleAddToCart}
               calculateItemPrice={calculateItemPrice}
+              isLargeCard={true}
             />
           ))}
         </div>

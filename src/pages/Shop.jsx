@@ -346,11 +346,11 @@ export const Shop = () => {
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className={`${isLight ? 'bg-white border-zinc-200 text-zinc-900' : 'bg-luxury-dark border-white/10 text-zinc-200'} text-xs rounded-sm py-2 px-3 outline-none focus:border-gold focus:ring-2 focus:ring-gold/20`}
+                    className="bg-black border border-[#C5A059] text-[#C5A059] text-xs font-bold uppercase tracking-wider rounded-[4px] py-2 px-3 outline-none focus:border-[#C5A059] focus:ring-1 focus:ring-[#C5A059] cursor-pointer"
                   >
-                    <option value="newest">Newest first</option>
-                    <option value="price-asc">Price low to high</option>
-                    <option value="price-desc">Price high to low</option>
+                    <option value="newest" className="bg-[#C5A059] text-black font-bold">Newest first</option>
+                    <option value="price-asc" className="bg-[#C5A059] text-black font-bold">Price low to high</option>
+                    <option value="price-desc" className="bg-[#C5A059] text-black font-bold">Price high to low</option>
                   </select>
                 </div>
                 {searchQuery && (
@@ -385,7 +385,7 @@ export const Shop = () => {
             )}
 
             {/* Perfume list */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
               {!isLoadingProducts && displayedProducts.map((prod) => {
                 const currentSel = cardSelections[prod.id] || { size: '100ml', concentration: 'Eau de Parfum' };
                 return (
