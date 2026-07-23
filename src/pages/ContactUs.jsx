@@ -31,25 +31,11 @@ export const ContactUs = () => {
 
   const salons = [
     {
-      city: 'Paris Salon',
-      address: '14 Avenue Montaigne, 75008 Paris',
-      phone: '+33 1 42 68 53 00',
-      email: 'paris@decantre.com',
-      hours: 'Mon - Sat: 10:00 AM - 7:00 PM'
-    },
-    {
-      city: 'London Atelier',
-      address: '28 Bruton Place, Mayfair, London W1J 6NP',
-      phone: '+44 20 7493 0000',
-      email: 'london@decantre.com',
-      hours: 'Mon - Sat: 11:00 AM - 6:30 PM'
-    },
-    {
-      city: 'Monaco Private Vault',
-      address: '6 Boulevard des Moulins, 98000 Monaco',
-      phone: '+377 97 97 00 00',
-      email: 'monaco@decantre.com',
-      hours: 'By Elite Appointment Only'
+      city: 'Decantre Flagship Store',
+      address: 'Ground Floor, House 20, Road 10, Sector 13, Uttara, Dhaka',
+      phone: '+880 1869-151550',
+      email: 'support@decantrebd.com',
+      hours: 'Mon - Sun: 10:00 AM - 10:00 PM'
     }
   ];
 
@@ -73,8 +59,8 @@ export const ContactUs = () => {
           {/* Salons Location Info list */}
           <div className="lg:col-span-5 space-y-8">
             <div className="space-y-2">
-              <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium">Bespoke Salons</span>
-              <h2 className="text-2xl sm:text-3xl font-serif font-light text-luxury-white">OUR WORLDWIDE COORDINATES</h2>
+              <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium font-bold">Boutique Store</span>
+              <h2 className="text-2xl sm:text-3xl font-serif font-light text-luxury-white">OUR STORE LOCATION</h2>
               <div className="h-[1px] w-12 bg-gold/40 mt-3"></div>
             </div>
 
@@ -82,27 +68,28 @@ export const ContactUs = () => {
               {salons.map((salon) => (
                 <div 
                   key={salon.city}
-                  className="bg-luxury-dark/20 border border-white/5 hover:border-gold/20 p-6 rounded-sm space-y-4 transition-all duration-300"
+                  className="bg-luxury-dark/20 border border-gold/30 hover:border-gold p-8 rounded-sm space-y-5 transition-all duration-300 shadow-xl"
                 >
-                  <h3 className="text-sm font-serif text-gold tracking-wide uppercase border-b border-white/5 pb-2">
-                    {salon.city}
+                  <h3 className="text-base font-serif text-gold tracking-widest uppercase border-b border-white/10 pb-3 flex items-center justify-between">
+                    <span>{salon.city}</span>
+                    <span className="text-[9px] font-sans font-bold text-black bg-gold px-2 py-0.5 rounded-xs tracking-wider">OFFICIAL</span>
                   </h3>
 
-                  <div className="space-y-2 text-xs font-sans font-light text-zinc-400">
-                    <p className="flex items-start gap-2.5">
-                      <MapPin className="w-4 h-4 text-gold/60 shrink-0 mt-0.5" />
-                      <span>{salon.address}</span>
+                  <div className="space-y-3.5 text-xs font-sans font-light text-zinc-300">
+                    <p className="flex items-start gap-3">
+                      <MapPin className="w-4 h-4 text-gold shrink-0 mt-1" />
+                      <span className="leading-relaxed">{salon.address}</span>
                     </p>
-                    <p className="flex items-center gap-2.5">
-                      <Phone className="w-4 h-4 text-gold/60 shrink-0" />
-                      <span>{salon.phone}</span>
+                    <p className="flex items-center gap-3">
+                      <Phone className="w-4 h-4 text-gold shrink-0" />
+                      <span className="font-mono text-zinc-200">{salon.phone}</span>
                     </p>
-                    <p className="flex items-center gap-2.5">
-                      <Mail className="w-4 h-4 text-gold/60 shrink-0" />
-                      <span className="text-gold/80 hover:underline cursor-pointer">{salon.email}</span>
+                    <p className="flex items-center gap-3">
+                      <Mail className="w-4 h-4 text-gold shrink-0" />
+                      <span className="text-gold hover:underline cursor-pointer font-mono">{salon.email}</span>
                     </p>
-                    <p className="flex items-center gap-2.5">
-                      <Clock className="w-4 h-4 text-gold/60 shrink-0" />
+                    <p className="flex items-center gap-3">
+                      <Clock className="w-4 h-4 text-gold shrink-0" />
                       <span>{salon.hours}</span>
                     </p>
                   </div>
@@ -194,6 +181,27 @@ export const ContactUs = () => {
             </form>
           </div>
 
+        </div>
+
+        {/* Full Width Google Map Section (Height 400px) */}
+        <div className="mt-16 sm:mt-20 w-full overflow-hidden rounded-sm border border-gold/30 bg-black shadow-2xl">
+          <div className="px-6 py-4 bg-luxury-dark/60 border-b border-white/10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-gold" />
+              <h3 className="text-xs uppercase tracking-[0.25em] font-serif font-light text-luxury-white">
+                STORE LOCATION MAP
+              </h3>
+            </div>
+            <span className="text-[10px] text-zinc-400 font-mono">House 20, Road 10, Sector 13, Uttara, Dhaka</span>
+          </div>
+          <iframe 
+            title="Decantre Location Map"
+            src="https://maps.google.com/maps?q=House%2020,%20Road%2010,%20Sector%2013,%20Uttara,%20Dhaka&t=&z=16&ie=UTF8&iwloc=&output=embed"
+            className="w-full h-[400px] border-0 filter grayscale contrast-125 invert opacity-90 hover:opacity-100 transition-opacity"
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
         </div>
 
       </div>

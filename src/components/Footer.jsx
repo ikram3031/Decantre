@@ -99,7 +99,7 @@ export const Footer = ({ startQuiz, addToast }) => {
               </Link>
             </li>
             <li>
-              <Link to="/contact-us" className="hover:text-gold transition-colors block">
+              <Link to="/faq" className="hover:text-gold transition-colors block">
                 FAQ
               </Link>
             </li>

@@ -67,13 +67,14 @@ export const NewArrival = () => {
     const isLight = currentTheme === 'light';
 
     return (
-        <section id="catalog-section" className={`py-20 ${isLight ? 'bg-white border-y border-zinc-200 text-black' : 'bg-luxury-dark/40 border-y border-gold/20'} scroll-mt-24 select-none`}>
+        <section id="catalog-section" className={`py-10 sm:py-14 ${isLight ? 'bg-white border-y border-zinc-200 text-black' : 'bg-luxury-dark/40 border-y border-gold/20'} scroll-mt-24 select-none`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col gap-4 mb-12">
-                    <div className="flex items-baseline justify-between gap-4 w-full border-b border-gold/10 pb-4">
-                        <div className="space-y-1.5 text-left">
-                            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-semibold">Spotlight Masterpieces</span>
-                            <h2 className="text-2xl sm:text-4xl font-serif font-light tracking-wide">New Arrivals</h2>
+                {/* Header - Reduced title size and spacing */}
+                <div className="flex flex-col gap-2 mb-6">
+                    <div className="flex items-baseline justify-between gap-4 w-full border-b border-gold/10 pb-3">
+                        <div className="space-y-0.5 text-left">
+                            <span className="text-[9px] uppercase tracking-[0.25em] text-gold font-sans font-semibold">Spotlight Masterpieces</span>
+                            <h2 className="text-xl sm:text-2xl font-serif font-light tracking-wide">New Arrivals</h2>
                         </div>
                         <div className="shrink-0">
                             <Link
@@ -81,8 +82,8 @@ export const NewArrival = () => {
                                 aria-label="See more on shop"
                                 className={`font-sans transition-all flex items-center gap-1 uppercase font-bold text-xs ${
                                     isLight 
-                                        ? 'bg-black text-white hover:bg-zinc-800 text-[10px] sm:text-xs px-4 py-2.5 rounded-sm' 
-                                        : 'text-gold hover:text-gold/80 tracking-[0.15em] sm:tracking-widest underline underline-offset-4 decoration-gold/40 hover:decoration-gold/90 sm:border sm:border-gold/30 sm:hover:border-gold sm:no-underline sm:px-4 sm:py-2.5 sm:hover:bg-gold/10'
+                                        ? 'bg-black text-white hover:bg-zinc-800 text-[10px] sm:text-xs px-3.5 py-2 rounded-sm' 
+                                        : 'text-gold hover:text-gold/80 tracking-[0.15em] sm:tracking-widest underline underline-offset-4 decoration-gold/40 hover:decoration-gold/90 sm:border sm:border-gold/30 sm:hover:border-gold sm:no-underline sm:px-3.5 sm:py-2 sm:hover:bg-gold/10'
                                 }`}
                             >
                                 <span>See More</span>
@@ -90,7 +91,7 @@ export const NewArrival = () => {
                             </Link>
                         </div>
                     </div>
-                    <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-lg text-left">
+                    <p className="text-zinc-500 text-xs font-sans font-light max-w-lg text-left">
                         Indulge in liquid art. Hand-poured signature essences formulated with rare, rich, natural ingredients.
                     </p>
                 </div>
@@ -120,7 +121,7 @@ export const NewArrival = () => {
                                     return (
                                         <div 
                                             key={prod.id} 
-                                            className="flex-shrink-0 px-3"
+                                            className="flex-shrink-0 px-2 sm:px-3"
                                             style={{ width: `${100 / visibleCount}%` }}
                                         >
                                             <ProductCard
@@ -133,6 +134,7 @@ export const NewArrival = () => {
                                                 handleOpenProductDetail={handleOpenProductDetail}
                                                 handleAddToCart={handleAddToCart}
                                                 calculateItemPrice={calculateItemPrice}
+                                                isLargeCard={true} // large carousel card -> 2 lines for description
                                             />
                                         </div>
                                     );
@@ -142,7 +144,7 @@ export const NewArrival = () => {
 
                         {/* Pagination Dots */}
                         {maxIndex > 0 && (
-                            <div className="mt-10 flex justify-center items-center gap-2">
+                            <div className="mt-6 flex justify-center items-center gap-2">
                                 {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
                                     <button
                                         key={idx}

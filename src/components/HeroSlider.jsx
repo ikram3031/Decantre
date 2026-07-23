@@ -37,7 +37,7 @@ export const HeroSlider = () => {
   }, []);
 
   return (
-    <section id="hero-slider" className="relative h-[70vh] sm:h-[80vh] bg-[#050505] overflow-hidden border-b border-gold/15">
+    <section id="hero-slider" className="relative h-[70vh] md:h-[70vh] lg:h-[80vh] bg-[#050505] overflow-hidden border-b border-gold/15">
       {bannerSlides.map((slide, index) => (
         <div 
           key={index}

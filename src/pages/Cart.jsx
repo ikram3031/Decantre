@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Trash2, Minus, Plus, CreditCard, ArrowRight, Sparkles, Gift } from 'lucide-react';
+import { ShoppingBag, Trash2, Minus, Plus, CreditCard, ArrowRight, Sparkles, Gift, Truck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatBDT } from '../utils/formatCurrency';
 import { useApp } from '../context/AppContext';
@@ -31,9 +31,9 @@ export const Cart = () => {
         
         {/* Page Header */}
         <div className="text-center space-y-4 mb-16 relative py-12 border-b border-gold/15">
-          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">The Vault Box Ledger</span>
+          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">Shopping Cart Ledger</span>
           <h1 className="text-3xl sm:text-5xl font-serif font-light text-luxury-white tracking-wide">
-            YOUR COLLECTION CHEST
+            YOUR SHOPPING CART
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-xl mx-auto leading-relaxed">
             Review your selected decants and formulation concentrations before preparing secure shipping options.
@@ -43,7 +43,7 @@ export const Cart = () => {
         {cart.length === 0 ? (
           <div className="text-center py-24 border border-dashed border-gold/15 rounded-sm bg-luxury-dark/10">
             <ShoppingBag className="w-12 h-12 text-gold/40 mx-auto mb-4 animate-pulse" />
-            <h3 className="text-lg font-serif font-light text-zinc-300 mb-2">Your Chest is Empty</h3>
+            <h3 className="text-lg font-serif font-light text-zinc-300 mb-2">Your Cart is Empty</h3>
             <p className="text-zinc-500 text-xs font-sans font-light max-w-xs mx-auto mb-8">
               You haven't decanted any royal fragrances into your secure shopping cart.
             </p>
@@ -124,12 +124,12 @@ export const Cart = () => {
                 </div>
               ))}
 
-              {/* Extra Perks Indicator */}
-              <div className="p-4 border border-gold/10 bg-gold/5 rounded-sm flex items-center gap-3">
-                <Gift className="w-5 h-5 text-gold shrink-0" />
-                <p className="text-zinc-400 text-[11px] font-sans font-light leading-relaxed">
-                  <span className="text-gold font-semibold uppercase tracking-wider text-[10px] block mb-0.5">Sovereign complimentary additions</span>
-                  Orders include complimentary silk dust bags, high-altitude botanical test samples, and authenticated security tags.
+              {/* Delivery Schedule Indicator */}
+              <div className="p-4 border border-gold/20 bg-gold/5 rounded-sm flex items-center gap-3">
+                <Truck className="w-5 h-5 text-gold shrink-0" />
+                <p className="text-zinc-300 text-[11px] font-sans font-light leading-relaxed">
+                  <span className="text-gold font-semibold uppercase tracking-wider text-[10px] block mb-0.5">ESTIMATED DELIVERY TIME</span>
+                  Inside Dhaka within 24–48 hours, outside Dhaka within 48–72 hours.
                 </p>
               </div>
             </div>
@@ -137,7 +137,7 @@ export const Cart = () => {
             {/* Calculations & Summary */}
             <div className="bg-luxury-dark/30 border border-gold/20 p-6 rounded-sm space-y-6">
               <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-zinc-300 border-b border-white/5 pb-4">
-                LEDGER DISPATCH SUMMARY
+                Cart Summary
               </h3>
 
               {/* Pricing breakdown list */}
@@ -154,66 +154,13 @@ export const Cart = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between text-zinc-400 font-light">
-                  <span>Sovereign Delivery Courier</span>
-                  <span className="font-mono text-zinc-300">
-                    {shippingFee === 0 ? 'Complimentary' : formatBDT(shippingFee)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-zinc-400 font-light">
-                  <span>Luxury Product Duties (8%)</span>
-                  <span className="font-mono text-zinc-300">{formatBDT(luxuryTax)}</span>
-                </div>
-
-                {/* Optional gift wrapping selection in Cart */}
-                <div className="flex items-center justify-between border-t border-white/5 pt-3">
-                  <label className="flex items-center gap-2 cursor-pointer text-zinc-400 font-light">
-                    <input
-                      type="checkbox"
-                      checked={shippingInfo.giftWrap}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, giftWrap: e.target.checked })}
-                      className="accent-gold rounded-sm bg-black border-white/10"
-                    />
-                    <span>Velvet Gift Box wrap</span>
-                  </label>
-                  <span className="font-mono text-gold/80 font-semibold">+{formatBDT(15)}</span>
-                </div>
-
                 <div className="border-t border-gold/20 pt-4 flex justify-between items-end">
                   <span className="text-xs font-sans font-bold uppercase text-zinc-300 tracking-wider">Estimated Total</span>
-                  <span className="text-xl font-serif text-gold font-semibold font-mono">{formatBDT(cartTotal)}</span>
+                  <span className="text-xl font-serif text-gold font-semibold font-mono">{formatBDT(Math.max(0, cartSubtotal - discountAmount))}</span>
                 </div>
               </div>
 
-              {/* Promo Code Entry */}
-              <form onSubmit={applyPromoCode} className="space-y-2 border-t border-white/5 pt-6">
-                <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-semibold block">Enter Coupon Credentials</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="e.g. GOLDEN20"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    className="bg-black/40 border border-white/10 focus:border-gold/60 text-zinc-200 text-xs px-3 py-2 outline-none rounded-sm font-sans w-full uppercase"
-                  />
-                  <button 
-                    type="submit"
-                    className="border border-gold text-gold hover:bg-gold hover:text-black transition-all text-[10px] font-sans font-bold uppercase tracking-widest px-4 rounded-sm shrink-0"
-                  >
-                    Apply
-                  </button>
-                </div>
-                {promoError && (
-                  <p className="text-rose-400 text-[10px] font-mono">{promoError}</p>
-                )}
-                {appliedDiscount > 0 && (
-                  <p className="text-emerald-400 text-[10px] font-mono">Verified coupon applied!</p>
-                )}
-                <div className="text-[10px] text-zinc-500 font-sans font-light leading-relaxed pt-1">
-                  *Use code <span className="text-gold font-mono font-semibold">GOLDEN20</span> for 20% off.
-                </div>
-              </form>
+
 
               {/* Actions */}
               <div className="space-y-3 pt-4 border-t border-white/5">

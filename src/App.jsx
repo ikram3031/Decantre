@@ -21,6 +21,7 @@ import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsAndCondition } from './pages/TermsAndCondition';
 import { ReturnPolicy } from './pages/ReturnPolicy';
 import { ProductDetail } from './pages/ProductDetail';
+import { FAQ } from './pages/FAQ';
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="privacy-policy" element={<PrivacyPolicy />} />
             <Route path="terms-and-condition" element={<TermsAndCondition />} />
             <Route path="return-policy" element={<ReturnPolicy />} />
+            <Route path="faq" element={<FAQ />} />
 
             {/* Olfactory Void (404 Fallback) */}
             <Route path="*" element={<NotFound />} />

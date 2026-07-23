@@ -1,5 +1,19 @@
 import { create } from 'zustand';
 import { mapRemoteProduct } from './productHelpers';
+import { FALLBACK_PRODUCTS, FALLBACK_CATEGORIES, FALLBACK_BRANDS } from '../data/fallbackData';
+
+const fetchWithTimeout = async (url, options = {}, timeout = 4000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return response;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+};
 
 const parseQuery = (queryString) => {
   const params = {};
@@ -47,10 +61,10 @@ export const useAppStore = create((set, get) => {
   })();
 
   return {
-    // Dynamic lists populated from API on mount
-    products: [],
-    categories: [],
-    brands: [],
+    // Dynamic lists populated from API on mount with fallback defaults
+    products: FALLBACK_PRODUCTS,
+    categories: FALLBACK_CATEGORIES,
+    brands: FALLBACK_BRANDS,
 
     setProducts: (newProducts) => set({ products: newProducts }),
     setCategories: (newCategories) => set({ categories: newCategories }),
@@ -61,20 +75,22 @@ export const useAppStore = create((set, get) => {
         const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
         const base = `${apiBaseUrl}/api/wp/products`;
         const url = opts && opts.rawQuery ? `${base}?${opts.rawQuery}` : base;
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url, {}, 4000);
         if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
         const json = await res.json();
         const list = Array.isArray(json.data) ? json.data : [];
 
-        // map remote shape to app product shape, include variations
-        const mapped = list.map(mapRemoteProduct);
-
-        set({ products: mapped });
-        return mapped;
+        if (list.length > 0) {
+          const mapped = list.map(mapRemoteProduct);
+          set({ products: mapped });
+          return mapped;
+        }
+        return get().products;
       } catch (err) {
-        console.error('Network error fetching products from API:', err);
-        set({ products: [] });
-        return [];
+        if (!get().products || get().products.length === 0) {
+          set({ products: FALLBACK_PRODUCTS });
+        }
+        return get().products;
       }
     },
 
@@ -83,16 +99,21 @@ export const useAppStore = create((set, get) => {
         const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
         const base = `${apiBaseUrl}/api/wp/taxonomies/categories`;
         const rawQuery = opts && opts.rawQuery ? opts.rawQuery : 'skip=0&limit=50';
-        const res = await fetch(`${base}?${rawQuery}`);
+        const res = await fetchWithTimeout(`${base}?${rawQuery}`, {}, 4000);
         if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
         const json = await res.json();
         const list = Array.isArray(json.data) ? json.data : [];
-        set({ categories: list });
-        return list;
+
+        if (list.length > 0) {
+          set({ categories: list });
+          return list;
+        }
+        return get().categories;
       } catch (err) {
-        console.error('Network error fetching categories from API:', err);
-        set({ categories: [] });
-        return [];
+        if (!get().categories || get().categories.length === 0) {
+          set({ categories: FALLBACK_CATEGORIES });
+        }
+        return get().categories;
       }
     },
 
@@ -101,16 +122,21 @@ export const useAppStore = create((set, get) => {
         const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
         const base = `${apiBaseUrl}/api/wp/taxonomies/brands`;
         const rawQuery = opts && opts.rawQuery ? opts.rawQuery : 'skip=0&limit=50';
-        const res = await fetch(`${base}?${rawQuery}`);
+        const res = await fetchWithTimeout(`${base}?${rawQuery}`, {}, 4000);
         if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
         const json = await res.json();
         const list = Array.isArray(json.data) ? json.data : [];
-        set({ brands: list });
-        return list;
+
+        if (list.length > 0) {
+          set({ brands: list });
+          return list;
+        }
+        return get().brands;
       } catch (err) {
-        console.error('Network error fetching brands from API:', err);
-        set({ brands: [] });
-        return [];
+        if (!get().brands || get().brands.length === 0) {
+          set({ brands: FALLBACK_BRANDS });
+        }
+        return get().brands;
       }
     },
     // 1. Core States
@@ -150,6 +176,8 @@ export const useAppStore = create((set, get) => {
     sameAsBilling: true,
     shippingZone: 'inside-dhaka',
     shippingAddress: {
+      fullName: '',
+      phone: '',
       address: '',
       city: '',
       thana: '',
@@ -316,7 +344,7 @@ export const useAppStore = create((set, get) => {
       }
 
       get().saveCart(newCart);
-      get().addToast(`Added ${qty}x ${product.name} (${size} - ${concentration}) to your chest.`, 'success');
+      get().addToast(`Added ${qty}x ${product.name} (${size} - ${concentration}) to your cart.`, 'success');
     },
 
     handleUpdateQty: (itemId, change) => {
@@ -410,47 +438,40 @@ export const useAppStore = create((set, get) => {
         shippingInfo.fullName,
         shippingInfo.phone,
         shippingInfo.email,
-        shippingInfo.address,
-        shippingInfo.thana,
-        shippingInfo.district,
-        shippingInfo.zip
+        shippingInfo.district
       ];
 
-      if (requiredBilling.some((field) => !field)) {
-        get().addToast('Please complete all billing details before continuing.', 'error');
+      if (requiredBilling.some((field) => !field || !field.trim())) {
+        get().addToast('Please complete required billing fields: Name, Phone, Email, District.', 'error');
         return;
       }
 
       if (paymentMethod !== 'instore' && !sameAsBilling) {
-        const requiredShipping = [
-          shippingAddress.address,
-          shippingAddress.thana,
-          shippingAddress.district,
-          shippingAddress.zip
-        ];
-        if (requiredShipping.some((field) => !field)) {
-          get().addToast('Please complete the shipping address or enable billing as shipping.', 'error');
+        if (!shippingAddress.fullName || !shippingAddress.fullName.trim() ||
+            !shippingAddress.phone || !shippingAddress.phone.trim() ||
+            !shippingAddress.district || !shippingAddress.district.trim()) {
+          get().addToast('Please enter required shipping fields: Recipient Name, Phone Number, and District.', 'error');
           return;
         }
       }
 
       // Validate payment details for bKash, Nagad, and Bank Transfer
       if (paymentMethod === 'bkash') {
-        const { bkashNumber, bkashTxnId, bkashAmount } = paymentDetails;
-        if (!bkashNumber || !bkashTxnId || !bkashAmount) {
-          get().addToast('Please fill in all bKash payment details.', 'error');
+        const { bkashNumber, bkashTxnId } = paymentDetails;
+        if (!bkashNumber || !bkashNumber.trim() || !bkashTxnId || !bkashTxnId.trim()) {
+          get().addToast('Please enter your bKash Number and Transaction ID.', 'error');
           return;
         }
       } else if (paymentMethod === 'nagad') {
-        const { nagadNumber, nagadTxnId, nagadAmount } = paymentDetails;
-        if (!nagadNumber || !nagadTxnId || !nagadAmount) {
-          get().addToast('Please fill in all Nagad payment details.', 'error');
+        const { nagadNumber, nagadTxnId } = paymentDetails;
+        if (!nagadNumber || !nagadNumber.trim() || !nagadTxnId || !nagadTxnId.trim()) {
+          get().addToast('Please enter your Nagad Number and Transaction ID.', 'error');
           return;
         }
       } else if (paymentMethod === 'bank_transfer') {
-        const { bankAccountNumber, bankName, bankAmount } = paymentDetails;
-        if (!bankAccountNumber || !bankName || !bankAmount) {
-          get().addToast('Please fill in all Bank Transfer details.', 'error');
+        const { bankAccountNumber, bankName } = paymentDetails;
+        if (!bankAccountNumber || !bankAccountNumber.trim() || !bankName || !bankName.trim()) {
+          get().addToast('Please enter Bank Details and Transaction Reference.', 'error');
           return;
         }
       }
@@ -473,7 +494,7 @@ export const useAppStore = create((set, get) => {
           paymentMethod,
           subtotal: pricing.cartSubtotal,
           shippingFee: pricing.shippingFee,
-          tax: pricing.luxuryTax,
+          tax: 0,
           total: pricing.cartTotal,
           items: cart.map((item) => ({
             name: item.product.name,
@@ -635,21 +656,19 @@ export const useAppStore = create((set, get) => {
       let shippingFee = 0;
       if (paymentMethod !== 'instore' && cartSubtotal > 0) {
         const activeDistrict = (sameAsBilling ? (shippingInfo.district || '') : (shippingAddress.district || '')).trim().toLowerCase();
-        if (activeDistrict === 'dhaka' || activeDistrict === '') {
+        if (activeDistrict === 'dhaka' || activeDistrict.includes('dhaka')) {
           shippingFee = 80;
         } else {
-          shippingFee = 140;
+          shippingFee = 120;
         }
       }
 
-      const luxuryTax = Math.round((cartSubtotal - discountAmount) * 0.08);
-      const cartTotal = Math.max(0, cartSubtotal - discountAmount + shippingFee + luxuryTax + (shippingInfo.giftWrap ? 15 : 0));
+      const cartTotal = Math.max(0, cartSubtotal - discountAmount + shippingFee);
 
       return {
         cartSubtotal,
         discountAmount,
         shippingFee,
-        luxuryTax,
         cartTotal
       };
     }

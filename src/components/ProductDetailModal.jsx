@@ -226,7 +226,7 @@ export const ProductDetailModal = ({
                     className="bg-transparent border border-gold hover:bg-gold hover:text-black text-gold font-sans font-bold uppercase tracking-[0.25em] text-[10px] px-8 py-3.5 rounded-none shadow-2xl flex items-center justify-center gap-2 transition-all cursor-pointer h-12"
                   >
                     <ShoppingCart className="w-3.5 h-3.5" />
-                    Add to chest
+                    Add to cart
                   </button>
                 </div>
 

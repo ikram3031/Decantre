@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 
 import { AnnouncementBar } from './AnnouncementBar';
 import { Header } from './Header';
+import { Breadcrumb } from './Breadcrumb';
 import { Footer } from './Footer';
 import { ScentFinderQuiz } from './ScentFinderQuiz';
 import { ProductDetailModal } from './ProductDetailModal';
@@ -52,7 +53,6 @@ export const Layout = () => {
     cartSubtotal,
     discountAmount,
     shippingFee,
-    luxuryTax,
     cartTotal,
     searchQuery,
     setSearchQuery,
@@ -83,8 +83,11 @@ export const Layout = () => {
         setIsCartOpen={setIsCartOpen}
       />
 
-      {/* Main Content Area */}
-      <main className="min-h-[70vh]">
+      {/* Breadcrumb Navigation on all subpages */}
+      <Breadcrumb />
+
+      {/* Main Content Area in Fixed Container */}
+      <main className="min-h-[70vh] max-w-7xl mx-auto w-full">
         <Outlet />
       </main>
 
@@ -96,19 +99,6 @@ export const Layout = () => {
         setQuizStep={setQuizStep}
         quizRecommendation={quizRecommendation}
         handleQuizAnswer={handleQuizAnswer}
-        handleAddToCart={handleAddToCart}
-        handleOpenProductDetail={handleOpenProductDetail}
-      />
-
-      {/* Product Detail Quickview dialog */}
-      <ProductDetailModal 
-        selectedProduct={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        modalSize={modalSize}
-        setModalSize={setModalSize}
-        modalConcentration={modalConcentration}
-        setModalConcentration={setModalConcentration}
-        calculateItemPrice={calculateItemPrice}
         handleAddToCart={handleAddToCart}
       />
 
@@ -135,15 +125,14 @@ export const Layout = () => {
         cartSubtotal={cartSubtotal}
         discountAmount={discountAmount}
         shippingFee={shippingFee}
-        luxuryTax={luxuryTax}
         cartTotal={cartTotal}
       />
 
       {/* User credentials & profile session overlay */}
       <AuthModal />
 
-      {/* Persistent floating bottom menu */}
-      <BottomNav />
+      {/* Persistent floating bottom menu - hidden/commented out per specification */}
+      {/* <BottomNav /> */}
 
       {/* Footnote */}
       <Footer />

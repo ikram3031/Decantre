@@ -39,7 +39,7 @@ export const CartDrawer = ({
         className="w-full max-w-md bg-luxury-black border-l border-gold/20 h-full shadow-2xl flex flex-col justify-between text-luxury-white p-0"
       >
         <div className="sr-only">
-          <SheetTitle>Your Perfume Chest</SheetTitle>
+          <SheetTitle>Your Shopping Cart</SheetTitle>
           <SheetDescription>Verify your decants, customize gift wrap and complete secure payment</SheetDescription>
         </div>
 
@@ -48,7 +48,7 @@ export const CartDrawer = ({
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold shrink-0" />
             <h2 className="text-[10px] sm:text-sm font-sans font-semibold tracking-wide sm:tracking-widest text-luxury-white uppercase truncate">
-              Your Fragrance Chest
+              Your Cart
             </h2>
             <span className="bg-gold/10 text-gold text-[9px] sm:text-[10px] font-sans font-semibold rounded-sm px-2 sm:px-2.5 py-0.5 ml-0.5 sm:ml-1 border border-gold/20 shrink-0">
               {cart.reduce((sum, item) => sum + item.quantity, 0)}
@@ -70,8 +70,8 @@ export const CartDrawer = ({
             cart.length === 0 ? (
               <div className="text-center py-20 space-y-4">
                 <ShoppingBag className="w-10 h-10 text-zinc-800 mx-auto" />
-                <p className="text-zinc-400 font-light text-xs font-serif">Your gold-lined chest is currently vacant.</p>
-                <p className="text-[10px] text-zinc-600">Select a signature scent from our list to fill your private collection.</p>
+                <p className="text-zinc-400 font-light text-xs font-serif">Your cart is currently empty.</p>
+                <p className="text-[10px] text-zinc-600">Select a signature scent from our list to fill your collection.</p>
                 <button 
                   onClick={() => setIsCartOpen(false)}
                   className="mt-6 bg-transparent hover:bg-gold text-gold hover:text-black border border-gold text-[10px] font-sans font-bold tracking-widest uppercase py-3 px-6 rounded-sm transition-all cursor-pointer"
@@ -333,7 +333,7 @@ export const CartDrawer = ({
                       onClick={() => setIsCheckoutMode(false)}
                       className="flex-1 border border-white/5 text-zinc-400 hover:text-white hover:bg-black text-[10px] font-bold uppercase tracking-widest py-3.5 rounded-sm transition-colors"
                     >
-                      Back to Chest
+                      Back to Cart
                     </button>
                     
                     <button 
@@ -368,36 +368,12 @@ export const CartDrawer = ({
         {!orderCompleted && cart.length > 0 && (
           <div className="p-4 sm:p-6 bg-luxury-black border-t border-white/5 space-y-4 w-full max-w-full overflow-hidden">
             
-            {/* Promo Code Input */}
-            {!isCheckoutMode && (
-              <form onSubmit={applyPromoCode} className="flex gap-1.5 w-full items-stretch">
-                <input 
-                  type="text" 
-                  placeholder="PROMO CODE"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  className="flex-1 min-w-0 bg-black border border-white/5 rounded-sm px-2.5 py-2 text-xs font-light text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-gold/50 uppercase font-sans"
-                />
-                <button 
-                  type="submit"
-                  className="bg-transparent hover:bg-gold hover:text-black text-gold border border-gold/40 px-3 sm:px-4 rounded-sm text-xs uppercase font-sans font-semibold tracking-wider transition-colors shrink-0"
-                >
-                  Apply
-                </button>
-              </form>
-            )}
 
-            {promoError && <p className="text-[10px] text-rose-400 text-left">{promoError}</p>}
-            {appliedDiscount > 0 && (
-              <p className="text-[10px] text-gold text-left font-sans">
-                ✨ Sovereign Credentials Verified: {appliedDiscount * 100}% off your entire basket!
-              </p>
-            )}
 
             {/* Pricing Recalcs */}
                 <div className="space-y-2 text-xs font-sans font-light text-zinc-400 border-t border-white/5 pt-3 text-left">
               <div className="flex justify-between">
-                <span>Decants Subtotal</span>
+                <span>Cart Subtotal</span>
                 <span className="text-zinc-200 font-medium">{formatBDT(cartSubtotal)}</span>
               </div>
               {appliedDiscount > 0 && (
@@ -406,23 +382,9 @@ export const CartDrawer = ({
                   <span>-{formatBDT(discountAmount)}</span>
                 </div>
               )}
-              {shippingInfo.giftWrap && (
-                <div className="flex justify-between text-zinc-300">
-                  <span>Presentation Velvet Box</span>
-                  <span>+{formatBDT(15)}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span>Elite Courier Shipping</span>
-                <span className="text-zinc-200">{shippingFee === 0 ? 'COMPLIMENTARY' : formatBDT(shippingFee)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Luxury Excise Duty (8%)</span>
-                <span className="text-zinc-200">{formatBDT(luxuryTax)}</span>
-              </div>
               <div className="flex justify-between text-xs font-semibold text-luxury-white border-t border-white/5 pt-2 font-sans tracking-widest">
-                <span>GRAND TOTAL DEVIATION</span>
-                <span className="text-gold text-base">{formatBDT(cartTotal)}</span>
+                <span>ESTIMATED TOTAL</span>
+                <span className="text-gold text-base">{formatBDT(Math.max(0, cartSubtotal - discountAmount))}</span>
               </div>
             </div>
 
@@ -432,12 +394,21 @@ export const CartDrawer = ({
                 <button
                   onClick={() => {
                     setIsCartOpen(false);
+                    navigate('/checkout');
+                  }}
+                  className="w-full bg-gold text-black hover:bg-gold/90 font-sans font-bold uppercase tracking-[0.25em] text-[11px] py-3.5 rounded-sm transition-all duration-300 shadow-xl flex items-center justify-center gap-2 group cursor-pointer"
+                >
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button
+                  onClick={() => {
+                    setIsCartOpen(false);
                     navigate('/cart');
                   }}
-                  className="w-full bg-gold text-black hover:bg-gold/90 font-sans font-bold uppercase tracking-[0.25em] text-[10px] py-3.5 rounded-sm transition-all duration-300 shadow-xl flex items-center justify-center gap-2 group cursor-pointer"
+                  className="w-full bg-transparent border border-white/20 text-zinc-300 hover:text-white hover:border-gold/60 font-sans font-bold uppercase tracking-[0.2em] text-[10px] py-2.5 rounded-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>View Full Chest Cart</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <span>View Full Cart</span>
                 </button>
               </div>
             ) : null}
