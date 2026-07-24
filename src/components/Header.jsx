@@ -179,19 +179,6 @@ export const Header = ({
           >
             {isMobileMenuOpen ? <X className="w-5 h-5 text-gold" /> : <Menu className="w-5 h-5 text-gold" />}
           </button>
-
-          {/* Direct Desktop Navigation */}
-          <nav className="hidden xl:flex items-center gap-5 text-xs uppercase tracking-[0.15em] font-medium text-gold/90 font-sans">
-            {menuData.mainNav.slice(0, 7).map((item) => (
-              <button
-                key={item.id}
-                onClick={() => navigate(item.path)}
-                className="hover:text-white transition-colors cursor-pointer py-1"
-              >
-                {item.label}
-              </button>
-            ))}
-          </nav>
         </div>
 
         {/* Center: Logo and Branding */}
