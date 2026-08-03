@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { mapRemoteProduct } from './productHelpers';
+import { 
+  fetchProducts as apiFetchProducts, 
+  fetchCategories as apiFetchCategories, 
+  fetchBrands as apiFetchBrands, 
+  fetchProductDetails as apiFetchProductDetails,
+  fetchCombos as apiFetchCombos,
+  createOrder as apiCreateOrder 
+} from '../lib/api';
 
 const parseQuery = (queryString) => {
   const params = {};
@@ -47,69 +54,101 @@ export const useAppStore = create((set, get) => {
   })();
 
   return {
-    // Dynamic lists populated from API on mount
+    // Dynamic lists populated exclusively from backend API
     products: [],
-    categories: [],
-    brands: [],
+    categories: (() => {
+      try {
+        const cached = localStorage.getItem('luxury_categories');
+        return cached ? JSON.parse(cached) : [];
+      } catch (e) {
+        return [];
+      }
+    })(),
+    brands: (() => {
+      try {
+        const cached = localStorage.getItem('luxury_brands');
+        return cached ? JSON.parse(cached) : [];
+      } catch (e) {
+        return [];
+      }
+    })(),
+    combos: [],
+
+    isProductsLoading: false,
+    productsError: null,
+
+    isCategoriesLoading: false,
+    categoriesError: null,
+
+    isBrandsLoading: false,
+    brandsError: null,
+
+    isCombosLoading: false,
+    combosError: null,
 
     setProducts: (newProducts) => set({ products: newProducts }),
     setCategories: (newCategories) => set({ categories: newCategories }),
     setBrands: (newBrands) => set({ brands: newBrands }),
+    setCombos: (newCombos) => set({ combos: newCombos }),
 
     fetchProducts: async (opts = {}) => {
+      set({ isProductsLoading: true, productsError: null });
       try {
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
-        const base = `${apiBaseUrl}/api/wp/products`;
-        const url = opts && opts.rawQuery ? `${base}?${opts.rawQuery}` : base;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
-        const json = await res.json();
-        const list = Array.isArray(json.data) ? json.data : [];
-
-        // map remote shape to app product shape, include variations
-        const mapped = list.map(mapRemoteProduct);
-
-        set({ products: mapped });
+        const mapped = await apiFetchProducts(opts);
+        set({ products: mapped, isProductsLoading: false, productsError: null });
         return mapped;
       } catch (err) {
-        console.error('Network error fetching products from API:', err);
-        set({ products: [] });
+        set({ isProductsLoading: false, productsError: 'Something went wrong' });
         return [];
       }
     },
 
-    fetchCategories: async (opts = {}) => {
+    fetchProductDetails: async (slugOrId) => {
       try {
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
-        const base = `${apiBaseUrl}/api/wp/taxonomies/categories`;
-        const rawQuery = opts && opts.rawQuery ? opts.rawQuery : 'skip=0&limit=50';
-        const res = await fetch(`${base}?${rawQuery}`);
-        if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
-        const json = await res.json();
-        const list = Array.isArray(json.data) ? json.data : [];
-        set({ categories: list });
+        return await apiFetchProductDetails(slugOrId);
+      } catch (err) {
+        return null;
+      }
+    },
+
+    fetchCategories: async (opts = {}) => {
+      set({ isCategoriesLoading: true, categoriesError: null });
+      try {
+        const list = await apiFetchCategories(opts);
+        set({ categories: list, isCategoriesLoading: false, categoriesError: null });
+        try {
+          localStorage.setItem('luxury_categories', JSON.stringify(list));
+        } catch (_) {}
         return list;
       } catch (err) {
-        console.error('Network error fetching categories from API:', err);
-        set({ categories: [] });
+        set({ isCategoriesLoading: false, categoriesError: 'Something went wrong' });
         return [];
       }
     },
 
     fetchBrands: async (opts = {}) => {
+      set({ isBrandsLoading: true, brandsError: null });
       try {
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
-        const base = `${apiBaseUrl}/api/wp/taxonomies/brands`;
-        const rawQuery = opts && opts.rawQuery ? opts.rawQuery : 'skip=0&limit=50';
-        const res = await fetch(`${base}?${rawQuery}`);
-        if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
-        const json = await res.json();
-        const list = Array.isArray(json.data) ? json.data : [];
-        set({ brands: list });
+        const list = await apiFetchBrands(opts);
+        set({ brands: list, isBrandsLoading: false, brandsError: null });
+        try {
+          localStorage.setItem('luxury_brands', JSON.stringify(list));
+        } catch (_) {}
         return list;
       } catch (err) {
-        console.error('Network error fetching brands from API:', err);
-        set({ brands: [] });
+        set({ isBrandsLoading: false, brandsError: 'Something went wrong' });
+        return [];
+      }
+    },
+
+    fetchCombos: async (opts = {}) => {
+      set({ isCombosLoading: true, combosError: null });
+      try {
+        const list = await apiFetchCombos(opts);
+        set({ combos: list, isCombosLoading: false, combosError: null });
+        return list;
+      } catch (err) {
+        set({ isCombosLoading: false, combosError: 'Something went wrong' });
         return [];
       }
     },
@@ -150,6 +189,8 @@ export const useAppStore = create((set, get) => {
     sameAsBilling: true,
     shippingZone: 'inside-dhaka',
     shippingAddress: {
+      fullName: '',
+      phone: '',
       address: '',
       city: '',
       thana: '',
@@ -182,8 +223,14 @@ export const useAppStore = create((set, get) => {
     isProcessingOrder: false,
     orderNumber: null,
     toasts: [],
+    currentTheme: localStorage.getItem('luxury_theme') || 'dark',
 
     // 2. Direct State Setters
+    toggleTheme: () => set((state) => {
+      const nextTheme = state.currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('luxury_theme', nextTheme);
+      return { currentTheme: nextTheme };
+    }),
     setCurrentSlide: (slide) => set((state) => ({
       currentSlide: typeof slide === 'function' ? slide(state.currentSlide) : slide
     })),
@@ -196,12 +243,32 @@ export const useAppStore = create((set, get) => {
     setIsCartOpen: (isOpen) => set((state) => ({
       isCartOpen: typeof isOpen === 'function' ? isOpen(state.isCartOpen) : isOpen
     })),
-    setUser: (user) => {
+    accessToken: localStorage.getItem('luxury_access_token') || null,
+    refreshToken: localStorage.getItem('luxury_refresh_token') || null,
+    setTokens: (accessToken, refreshToken) => {
+      set({ accessToken, refreshToken });
+      if (accessToken) {
+        localStorage.setItem('luxury_access_token', accessToken);
+      } else {
+        localStorage.removeItem('luxury_access_token');
+      }
+      if (refreshToken) {
+        localStorage.setItem('luxury_refresh_token', refreshToken);
+      } else {
+        localStorage.removeItem('luxury_refresh_token');
+      }
+    },
+    setUser: (user, tokens = null) => {
       set({ user });
       if (user) {
         localStorage.setItem('luxury_user', JSON.stringify(user));
       } else {
         localStorage.removeItem('luxury_user');
+      }
+      if (tokens) {
+        get().setTokens(tokens.accessToken, tokens.refreshToken);
+      } else if (user === null) {
+        get().setTokens(null, null);
       }
     },
     setAuthModal: (isOpen, mode = 'login') => set({
@@ -288,8 +355,15 @@ export const useAppStore = create((set, get) => {
       return Math.round(finalPrice);
     },
 
-    handleAddToCart: (product, size, concentration, qty = 1) => {
-      const unitPrice = get().calculateItemPrice(product.basePrice, size, concentration);
+    handleAddToCart: (product, size, concentration, qty = 1, explicitUnitPrice = null) => {
+      let unitPrice = explicitUnitPrice;
+      if (unitPrice == null) {
+        const foundVar = product?.variations && Array.isArray(product.variations)
+          ? product.variations.find(v => v.size === size)
+          : null;
+        const basePrice = foundVar ? foundVar.price : (product?.basePrice ?? 0);
+        unitPrice = get().calculateItemPrice(basePrice, size, concentration);
+      }
       const cart = get().cart;
       const existingIndex = cart.findIndex(
         (item) => item.product.id === product.id && item.size === size && item.concentration === concentration
@@ -310,7 +384,38 @@ export const useAppStore = create((set, get) => {
       }
 
       get().saveCart(newCart);
-      get().addToast(`Added ${qty}x ${product.name} (${size} - ${concentration}) to your chest.`, 'success');
+      get().addToast(`Added ${qty}x ${product.name} (${size} - ${concentration}) to your cart.`, 'success');
+    },
+
+    handleAddComboToCart: (combo, qty = 1) => {
+      const cart = get().cart;
+      const comboId = `combo-${combo.id}`;
+      const existingIndex = cart.findIndex((item) => item.id === comboId);
+
+      let newCart = [...cart];
+      if (existingIndex > -1) {
+        newCart[existingIndex].quantity += qty;
+      } else {
+        newCart.push({
+          id: comboId,
+          product: {
+            id: combo.id,
+            name: combo.name,
+            image: combo.image || (combo.items && combo.items[0] && combo.items[0].image) || '',
+            category: 'Combo Set',
+            brand: combo.brand || 'Decantre Curated Bundle',
+            isCombo: true
+          },
+          size: 'Full Combo Set',
+          concentration: `${combo.items ? combo.items.length : 3} Items Included`,
+          quantity: qty,
+          unitPrice: combo.comboPrice,
+          comboItems: combo.items || []
+        });
+      }
+
+      get().saveCart(newCart);
+      get().addToast(`Added "${combo.name}" Combo Bundle to your cart!`, 'success');
     },
 
     handleUpdateQty: (itemId, change) => {
@@ -405,46 +510,41 @@ export const useAppStore = create((set, get) => {
         shippingInfo.phone,
         shippingInfo.email,
         shippingInfo.address,
-        shippingInfo.thana,
-        shippingInfo.district,
-        shippingInfo.zip
+        shippingInfo.district
       ];
 
-      if (requiredBilling.some((field) => !field)) {
-        get().addToast('Please complete all billing details before continuing.', 'error');
+      if (requiredBilling.some((field) => !field || !field.trim())) {
+        get().addToast('Please complete required billing fields: Name, Phone, Email, Address, District.', 'error');
         return;
       }
 
       if (paymentMethod !== 'instore' && !sameAsBilling) {
-        const requiredShipping = [
-          shippingAddress.address,
-          shippingAddress.thana,
-          shippingAddress.district,
-          shippingAddress.zip
-        ];
-        if (requiredShipping.some((field) => !field)) {
-          get().addToast('Please complete the shipping address or enable billing as shipping.', 'error');
+        if (!shippingAddress.fullName || !shippingAddress.fullName.trim() ||
+            !shippingAddress.phone || !shippingAddress.phone.trim() ||
+            !shippingAddress.address || !shippingAddress.address.trim() ||
+            !shippingAddress.district || !shippingAddress.district.trim()) {
+          get().addToast('Please enter required shipping fields: Recipient Name, Phone Number, Address, and District.', 'error');
           return;
         }
       }
 
       // Validate payment details for bKash, Nagad, and Bank Transfer
       if (paymentMethod === 'bkash') {
-        const { bkashNumber, bkashTxnId, bkashAmount } = paymentDetails;
-        if (!bkashNumber || !bkashTxnId || !bkashAmount) {
-          get().addToast('Please fill in all bKash payment details.', 'error');
+        const { bkashNumber, bkashTxnId } = paymentDetails;
+        if (!bkashNumber || !bkashNumber.trim() || !bkashTxnId || !bkashTxnId.trim()) {
+          get().addToast('Please enter your bKash Number and Transaction ID.', 'error');
           return;
         }
       } else if (paymentMethod === 'nagad') {
-        const { nagadNumber, nagadTxnId, nagadAmount } = paymentDetails;
-        if (!nagadNumber || !nagadTxnId || !nagadAmount) {
-          get().addToast('Please fill in all Nagad payment details.', 'error');
+        const { nagadNumber, nagadTxnId } = paymentDetails;
+        if (!nagadNumber || !nagadNumber.trim() || !nagadTxnId || !nagadTxnId.trim()) {
+          get().addToast('Please enter your Nagad Number and Transaction ID.', 'error');
           return;
         }
       } else if (paymentMethod === 'bank_transfer') {
-        const { bankAccountNumber, bankName, bankAmount } = paymentDetails;
-        if (!bankAccountNumber || !bankName || !bankAmount) {
-          get().addToast('Please fill in all Bank Transfer details.', 'error');
+        const { bankAccountNumber, bankName } = paymentDetails;
+        if (!bankAccountNumber || !bankAccountNumber.trim() || !bankName || !bankName.trim()) {
+          get().addToast('Please enter Bank Details and Transaction Reference.', 'error');
           return;
         }
       }
@@ -467,7 +567,7 @@ export const useAppStore = create((set, get) => {
           paymentMethod,
           subtotal: pricing.cartSubtotal,
           shippingFee: pricing.shippingFee,
-          tax: pricing.luxuryTax,
+          tax: 0,
           total: pricing.cartTotal,
           items: cart.map((item) => ({
             name: item.product.name,
@@ -479,59 +579,18 @@ export const useAppStore = create((set, get) => {
           paymentDetails: ['bkash', 'nagad', 'bank_transfer'].includes(paymentMethod) ? paymentDetails : null
         };
 
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
-        const res = await fetch(`${apiBaseUrl}/api/v1/orders/new-order`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        const json = await apiCreateOrder(payload);
 
-        let json = {};
-        try {
-          json = await res.json();
-        } catch {
-          json = {};
-        }
-
-        if (!res.ok || json.status !== 'success') {
-          // If the backend doesn't support our new payment methods, fallback to local simulation
-          if (['bkash', 'nagad', 'bank_transfer'].includes(paymentMethod)) {
-            console.warn('Backend does not support this payment method, falling back to local simulation.');
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            const localOrderNumber = 'DEC-' + Math.floor(100000 + Math.random() * 900000);
-            set({
-              isProcessingOrder: false,
-              orderCompleted: true,
-              orderNumber: localOrderNumber
-            });
-            get().addToast('Your order has been officially verified and compiled.', 'success');
-            return;
-          }
-          const errMsg = json?.errors?.[0] || json?.message || 'Order submission failed. Please try again.';
-          get().addToast(errMsg, 'error');
-          set({ isProcessingOrder: false });
-          return;
-        }
-
+        get().saveCart([]);
         set({
           isProcessingOrder: false,
           orderCompleted: true,
-          orderNumber: json.data?.orderNumber ?? null
+          orderNumber: json.data?.orderNumber ?? json.data?.id ?? ('DEC-' + Math.floor(100000 + Math.random() * 900000))
         });
-        get().addToast(json?.message || 'Your order has been officially verified and compiled.', 'success');
+        get().addToast(json?.message || 'Your order has been placed successfully!', 'success');
       } catch (err) {
-        console.warn('Network error during checkout submission, simulating high-fidelity local checkout:', err);
-        
-        // Simulating minor processing delay for realistic luxury experience
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        const localOrderNumber = 'DEC-' + Math.floor(100000 + Math.random() * 900000);
-        set({
-          isProcessingOrder: false,
-          orderCompleted: true,
-          orderNumber: localOrderNumber
-        });
-        get().addToast('Your order has been officially verified and compiled.', 'success');
+        set({ isProcessingOrder: false });
+        get().addToast(err?.message || 'Something went wrong', 'error');
       }
     },
 
@@ -629,21 +688,19 @@ export const useAppStore = create((set, get) => {
       let shippingFee = 0;
       if (paymentMethod !== 'instore' && cartSubtotal > 0) {
         const activeDistrict = (sameAsBilling ? (shippingInfo.district || '') : (shippingAddress.district || '')).trim().toLowerCase();
-        if (activeDistrict === 'dhaka' || activeDistrict === '') {
+        if (activeDistrict === 'dhaka' || activeDistrict.includes('dhaka')) {
           shippingFee = 80;
         } else {
-          shippingFee = 140;
+          shippingFee = 120;
         }
       }
 
-      const luxuryTax = Math.round((cartSubtotal - discountAmount) * 0.08);
-      const cartTotal = Math.max(0, cartSubtotal - discountAmount + shippingFee + luxuryTax + (shippingInfo.giftWrap ? 15 : 0));
+      const cartTotal = Math.max(0, cartSubtotal - discountAmount + shippingFee);
 
       return {
         cartSubtotal,
         discountAmount,
         shippingFee,
-        luxuryTax,
         cartTotal
       };
     }

@@ -4,6 +4,10 @@ npm-debug.log*
 .gitignore
 .env
 .env.*
+.env.development
+.env.production
+logs
+coverage
 dist
 build
-docs
+Dockerfile*

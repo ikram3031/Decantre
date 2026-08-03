@@ -77,8 +77,7 @@ export const ProductDetailModal = ({
         {/* Fixed Top-Left Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 z-50 p-2.5 bg-luxury-black/90 hover:bg-black border border-gold/20 hover:border-gold rounded-full text-zinc-300 hover:text-gold transition-all duration-300 shadow-xl cursor-pointer"
-          title="Close"
+          className="absolute top-4 left-4 z-50 p-2.5 bg-luxury-black/90 hover:bg-black border border-gold/50 hover:border-gold rounded-full text-zinc-300 hover:text-gold transition-all duration-300 shadow-xl cursor-pointer"
         >
           <XIcon className="w-4 h-4" />
         </button>
@@ -221,13 +220,13 @@ export const ProductDetailModal = ({
 
                   <button
                     onClick={() => {
-                      handleAddToCart(selectedProduct, modalSize, 'Eau de Parfum', 1);
+                      handleAddToCart(selectedProduct, modalSize, 'Eau de Parfum', 1, activePrice);
                       onClose();
                     }}
                     className="bg-transparent border border-gold hover:bg-gold hover:text-black text-gold font-sans font-bold uppercase tracking-[0.25em] text-[10px] px-8 py-3.5 rounded-none shadow-2xl flex items-center justify-center gap-2 transition-all cursor-pointer h-12"
                   >
                     <ShoppingCart className="w-3.5 h-3.5" />
-                    Add to chest
+                    Add to cart
                   </button>
                 </div>
 

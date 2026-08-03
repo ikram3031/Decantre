@@ -1,33 +1,38 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import luxuryPerfumeHero from '../assets/images/luxury_perfume_hero_1784311872347.jpg';
+import perfumeUnisex from '../assets/images/perfume_unisex_1784311906469.jpg';
+import perfumeForHer from '../assets/images/perfume_for_her_1784311895919.jpg';
 
 const featuredSlides = [
   {
     title: "DECANTRE DE MAJESTÉ",
     subtitle: "The Sovereign Golden Oud",
     description: "A breathtaking encounter between golden royal saffron, deep Cambodian oud, and burnished leather. Experience the peak of luxurious scent chemistry.",
-    bgImage: '/src/assets/images/luxury_perfume_hero_1784311872347.jpg',
+    bgImage: luxuryPerfumeHero,
     productId: 'oud-imperial'
   },
   {
     title: "SAFFRON MYSTIQUE",
     subtitle: "A Sacred Alchemy",
     description: "A modern classic designed in collaboration with elite French master perfumers. Deeply sophisticated, intensely persistent, and proudly unisex.",
-    bgImage: '/src/assets/images/perfume_unisex_1784311906469.jpg',
+    bgImage: perfumeUnisex,
     productId: 'saffron-mystique'
   },
   {
     title: "NECTAR DE SAPHIR",
     subtitle: "Unmatched Feminine Grace",
     description: "Crystalline rose buds drenched in sweet golden nectar and vanilla orchid. A vibrant aura that leaves an unforgettable trail of absolute elegance.",
-    bgImage: '/src/assets/images/perfume_for_her_1784311895919.jpg',
+    bgImage: perfumeForHer,
     productId: 'nectar-de-saphir'
   }
 ];
 
 export const FeaturedProductSlider = () => {
-  const { products, handleOpenProductDetail } = useApp();
+  const { products } = useApp();
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Auto interval rotation
@@ -96,7 +101,11 @@ export const FeaturedProductSlider = () => {
                   <button 
                     onClick={() => {
                       const targetProd = products.find(p => p.id === slide.productId);
-                      if (targetProd) handleOpenProductDetail(targetProd);
+                      if (targetProd) {
+                        navigate(`/product?did=${targetProd.id}`);
+                      } else {
+                        navigate('/shop');
+                      }
                     }}
                     className="px-8 py-3.5 border border-gold text-[10px] uppercase tracking-[0.3em] font-sans font-bold hover:bg-gold hover:text-black transition-all duration-300 bg-transparent text-gold cursor-pointer"
                   >
@@ -142,7 +151,6 @@ export const FeaturedProductSlider = () => {
             className={`h-[2px] transition-all duration-300 cursor-pointer ${
               idx === currentSlide ? 'w-10 bg-gold' : 'w-4 bg-white/20 hover:bg-white/40'
             }`}
-            title={`Slide ${idx + 1}`}
           />
         ))}
       </div>
@@ -150,15 +158,13 @@ export const FeaturedProductSlider = () => {
       {/* Prev & Next arrows */}
       <button 
         onClick={() => setCurrentSlide((prev) => (prev - 1 + featuredSlides.length) % featuredSlides.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/20 hover:border-gold transition-all cursor-pointer"
-        title="Previous slide"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all cursor-pointer"
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
       <button 
         onClick={() => setCurrentSlide((prev) => (prev + 1) % featuredSlides.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/20 hover:border-gold transition-all cursor-pointer"
-        title="Next slide"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-[#080808]/80 hover:bg-gold text-zinc-400 hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all cursor-pointer"
       >
         <ChevronRight className="w-5 h-5" />
       </button>

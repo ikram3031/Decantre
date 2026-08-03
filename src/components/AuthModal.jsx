@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Mail, Lock, User, Key, ShieldCheck, ShoppingBag, LogOut, Award } from 'lucide-react';
+import { X, Mail, Lock, User, Key, ShieldCheck, ShoppingBag, LogOut, Award, ArrowLeft, RefreshCw, Phone } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { loginMember, registerMember, verifyMemberOtp, resendMemberOtp } from '../lib/api';
 
 export const AuthModal = () => {
   const {
@@ -13,17 +14,53 @@ export const AuthModal = () => {
     addToast
   } = useApp();
 
-  const [mode, setMode] = useState(authModalMode); // 'login' | 'register' | 'profile'
+  const [mode, setMode] = useState(authModalMode); // 'login' | 'register' | 'otp' | 'profile'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+
+  // OTP State (6 Digits)
+  const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
+  const [resendTimer, setResendTimer] = useState(180); // 3 minutes
+  const [isResending, setIsResending] = useState(false);
+  const otpInputsRef = useRef([]);
+
+  const formatOtpTimer = (seconds) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   // Synchronize internal state with global state trigger
   React.useEffect(() => {
     setMode(authModalMode);
   }, [authModalMode, isAuthModalOpen]);
+
+  // OTP Countdown Timer — auto-resends when it reaches 0
+  useEffect(() => {
+    if (mode !== 'otp') return;
+    if (resendTimer <= 0) return;
+
+    const timer = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Auto-trigger resend when timer expires
+          handleAutoResend();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, resendTimer]);
 
   if (!isAuthModalOpen) return null;
 
@@ -34,6 +71,143 @@ export const AuthModal = () => {
     setPassword('');
     setConfirmPassword('');
     setName('');
+    setPhone('');
+    setOtpValues(['', '', '', '', '', '']);
+  };
+
+  const validateEmail = (value) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed) return 'Email address is required.';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(trimmed) ? '' : 'Please enter a valid email address.';
+  };
+
+  const normalizePhoneValue = (value) => {
+    const raw = (value || '').toString().trim();
+    if (!raw) return '';
+
+    const digitsOnly = raw.replace(/[^\d+]/g, '');
+    if (digitsOnly.startsWith('+880')) return digitsOnly;
+    if (digitsOnly.startsWith('880')) return `+${digitsOnly}`;
+    if (digitsOnly.startsWith('01')) return `+880${digitsOnly.slice(1)}`;
+    if (/^1[3-8]\d{8}$/.test(digitsOnly)) return `+880${digitsOnly}`;
+    return digitsOnly;
+  };
+
+  const validatePhoneValue = (value) => {
+    const normalized = normalizePhoneValue(value);
+    if (!normalized) return 'Phone number is required.';
+    const phoneRegex = /^\+8801[3-8]\d{8}$/;
+    return phoneRegex.test(normalized)
+      ? ''
+      : 'Please enter a valid Bangladeshi number in format +8801[3-8]XXXXXXXX.';
+  };
+
+  const handlePhoneChange = (value) => {
+    const normalized = normalizePhoneValue(value);
+    setPhone(normalized);
+    setPhoneError(validatePhoneValue(normalized));
+  };
+
+  const handleOTPChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+
+    const newOtp = [...otpValues];
+    newOtp[index] = value.slice(-1);
+    setOtpValues(newOtp);
+
+    // Auto-advance to next input field
+    if (value && index < 5) {
+      otpInputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOTPKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otpValues[index] && index > 0) {
+      otpInputsRef.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOTPPaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').trim();
+    if (!/^\d+$/.test(pastedData)) return;
+
+    const digits = pastedData.slice(0, 6).split('');
+    const newOtp = [...otpValues];
+    digits.forEach((digit, idx) => {
+      newOtp[idx] = digit;
+    });
+    setOtpValues(newOtp);
+
+    const focusIdx = Math.min(digits.length, 5);
+    otpInputsRef.current[focusIdx]?.focus();
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    const code = otpValues.join('');
+    if (code.length !== 6) {
+      addToast('Please enter the full 6-digit verification code.', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await verifyMemberOtp({ email, otp: code });
+      const userData = response.user || response.data?.user || response.data || {};
+      const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
+      const refreshToken = response.refreshToken || response.data?.refreshToken;
+
+      const displayName = userData.name || name || email.split('@')[0];
+      const verifiedUser = {
+        name: displayName,
+        email: userData.email || email,
+        phone: userData.phone || phone,
+        tier: userData.tier || 'Privé Connoisseur',
+        raw: userData
+      };
+
+      setUser(verifiedUser, { accessToken, refreshToken });
+      addToast(`OTP verified successfully! Welcome, ${displayName}.`, 'success');
+      handleClose();
+    } catch (err) {
+      // Show generic error for any backend failure
+      addToast('An unexpected error occurred. Please try again.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Called manually by user pressing "Resend" button
+  const handleResendOTPCode = async () => {
+    if (resendTimer > 0 || isResending) return;
+    await triggerResend();
+  };
+
+  // Called automatically when timer hits 0
+  const handleAutoResend = async () => {
+    if (isResending) return;
+    await triggerResend({ auto: true });
+  };
+
+  const triggerResend = async ({ auto = false } = {}) => {
+    setIsResending(true);
+    try {
+      await resendMemberOtp({ email });
+      if (auto) {
+        addToast('OTP expired — a new code has been sent to your email.', 'info');
+      } else {
+        addToast('A new 6-digit verification code has been dispatched to your email.', 'success');
+      }
+      setResendTimer(180);
+      setOtpValues(['', '', '', '', '', '']);
+      otpInputsRef.current[0]?.focus();
+    } catch (err) {
+      addToast('Failed to resend verification code. Please try again later.', 'error');
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -42,39 +216,60 @@ export const AuthModal = () => {
       addToast('Please enter both your email and password.', 'error');
       return;
     }
-    if (password.length < 6) {
-      addToast('Security credentials must be at least 6 characters.', 'error');
-      return;
-    }
 
     setIsLoading(true);
-    // Realistic luxury loading simulation
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setIsLoading(false);
+    try {
+      const response = await loginMember({ email, password });
+      
+      // If backend signals OTP required
+      if (response.requiresOtp || response.data?.requiresOtp) {
+        setMode('otp');
+        setResendTimer(180);
+        addToast('Verification required. Enter the 6-digit code sent to your email.', 'info');
+        return;
+      }
 
-    const displayName = email.split('@')[0];
-    const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+      const userData = response.user || response.data?.user || response.data || {};
+      const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
+      const refreshToken = response.refreshToken || response.data?.refreshToken;
 
-    const loggedInUser = {
-      name: capitalizedName,
-      email: email,
-      tier: 'Elite Connoisseur',
-      memberSince: 'July 2026',
-      orders: [
-        { id: 'DEC-883192', date: '2026-07-15', total: 'BDT 12,450', status: 'Delivered' },
-        { id: 'DEC-941031', date: '2026-07-19', total: 'BDT 8,900', status: 'Processing' }
-      ]
-    };
+      const displayName = userData.name || userData.fullName || email.split('@')[0];
+      const loggedInUser = {
+        name: displayName,
+        email: userData.email || email,
+        tier: userData.tier || 'Elite Connoisseur',
+        raw: userData
+      };
 
-    setUser(loggedInUser);
-    addToast(`Welcome back to Decantre, ${capitalizedName}!`, 'success');
-    handleClose();
+      setUser(loggedInUser, { accessToken, refreshToken });
+      addToast(`Login successful! Welcome back, ${displayName}.`, 'success');
+      handleClose();
+    } catch (err) {
+      // Generic login error
+      addToast('Login failed. Please try again.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (!name || !email || !password || !confirmPassword) {
+
+    const emailValidationError = validateEmail(email);
+    const phoneValidationError = validatePhoneValue(phone);
+    setEmailError(emailValidationError);
+    setPhoneError(phoneValidationError);
+
+    if (!name || !email || !phone || !password || !confirmPassword) {
       addToast('Please complete all fields.', 'error');
+      return;
+    }
+    if (emailValidationError) {
+      addToast('Please enter a valid email address.', 'error');
+      return;
+    }
+    if (phoneValidationError) {
+      addToast('Please enter a valid Bangladeshi phone number in format +8801[3-8]XXXXXXXX.', 'error');
       return;
     }
     if (password !== confirmPassword) {
@@ -82,25 +277,50 @@ export const AuthModal = () => {
       return;
     }
     if (password.length < 6) {
-      addToast('Security credentials must be at least 6 characters.', 'error');
+      addToast('Password must be at least 6 characters.', 'error');
       return;
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
+    try {
+      const normalizedPhone = normalizePhoneValue(phone);
+      const memberPayload = {
+        name: name.trim(),
+        email: email.trim(),
+        phone: normalizedPhone,
+        password,
+      };
 
-    const registeredUser = {
-      name: name,
-      email: email,
-      tier: 'Privé Connoisseur',
-      memberSince: 'July 2026',
-      orders: []
-    };
+      const response = await registerMember(memberPayload);
+      
+      const userData = response.user || response.data || response;
+      const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
+      const refreshToken = response.refreshToken || response.data?.refreshToken;
 
-    setUser(registeredUser);
-    addToast(`Welcome to the Decantre Inner Circle, ${name}!`, 'success');
-    handleClose();
+      if (accessToken || refreshToken) {
+        const displayName = userData.name || name;
+        const registeredUser = {
+          name: displayName,
+          email: userData.email || email,
+          phone: userData.phone || phone,
+          tier: 'Privé Connoisseur',
+          raw: userData
+        };
+        setUser(registeredUser, { accessToken, refreshToken });
+        addToast(`Welcome to Decantre, ${displayName}!`, 'success');
+        handleClose();
+      } else {
+        // Switch to OTP verification UI if backend requires verification
+        setMode('otp');
+        setResendTimer(180);
+        addToast('Account created! Please verify the 6-digit code sent to your email.', 'success');
+      }
+    } catch (err) {
+      // Generic registration error
+      addToast('Registration failed. Please try again later.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -112,7 +332,7 @@ export const AuthModal = () => {
   return (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+        className="fixed inset-0 z-[999] flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-0 bg-black/80 backdrop-blur-md"
         onClick={handleClose}
       >
         <motion.div
@@ -120,7 +340,7 @@ export const AuthModal = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
-          className="relative w-full max-w-md bg-[#050505] border border-gold/30 rounded-none overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-6 sm:p-8"
+          className="relative w-full max-w-md max-h-[calc(100vh-2rem)] bg-zinc-900/95 border border-zinc-700/80 rounded-sm overflow-hidden shadow-2xl p-6 sm:p-8 overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Decorative Top Accent Line */}
@@ -129,7 +349,7 @@ export const AuthModal = () => {
           {/* Close Button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 p-1.5 text-zinc-500 hover:text-gold transition-colors hover:bg-white/5 cursor-pointer"
+            className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-gold border border-gold rounded-full transition-colors hover:bg-white/5 cursor-pointer"
             aria-label="Close credentials panel"
           >
             <X className="w-5 h-5" />
@@ -138,15 +358,97 @@ export const AuthModal = () => {
           {/* Title Header */}
           <div className="text-center mb-8">
             <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-sans font-semibold block mb-2">
-              Decantre Membership
+              Decantre
             </span>
             <h2 className="text-2xl sm:text-3xl font-serif font-light text-white tracking-widest uppercase">
-              {mode === 'profile' ? 'My Atelier' : mode === 'login' ? 'Inner Circle Sign In' : 'Exclusive Registry'}
+              {mode === 'profile' ? 'My Profile' : mode === 'otp' ? 'OTP Verification' : mode === 'login' ? 'Member Login' : 'Become a Member'}
             </h2>
           </div>
 
-          {/* Render Profile Content */}
-          {mode === 'profile' && user ? (
+          {/* Mode Render: OTP VERIFICATION VIEW */}
+          {mode === 'otp' ? (
+            <form onSubmit={handleVerifyOTP} className="space-y-6">
+              <div className="text-center space-y-2">
+                <p className="text-xs text-zinc-300 font-sans font-light leading-relaxed">
+                  Verification code sent to:
+                </p>
+                <p className="text-xs font-mono text-gold font-semibold">"{email}"</p>
+              </div>
+
+              {/* 6 Digit Input Grid */}
+              <div className="flex justify-between items-center gap-2 py-2" onPaste={handleOTPPaste}>
+                {otpValues.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    ref={(el) => (otpInputsRef.current[idx] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOTPChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleOTPKeyDown(idx, e)}
+                    className="w-11 h-13 text-center bg-black border border-zinc-700 focus:border-gold rounded-sm text-lg font-mono font-bold text-gold focus:outline-none transition-all shadow-inner"
+                  />
+                ))}
+              </div>
+
+              {/* 3-Minute Countdown Timer */}
+              <div className="flex flex-col items-center gap-1">
+                <div className={`text-2xl font-mono font-bold tracking-widest tabular-nums ${
+                  resendTimer === 0 ? 'text-rose-500' : resendTimer <= 30 ? 'text-amber-400' : 'text-gold'
+                }`}>
+                  {formatOtpTimer(resendTimer)}
+                </div>
+                <p className={`text-[10px] font-sans uppercase tracking-widest ${
+                  resendTimer === 0 ? 'text-rose-400' : 'text-zinc-500'
+                }`}>
+                  {resendTimer === 0 ? 'Code expired — resending…' : 'Code expires in'}
+                </p>
+              </div>
+
+              {/* Verification Button */}
+              <button
+                type="submit"
+                disabled={isLoading || otpValues.join('').length !== 6 || resendTimer === 0}
+                className="w-full py-4 bg-gradient-to-r from-gold via-[#DAA520] to-gold hover:opacity-90 disabled:opacity-40 text-black font-sans text-xs uppercase tracking-[0.25em] font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border-none rounded-none shadow-lg"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 rounded-full border-2 border-black border-r-transparent animate-spin" />
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>{resendTimer === 0 ? 'Code Expired' : 'Authorize Code'}</span>
+                  </>
+                )}
+              </button>
+
+              {/* Resend Controls */}
+              <div className="flex items-center justify-between pt-2 text-[11px] font-sans">
+                <button
+                  type="button"
+                  onClick={() => setMode('register')}
+                  className="text-zinc-500 hover:text-white flex items-center gap-1 cursor-pointer bg-transparent border-none"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResendOTPCode}
+                  disabled={resendTimer > 0 || isResending}
+                  className={`flex items-center gap-1.5 font-semibold bg-transparent border-none cursor-pointer ${
+                    resendTimer > 0 || isResending ? 'text-zinc-600 cursor-not-allowed' : 'text-gold hover:underline'
+                  }`}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
+                  <span>
+                    {isResending ? 'Sending…' : resendTimer > 0 ? 'Resend Code' : 'Resend Now'}
+                  </span>
+                </button>
+              </div>
+            </form>
+          ) : mode === 'profile' && user ? (
             <div className="space-y-6">
               {/* Profile Card Summary */}
               <div className="p-5 border border-gold/15 bg-zinc-950/50 rounded-none relative overflow-hidden">
@@ -168,7 +470,7 @@ export const AuthModal = () => {
                 </div>
                 <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-zinc-500">
                   <span>MEMBER SINCE</span>
-                  <span className="text-zinc-300 font-sans uppercase tracking-widest">{user.memberSince}</span>
+                  <span className="text-zinc-300 font-sans uppercase tracking-widest">{user.memberSince || 'July 2026'}</span>
                 </div>
               </div>
 
@@ -225,12 +527,33 @@ export const AuthModal = () => {
                     <User className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
                     <input
                       type="text"
-                      placeholder="e.g. Alexander Vance"
+                      placeholder=""
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-zinc-950 border border-white/10 focus:border-gold/50 rounded-none py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-600"
+                      className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500"
                       required
                     />
+                  </div>
+                </div>
+              )}
+
+              {mode === 'register' && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
+                    Phone Number
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
+                    <input
+                      type="tel"
+                      placeholder="+8801712345678"
+                      value={phone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      onBlur={(e) => setPhoneError(validatePhoneValue(e.target.value))}
+                      className={`w-full bg-zinc-800/80 border ${phoneError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500`}
+                      required
+                    />
+                    {phoneError && <p className="mt-1.5 text-[10px] text-rose-400">{phoneError}</p>}
                   </div>
                 </div>
               )}
@@ -243,27 +566,32 @@ export const AuthModal = () => {
                   <Mail className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
                   <input
                     type="email"
-                    placeholder="name@exclusive.com"
+                    placeholder=""
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-zinc-950 border border-white/10 focus:border-gold/50 rounded-none py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-600"
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setEmailError(validateEmail(e.target.value));
+                    }}
+                    onBlur={(e) => setEmailError(validateEmail(e.target.value))}
+                    className={`w-full bg-zinc-800/80 border ${emailError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500`}
                     required
                   />
+                  {emailError && <p className="mt-1.5 text-[10px] text-rose-400">{emailError}</p>}
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
-                  Password Key
+                  Password
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
                   <input
                     type="password"
-                    placeholder="••••••••"
+                    placeholder=""
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-zinc-950 border border-white/10 focus:border-gold/50 rounded-none py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-600"
+                    className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500"
                     required
                   />
                 </div>
@@ -278,10 +606,10 @@ export const AuthModal = () => {
                     <Key className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
                     <input
                       type="password"
-                      placeholder="••••••••"
+                      placeholder=""
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full bg-zinc-950 border border-white/10 focus:border-gold/50 rounded-none py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-600"
+                      className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500"
                       required
                     />
                   </div>
@@ -300,7 +628,7 @@ export const AuthModal = () => {
                   ) : (
                     <>
                       <ShieldCheck className="w-4 h-4" />
-                      <span>{mode === 'login' ? 'Request Session Entry' : 'Create Member Credentials'}</span>
+                      <span>{mode === 'login' ? 'Log In' : 'Become a Member'}</span>
                     </>
                   )}
                 </button>
@@ -314,7 +642,7 @@ export const AuthModal = () => {
                     onClick={() => setMode('register')}
                     className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-gold transition-colors font-sans cursor-pointer bg-transparent border-none outline-none"
                   >
-                    Don't have credentials? <span className="text-gold font-bold underline">Register here</span>
+                    Don't have an account? <span className="text-gold font-bold underline">Register here</span>
                   </button>
                 ) : (
                   <button
