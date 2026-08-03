@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
+import fallbackBanner from '../assets/main-banner.webp';
 
 const bannerSlides = [
   {
-    bgImage: "https://decantrebd.com/wp-content/uploads/2025/12/main-bannerJPG-scaled-1.jpg",
+    bgImage: "https://decantrebd.com/wp-content/uploads/assets/main-banner.webp",
     tagline: "Enchanting aromas for every unique moment",
     title: "INDULGE IN LUXURY",
     buttonText: "SHOP NOW"
   },
+  /*
   {
     bgImage: "https://decantrebd.com/wp-content/uploads/2026/07/main_banner-2.jpg",
     tagline: "Elevate your olfactory signature",
@@ -22,6 +24,7 @@ const bannerSlides = [
     title: "ROYAL SIGNATURES",
     buttonText: "SHOP NOW"
   }
+  */
 ];
 
 export const HeroSlider = () => {
@@ -30,6 +33,7 @@ export const HeroSlider = () => {
 
   // Auto-play the slider
   useEffect(() => {
+    if (bannerSlides.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
     }, 6000);
@@ -47,12 +51,7 @@ export const HeroSlider = () => {
         >
           {/* Rich full-color background image with elegant gradient dark overlays */}
           <div className="absolute inset-0 bg-black">
-            <img 
-              src={slide.bgImage} 
-              alt={slide.title} 
-              className="w-full h-full object-cover object-center opacity-85"
-              referrerPolicy="no-referrer"
-            />
+            <HeroSlideImage src={slide.bgImage} title={slide.title} />
             {/* Top, Bottom and center dark protection overlays for text readability */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70"></div>
             <div className="absolute inset-0 bg-black/35"></div>
@@ -87,32 +86,70 @@ export const HeroSlider = () => {
       ))}
 
       {/* Slider Controls (Bottom Dot Indicators with elegant long active pills) */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-        {bannerSlides.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentSlide(idx)}
-            className={`h-2 rounded-full transition-all duration-500 cursor-pointer ${
-              idx === currentSlide ? 'bg-gold w-6' : 'bg-white/40 hover:bg-white/70 w-2'
-            }`}
-          />
-        ))}
-      </div>
+      {bannerSlides.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+          {bannerSlides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-2 rounded-full transition-all duration-500 cursor-pointer ${
+                idx === currentSlide ? 'bg-gold w-6' : 'bg-white/40 hover:bg-white/70 w-2'
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Left & Right Arrows */}
-      <button 
-        onClick={() => setCurrentSlide((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer"
-      >
-        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-      </button>
-      <button 
-        onClick={() => setCurrentSlide((prev) => (prev + 1) % bannerSlides.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer"
-      >
-        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-      </button>
+      {bannerSlides.length > 1 && (
+        <>
+          <button 
+            onClick={() => setCurrentSlide((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+          <button 
+            onClick={() => setCurrentSlide((prev) => (prev + 1) % bannerSlides.length)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/40 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        </>
+      )}
     </section>
+  );
+};
+
+// Helper Component to handle Image Load States, Skeletons, and Error Fallbacks
+const HeroSlideImage = ({ src, title }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const PLACEHOLDER_IMAGE = fallbackBanner; 
+
+  return (
+    <div className="w-full h-full relative">
+      {/* Loading Skeleton */}
+      {!imageLoaded && (
+        <div className="absolute inset-0 bg-zinc-950 animate-pulse flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full border-t-2 border-r-2 border-gold animate-spin"></div>
+        </div>
+      )}
+
+      <img 
+        src={error ? PLACEHOLDER_IMAGE : src} 
+        alt={title} 
+        className={`w-full h-full object-cover object-center opacity-85 transition-opacity duration-700 ${
+          imageLoaded ? 'opacity-85' : 'opacity-0'
+        }`}
+        referrerPolicy="no-referrer"
+        onLoad={() => setImageLoaded(true)}
+        onError={() => {
+          setError(true);
+          setImageLoaded(true);
+        }}
+      />
+    </div>
   );
 };
 

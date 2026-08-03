@@ -4,7 +4,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Accept VITE_API_URL as build argument
-ARG VITE_API_URL=http://localhost:4000
+ARG VITE_API_URL=https://server.decantrebd.com
+ENV VITE_API_URL=$VITE_API_URL
 
 # Copy package files
 COPY package.json package-lock.json ./
@@ -41,9 +42,9 @@ RUN addgroup -g 1001 -S nodejs && \
 
 USER nodejs
 
-EXPOSE 3000
+EXPOSE 8001
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8001 || exit 1
 
 CMD ["npm", "run", "prod"]

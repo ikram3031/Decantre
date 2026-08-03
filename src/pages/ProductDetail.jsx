@@ -2,8 +2,28 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { formatBDT } from '../utils/formatCurrency';
-import { mapRemoteProduct } from '../store/productHelpers';
+import { mapRemoteProduct, resolveBrandName, resolveCategoryName } from '../store/productHelpers';
+import { fetchProductDetails, fetchProducts } from '../lib/api';
 import { MoreProducts } from '../components/sections/MoreProducts';
+import { RecentlyViewedProducts } from '../components/sections/RecentlyViewedProducts';
+
+const addToRecentlyViewed = (id) => {
+  if (!id) return;
+  try {
+    const stored = localStorage.getItem('recently_viewed');
+    let list = stored ? JSON.parse(stored) : [];
+    if (!Array.isArray(list)) list = [];
+    
+    // Filter out if already exists, and push to front (max 10)
+    list = list.filter(item => String(item) !== String(id));
+    list.unshift(id);
+    list = list.slice(0, 10);
+    
+    localStorage.setItem('recently_viewed', JSON.stringify(list));
+  } catch (e) {
+    console.error(e);
+  }
+};
 import { 
   ArrowLeft, 
   ShoppingCart, 
@@ -87,21 +107,13 @@ export const ProductDetail = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || 'https://perfume-store-backend-wi7o.onrender.com').replace(/\/$/, '');
-        
-        try {
-          const res = await fetch(`${apiBaseUrl}/api/wp/products/${did}`);
-          if (res.ok) {
-            const json = await res.json();
-            if (json && json.data) {
-              const mapped = mapRemoteProduct(json.data);
-              setProduct(mapped);
-              setIsLoading(false);
-              return;
-            }
-          }
-        } catch (e) {
-          console.warn('Direct fetch failed, falling back to lists...', e);
+        const fetched = await fetchProductDetails(did);
+        if (fetched) {
+          setProduct(fetched);
+          setIsLoading(false);
+          // Add to recently viewed in localStorage
+          addToRecentlyViewed(fetched.id);
+          return;
         }
 
         if (products && products.length > 0) {
@@ -109,27 +121,21 @@ export const ProductDetail = () => {
           if (found) {
             setProduct(found);
             setIsLoading(false);
+            addToRecentlyViewed(found.id);
             return;
           }
         }
 
-        const res = await fetch(`${apiBaseUrl}/api/wp/products?limit=100`);
-        if (res.ok) {
-          const json = await res.json();
-          const list = Array.isArray(json.data) ? json.data : [];
-          const mappedList = list.map(mapRemoteProduct);
-          const found = mappedList.find(p => p.id === did || String(p.raw?.id) === String(did));
-          if (found) {
-            setProduct(found);
-          } else {
-            setError('The requested fragrance could not be located.');
-          }
+        const allProds = await fetchProducts({ limit: 100 });
+        const found = allProds.find(p => p.id === did || String(p.raw?.id) === String(did));
+        if (found) {
+          setProduct(found);
+          addToRecentlyViewed(found.id);
         } else {
-          setError('Failed to load fragrance information from our catalog.');
+          setError('Product not found.');
         }
       } catch (err) {
-        console.error('Error fetching product:', err);
-        setError('A network connection error occurred while loading details.');
+        setError('Something went wrong');
       } finally {
         setIsLoading(false);
       }
@@ -137,6 +143,32 @@ export const ProductDetail = () => {
 
     loadProductDetail();
   }, [did, products]);
+
+  // Dynamic variations directly from API
+  const decantSwatches = React.useMemo(() => {
+    if (product && Array.isArray(product.variations) && product.variations.length > 0) {
+      return product.variations.map((v) => {
+        const rawSize = String(v.size || 'Standard');
+        const sizeNumber = parseInt(rawSize.replace(/[^0-9]/g, ''), 10);
+        return {
+          size: rawSize,
+          label: rawSize.replace(/-/g, ' '),
+          price: v.price,
+          originalPrice: v.originalPrice,
+          sprays: sizeNumber ? `~${sizeNumber * 15} Sprays` : '',
+          raw: v
+        };
+      });
+    }
+    return [];
+  }, [product]);
+
+  // Sync initial selected size with available variations
+  useEffect(() => {
+    if (decantSwatches.length > 0 && (!selectedSize || !decantSwatches.some(s => s.size === selectedSize))) {
+      setSelectedSize(decantSwatches[0].size);
+    }
+  }, [decantSwatches, selectedSize]);
 
   if (isLoading) {
     return (
@@ -168,16 +200,22 @@ export const ProductDetail = () => {
     );
   }
 
-  // PCBWay Swatch Options (3-column grid)
-  const decantSwatches = [
-    { size: '3ML', label: '3ml Decant', sprays: '~45 Sprays', priceMultiplier: 0.28 },
-    { size: '5ML', label: '5ml Decant', sprays: '~75 Sprays', priceMultiplier: 0.42 },
-    { size: '10ML', label: '10ml Decant', sprays: '~150 Sprays', priceMultiplier: 0.75 },
-    { size: '15ML', label: '15ml Decant', sprays: '~225 Sprays', priceMultiplier: 1.00 }
-  ];
+  const activeSwatch = decantSwatches.find(s => s.size === selectedSize) || decantSwatches[0] || {};
+  const unitPrice = activeSwatch.price ?? product.basePrice ?? 980;
 
-  const activeSwatch = decantSwatches.find(s => s.size === selectedSize) || decantSwatches[3];
-  const unitPrice = product.basePrice ? Math.round(product.basePrice * activeSwatch.priceMultiplier) : 980;
+  const isSwatchOutOfStock = React.useMemo(() => {
+    if (!product) return true;
+    if (product.stockStatus === 'outofstock') return true;
+    if (activeSwatch && activeSwatch.raw) {
+      const swatchRaw = activeSwatch.raw;
+      return (
+        swatchRaw.stock_status === 'outofstock' || 
+        swatchRaw.stockStatus === 'outofstock' || 
+        swatchRaw.stockQuantity === 0
+      );
+    }
+    return product.stockQuantity === 0;
+  }, [product, activeSwatch]);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -193,7 +231,7 @@ export const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    handleAddToCart(product, activeSwatch.size, 'Eau de Parfum', quantity);
+    handleAddToCart(product, activeSwatch.size, 'Eau de Parfum', quantity, unitPrice);
     navigate('/checkout');
   };
 
@@ -240,28 +278,12 @@ export const ProductDetail = () => {
                   onLoad={() => setImageLoaded(true)}
                   referrerPolicy="no-referrer"
                 />
+                {isSwatchOutOfStock && (
+                  <div className="absolute top-4 right-4 z-10 bg-red-600/90 backdrop-blur-sm text-white text-[10px] font-sans font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-md">
+                    Out of Stock
+                  </div>
+                )}
               </div>
-
-              {/* Decant Volume Thumbnails */}
-              <div className="grid grid-cols-4 gap-2.5">
-                {decantSwatches.map((swatch) => (
-                  <button
-                    key={swatch.size}
-                    onClick={() => setSelectedSize(swatch.size)}
-                    className={`p-2 rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center justify-between ${
-                      selectedSize === swatch.size
-                        ? 'border-gold bg-gold/15 text-gold font-bold shadow-md'
-                        : isLight 
-                          ? 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-400' 
-                          : 'border-white/10 bg-zinc-900 text-zinc-400 hover:border-gold/30'
-                    }`}
-                  >
-                    <span className="text-[10px] font-mono font-bold">{swatch.size}</span>
-                    <span className="text-[8px] text-zinc-500 font-sans block">{swatch.sprays}</span>
-                  </button>
-                ))}
-              </div>
-
             </div>
           </div>
 
@@ -271,18 +293,16 @@ export const ProductDetail = () => {
             {/* Category Link, Title & Brand */}
             <div className="space-y-2.5 border-b border-gold/15 pb-6">
               <Link
-                to={`/shop?category=${encodeURIComponent(product.category || 'All')}`}
-                className="text-[10px] uppercase tracking-[0.25em] text-gold font-sans font-bold hover:underline inline-block"
+                to={`/shop?${new URLSearchParams({ category: resolveCategoryName(product.category) || 'All' }).toString()}`}
+                className="text-[10px] sm:text-xs font-sans font-bold uppercase tracking-[0.25em] text-gold hover:underline"
               >
-                Category: {product.category || 'Luxury Fragrance'}
+                {resolveCategoryName(product.category)}
               </Link>
-              
-              <h1 className={`text-2xl sm:text-4xl font-serif font-light tracking-wide ${isLight ? 'text-black' : 'text-white'}`}>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-medium leading-tight tracking-tight">
                 {product.name}
               </h1>
-
               <span className="text-xs uppercase tracking-widest text-zinc-400 font-sans font-medium block">
-                Brand: <strong className="text-gold font-semibold">{product.brand || 'Decantre'}</strong>
+                Brand: <strong className="text-gold font-semibold">{resolveBrandName(product.brand)}</strong>
               </span>
 
               {/* Star Rating */}
@@ -307,13 +327,13 @@ export const ProductDetail = () => {
             </div>
 
             {/* Linked Shipping Notice */}
-            <div className={`p-4 border rounded-sm flex items-start gap-3 ${
-              isLight ? 'bg-amber-50/60 border-amber-200 text-amber-900' : 'bg-amber-950/20 border-amber-500/25 text-amber-200'
+            <div className={`p-4 border rounded-sm flex items-start gap-3 shadow-md ${
+              isLight ? 'bg-amber-50/60 border-amber-200 text-amber-900' : 'bg-zinc-900/90 border-zinc-700/60 text-zinc-200'
             }`}>
               <Truck className="w-5 h-5 text-gold shrink-0 mt-0.5" />
               <div className="text-xs font-sans leading-relaxed">
                 <strong className="text-gold font-bold uppercase tracking-wider block mb-0.5">Delivery Notice</strong>
-                Courier delivery: <span className="font-semibold text-white">৳80 Inside Dhaka (24–48h)</span>, <span className="font-semibold text-white">৳120 Outside Dhaka (48–72h)</span>. Cash on Delivery & In-Store Pickup available.
+                Courier delivery: <span className="font-semibold text-white">৳80 Inside Dhaka (24–48h)</span>, <span className="font-semibold text-white">৳120 Outside Dhaka (24–72h)</span>. Cash on Delivery & Office Pickup available.
               </div>
             </div>
 
@@ -331,14 +351,19 @@ export const ProductDetail = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {decantSwatches.map((swatch) => {
                   const isSelected = selectedSize === swatch.size;
+                  const isSwatchOut = swatch.raw && (
+                    swatch.raw.stock_status === 'outofstock' || 
+                    swatch.raw.stockStatus === 'outofstock' || 
+                    swatch.raw.stockQuantity === 0
+                  );
                   return (
                     <button
                       key={swatch.size}
                       onClick={() => setSelectedSize(swatch.size)}
-                      className={`p-3.5 rounded-sm border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      className={`p-3.5 rounded-sm border text-left transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
                         isSelected
                           ? 'border-gold bg-gold/15 text-gold font-bold shadow-md ring-1 ring-gold/50'
                           : isLight
@@ -347,7 +372,15 @@ export const ProductDetail = () => {
                       }`}
                     >
                       <span className="text-xs font-mono font-bold block">{swatch.label}</span>
-                      <span className="text-[10px] text-zinc-400 font-sans block mt-1">{swatch.sprays}</span>
+                      <span className="text-[11px] text-gold font-mono font-semibold block mt-1">{formatBDT(swatch.price)}</span>
+                      {swatch.sprays && (
+                        <span className="text-[10px] text-zinc-400 font-mono block mt-2">{swatch.sprays}</span>
+                      )}
+                      {isSwatchOut && (
+                        <span className="absolute top-1 right-1 text-[7px] uppercase font-bold text-red-500 bg-red-500/10 px-1 py-0.5 rounded">
+                          Out of Stock
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -359,10 +392,11 @@ export const ProductDetail = () => {
               <span className="text-xs font-sans uppercase tracking-widest text-zinc-400 font-bold block">
                 Quantity
               </span>
-              <div className="inline-flex items-center border border-gold/30 rounded-sm bg-black/60">
+              <div className="inline-flex items-center border border-gold/40 rounded-sm bg-black/60 overflow-hidden">
                 <button 
+                  type="button"
                   onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                  className="w-10 h-10 flex items-center justify-center text-gold hover:bg-gold/20 transition-colors font-bold cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-gold text-black hover:bg-gold/90 transition-colors font-bold cursor-pointer"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
@@ -370,6 +404,7 @@ export const ProductDetail = () => {
                   {quantity}
                 </span>
                 <button 
+                  type="button"
                   onClick={() => setQuantity(prev => prev + 1)}
                   className="w-10 h-10 flex items-center justify-center bg-gold text-black hover:bg-gold/90 transition-colors font-bold cursor-pointer"
                 >
@@ -381,18 +416,35 @@ export const ProductDetail = () => {
             {/* Action Buttons: Add to Cart & Buy Now */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button
-                onClick={() => handleAddToCart(product, activeSwatch.size, 'Eau de Parfum', quantity)}
-                className="w-full bg-gold hover:bg-gold/90 text-black py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all shadow-lg shadow-gold/10 cursor-pointer flex items-center justify-center gap-2"
+                disabled={isSwatchOutOfStock}
+                onClick={() => {
+                  if (isSwatchOutOfStock) return;
+                  handleAddToCart(product, activeSwatch.size, 'Eau de Parfum', quantity, unitPrice);
+                }}
+                className={`w-full py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 ${
+                  isSwatchOutOfStock
+                    ? 'bg-zinc-800 text-zinc-500 shadow-none cursor-not-allowed opacity-50'
+                    : 'bg-gold hover:bg-gold/90 text-black shadow-gold/10 cursor-pointer'
+                }`}
               >
                 <ShoppingCart className="w-4 h-4" />
-                ADD TO CART
+                {isSwatchOutOfStock ? 'SOLD OUT' : 'ADD TO CART'}
               </button>
 
               <button
-                onClick={handleBuyNow}
-                className="w-full bg-black text-gold border border-gold hover:bg-gold hover:text-black py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
+                disabled={isSwatchOutOfStock}
+                onClick={() => {
+                  if (isSwatchOutOfStock) return;
+                  handleBuyNow();
+                }}
+                className={`w-full py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 border ${
+                  isSwatchOutOfStock
+                    ? 'bg-transparent text-zinc-500 border-zinc-800 cursor-not-allowed opacity-50'
+                    : 'bg-black text-gold border-gold hover:bg-gold hover:text-black cursor-pointer'
+                }`}
               >
-                BUY NOW
+                <ShoppingBag className="w-4 h-4" />
+                {isSwatchOutOfStock ? 'SOLD OUT' : 'BUY NOW'}
               </button>
             </div>
 
@@ -421,12 +473,16 @@ export const ProductDetail = () => {
             {/* Description & Olfactory Notes breakdown */}
             <div className={`p-6 border ${isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-zinc-950/80 border-gold/15'} rounded-sm space-y-4`}>
               <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-gold border-b border-gold/15 pb-2">
-                Fragrance Curation & Profile
+                Description
               </h3>
-              <p className="text-xs text-zinc-400 font-sans font-light leading-relaxed">
-                {product.description || product.tagline || 'Exquisitely blended royal fragrance with top notes of bergamot and pink pepper, transitioning into a heart of white cedar, and anchored by a rich amber-musk sillage.'}
-              </p>
+              <div 
+                className="text-xs text-zinc-300 font-sans font-light leading-relaxed space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-1 [&_strong]:font-semibold [&_b]:font-semibold [&_p]:my-1"
+                dangerouslySetInnerHTML={{ 
+                  __html: product.description || product.tagline || 'Exquisitely blended royal fragrance with top notes of bergamot and pink pepper, transitioning into a heart of white cedar, and anchored by a rich amber-musk sillage.' 
+                }}
+              />
 
+              {/* Hardcoded notes commented out
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
                 <div className="p-3 bg-black/40 border border-white/5 rounded-sm">
                   <span className="text-[10px] uppercase tracking-wider text-gold font-bold block mb-1">Top Notes</span>
@@ -441,13 +497,14 @@ export const ProductDetail = () => {
                   <span className="text-zinc-300">Amber, Oakmoss, Vetiver</span>
                 </div>
               </div>
+              */}
             </div>
 
             {/* Customer Reviews Section */}
             <div className={`p-6 border ${isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-zinc-950/80 border-gold/15'} rounded-sm space-y-6`}>
               <div className="flex items-center justify-between border-b border-gold/15 pb-3">
                 <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-gold flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-gold" /> Client Olfactory Reviews
+                  <MessageSquare className="w-4 h-4 text-gold" /> Customer Reviews
                 </h3>
                 <span className="text-xs font-mono text-zinc-400">{userReviews.length} Reviews</span>
               </div>
@@ -473,7 +530,7 @@ export const ProductDetail = () => {
                   <textarea
                     rows={3}
                     required
-                    placeholder="Share your experience with sillage, projection, and notes..."
+                    placeholder=""
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     className="w-full bg-black border border-white/10 focus:border-gold text-xs text-zinc-200 p-3 rounded-sm outline-none font-sans"
@@ -495,7 +552,7 @@ export const ProductDetail = () => {
                     onClick={() => setAuthModal(true, 'login')}
                     className="px-6 py-2.5 border border-gold text-gold hover:bg-gold hover:text-black text-xs font-sans font-bold uppercase tracking-widest rounded-sm transition-all cursor-pointer"
                   >
-                    Log In to Write a Review
+                    Log In
                   </button>
                 </div>
               )}
@@ -520,6 +577,14 @@ export const ProductDetail = () => {
             </div>
 
           </div>
+        </div>
+
+        {/* Recently Viewed Products Section */}
+        <div className="pt-8">
+          <RecentlyViewedProducts 
+            currentProductId={product.id}
+            limit={8}
+          />
         </div>
 
         {/* Requirement 11: Reusable "More Products" Section Component */}
@@ -580,22 +645,36 @@ export const ProductDetail = () => {
             </p>
 
             <div className="space-y-2.5 pt-1 font-mono text-xs">
-              <div className="flex justify-between items-center p-3 rounded-sm bg-black border border-white/10">
-                <span className="font-bold text-gold">3ML Decant</span>
-                <span className="text-zinc-300">~45+ Sprays</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-sm bg-black border border-white/10">
-                <span className="font-bold text-gold">5ML Decant</span>
-                <span className="text-zinc-300">~75+ Sprays</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-sm bg-black border border-white/10">
-                <span className="font-bold text-gold">10ML Decant</span>
-                <span className="text-zinc-300">~150+ Sprays</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-sm bg-gold/15 border border-gold/40">
-                <span className="font-bold text-gold">15ML Decant (Best Value)</span>
-                <span className="text-gold font-bold">~225+ Sprays</span>
-              </div>
+              {decantSwatches.length > 0 ? (
+                decantSwatches.map((swatch) => (
+                  <div
+                    key={swatch.size}
+                    className={`flex justify-between items-center p-3 rounded-sm border ${swatch.size === selectedSize ? 'bg-gold/15 border-gold/40' : 'bg-black border-white/10'}`}
+                  >
+                    <span className="font-bold text-gold">{swatch.label}</span>
+                    <span className="text-zinc-300">{swatch.sprays}</span>
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="flex justify-between items-center p-3 rounded-sm bg-black border border-white/10">
+                    <span className="font-bold text-gold">3ML Decant</span>
+                    <span className="text-zinc-300">~45+ Sprays</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-sm bg-black border border-white/10">
+                    <span className="font-bold text-gold">5ML Decant</span>
+                    <span className="text-zinc-300">~75+ Sprays</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-sm bg-black border border-white/10">
+                    <span className="font-bold text-gold">10ML Decant</span>
+                    <span className="text-zinc-300">~150+ Sprays</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-sm bg-gold/15 border border-gold/40">
+                    <span className="font-bold text-gold">15ML Decant (Best Value)</span>
+                    <span className="text-gold font-bold">~225+ Sprays</span>
+                  </div>
+                </>
+              )}
             </div>
 
             <button 

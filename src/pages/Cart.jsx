@@ -41,7 +41,7 @@ export const Cart = () => {
         </div>
 
         {cart.length === 0 ? (
-          <div className="text-center py-24 border border-dashed border-gold/15 rounded-sm bg-luxury-dark/10">
+          <div className="text-center py-12 border border-dashed border-gold/15 rounded-sm bg-luxury-dark/10">
             <ShoppingBag className="w-12 h-12 text-gold/40 mx-auto mb-4 animate-pulse" />
             <h3 className="text-lg font-serif font-light text-zinc-300 mb-2">Your Cart is Empty</h3>
             <p className="text-zinc-500 text-xs font-sans font-light max-w-xs mx-auto mb-8">
@@ -67,7 +67,7 @@ export const Cart = () => {
               {cart.map((item) => (
                 <div 
                   key={item.id}
-                  className="bg-luxury-dark/30 border border-white/5 p-5 rounded-sm flex gap-4 sm:gap-6 items-center justify-between"
+                  className="bg-zinc-900/90 border border-zinc-700/60 p-5 rounded-sm flex gap-4 sm:gap-6 items-center justify-between shadow-xl"
                 >
                   <div className="flex gap-4 items-center">
                     {/* Visual Bottle Indicator */}
@@ -125,7 +125,7 @@ export const Cart = () => {
               ))}
 
               {/* Delivery Schedule Indicator */}
-              <div className="p-4 border border-gold/20 bg-gold/5 rounded-sm flex items-center gap-3">
+              <div className="p-4 border border-zinc-700/60 bg-zinc-900/90 rounded-sm flex items-center gap-3 shadow-xl">
                 <Truck className="w-5 h-5 text-gold shrink-0" />
                 <p className="text-zinc-300 text-[11px] font-sans font-light leading-relaxed">
                   <span className="text-gold font-semibold uppercase tracking-wider text-[10px] block mb-0.5">ESTIMATED DELIVERY TIME</span>
@@ -135,7 +135,7 @@ export const Cart = () => {
             </div>
 
             {/* Calculations & Summary */}
-            <div className="bg-luxury-dark/30 border border-gold/20 p-6 rounded-sm space-y-6">
+            <div className="bg-zinc-900/90 border border-zinc-700/60 p-6 rounded-sm space-y-6 shadow-xl">
               <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-zinc-300 border-b border-white/5 pb-4">
                 Cart Summary
               </h3>

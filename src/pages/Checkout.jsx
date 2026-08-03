@@ -53,16 +53,155 @@ export const Checkout = () => {
 
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    if (!user) return;
+
+    const valueFor = (key) =>
+      user?.[key] ||
+      user?.raw?.[key] ||
+      user?.raw?.address?.[key] ||
+      user?.raw?.shippingAddress?.[key] ||
+      user?.raw?.billingInfo?.[key] ||
+      user?.raw?.shippingInfo?.[key] ||
+      user?.raw?.profile?.[key] ||
+      "";
+
+    const updates = {};
+    if (!shippingInfo.fullName && (user.name || valueFor("fullName"))) updates.fullName = user.name || valueFor("fullName");
+    if (!shippingInfo.email && valueFor("email")) updates.email = valueFor("email");
+    if (!shippingInfo.phone && valueFor("phone")) updates.phone = valueFor("phone");
+    if (!shippingInfo.address && valueFor("address")) updates.address = valueFor("address");
+    if (!shippingInfo.thana && valueFor("thana")) updates.thana = valueFor("thana");
+    if (!shippingInfo.district && valueFor("district")) updates.district = valueFor("district");
+    if (!shippingInfo.city && valueFor("city")) updates.city = valueFor("city");
+    if (!shippingInfo.zip && (valueFor("zip") || valueFor("postcode"))) {
+      updates.zip = valueFor("zip") || valueFor("postcode");
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setShippingInfo((prev) => ({ ...prev, ...updates }));
+    }
+  }, [user, shippingInfo, setShippingInfo]);
+
+  React.useEffect(() => {
+    if (!sameAsBilling) return;
+    if (!shippingInfo.fullName && !shippingInfo.address && !shippingInfo.district) return;
+    if (shippingAddress.fullName || shippingAddress.address || shippingAddress.district) return;
+
+    setShippingAddress((prev) => ({
+      ...prev,
+      fullName: shippingInfo.fullName,
+      phone: shippingInfo.phone,
+      address: shippingInfo.address,
+      city: shippingInfo.city,
+      thana: shippingInfo.thana,
+      district: shippingInfo.district,
+      zip: shippingInfo.zip,
+    }));
+  }, [sameAsBilling, shippingInfo, shippingAddress.fullName, shippingAddress.address, shippingAddress.district, setShippingAddress]);
+
   const [agreedToTerms, setAgreedToTerms] = React.useState(false);
   const [isDistrictOpen, setIsDistrictOpen] = React.useState(false);
   const [isShipDistrictOpen, setIsShipDistrictOpen] = React.useState(false);
+  const [emailError, setEmailError] = React.useState('');
+  const [phoneError, setPhoneError] = React.useState('');
+  const [shipPhoneError, setShipPhoneError] = React.useState('');
+
+  const validateEmail = (value) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed) return 'Email address is required.';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(trimmed) ? '' : 'Please enter a valid email address.';
+  };
+
+  const normalizePhoneValue = (value) => {
+    let raw = (value || '').toString().trim();
+    if (!raw) return '';
+
+    // Enforce that it starts with '+88'
+    if (!raw.startsWith('+88')) {
+      // Remove any leading non-digits to check
+      const digits = raw.replace(/[^\d]/g, '');
+      if (digits.startsWith('880')) {
+        raw = `+${digits}`;
+      } else if (digits.startsWith('0')) {
+        raw = `+88${digits}`;
+      } else if (digits.startsWith('1')) {
+        raw = `+880${digits}`;
+      } else {
+        raw = `+88${digits}`;
+      }
+    }
+    
+    // Cleanup any characters except digits and the leading +
+    const cleaned = '+' + raw.slice(1).replace(/[^\d]/g, '');
+    return cleaned;
+  };
+
+  const validatePhoneValue = (value) => {
+    const normalized = normalizePhoneValue(value);
+    if (!normalized || normalized === '+88') return 'Phone number is required.';
+    
+    // Check pattern: Must start with +8801 followed by 3-9, then 8 digits (Total length: 14 characters including +88)
+    const phoneRegex = /^\+8801[3-9]\d{8}$/;
+    if (!phoneRegex.test(normalized)) {
+      return 'Please enter a valid 11-digit Bangladeshi number starting with 01[3-9] (e.g. +88017XXXXXXXX).';
+    }
+    return '';
+  };
+
+  const handleBillingPhoneChange = (value) => {
+    let normalized = normalizePhoneValue(value);
+    // If user cleared it or tried to delete beyond prefix, keep the default prefix
+    if (!normalized || normalized === '+') {
+      normalized = '+88';
+    }
+    setShippingInfo((prev) => ({ ...prev, phone: normalized }));
+    setPhoneError(validatePhoneValue(normalized));
+  };
+
+  const handleShippingPhoneChange = (value) => {
+    let normalized = normalizePhoneValue(value);
+    if (!normalized || normalized === '+') {
+      normalized = '+88';
+    }
+    setShippingAddress((prev) => ({ ...prev, phone: normalized }));
+    setShipPhoneError(validatePhoneValue(normalized));
+  };
 
   const onFormSubmit = (e) => {
     e.preventDefault();
+
+    const emailValidationError = validateEmail(email);
+    const phoneValidationError = validatePhoneValue(phone);
+    const shippingPhoneValidationError = paymentMethod !== 'instore' && !sameAsBilling
+      ? validatePhoneValue(shipPhone || '')
+      : '';
+
+    setEmailError(emailValidationError);
+    setPhoneError(phoneValidationError);
+    setShipPhoneError(shippingPhoneValidationError);
+
     if (!agreedToTerms) {
       addToast('Please read and agree to the website terms and conditions to place your order.', 'error');
       return;
     }
+
+    if (emailValidationError) {
+      addToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    if (phoneValidationError) {
+      addToast('Please enter a valid Bangladeshi phone number in format +8801[3-8]XXXXXXXX.', 'error');
+      return;
+    }
+
+    if (shippingPhoneValidationError) {
+      addToast('Please enter a valid recipient phone number in format +8801[3-8]XXXXXXXX.', 'error');
+      return;
+    }
+
     handleCheckoutSubmit(e);
   };
 
@@ -125,7 +264,7 @@ export const Checkout = () => {
               </div>
 
               {/* Billing Address Section */}
-              <div className="space-y-6 bg-luxury-dark/10 p-6 border border-white/10 rounded-sm">
+              <div className="space-y-6 bg-zinc-900/90 p-6 border border-zinc-700/60 rounded-sm shadow-xl">
                 <div className="border-b border-white/10 pb-3">
                   <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-gold flex items-center gap-2">
                     Billing Address Details
@@ -144,10 +283,10 @@ export const Checkout = () => {
                     <input 
                       type="text" 
                       required
-                      placeholder="e.g. Tanvir Ahmed"
+                      placeholder=""
                       value={fullName}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, fullName: e.target.value })}
-                      className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                      className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
                   </div>
 
@@ -159,11 +298,16 @@ export const Checkout = () => {
                     <input 
                       type="email" 
                       required
-                      placeholder="tanvir@example.com"
+                      placeholder=""
                       value={email}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
-                      className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                      onChange={(e) => {
+                        setShippingInfo({ ...shippingInfo, email: e.target.value });
+                        setEmailError(validateEmail(e.target.value));
+                      }}
+                      onBlur={(e) => setEmailError(validateEmail(e.target.value))}
+                      className={`w-full bg-zinc-800/80 border ${emailError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans`}
                     />
+                    {emailError && <p className="mt-1.5 text-[10px] text-rose-400">{emailError}</p>}
                   </div>
 
                   {/* Contact Phone */}
@@ -174,11 +318,13 @@ export const Checkout = () => {
                     <input
                       type="tel"
                       required
-                      placeholder="017XXXXXXXX"
+                      placeholder="+8801712345678"
                       value={phone}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
-                      className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                      onChange={(e) => handleBillingPhoneChange(e.target.value)}
+                      onBlur={(e) => setPhoneError(validatePhoneValue(e.target.value))}
+                      className={`w-full bg-zinc-800/80 border ${phoneError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans`}
                     />
+                    {phoneError && <p className="mt-1.5 text-[10px] text-rose-400">{phoneError}</p>}
                   </div>
 
                   {/* Street Address */}
@@ -188,10 +334,10 @@ export const Checkout = () => {
                     </label>
                     <input 
                       type="text" 
-                      placeholder="House No, Road No, Area"
+                      placeholder=""
                       value={address}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
-                      className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                      className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
                   </div>
 
@@ -202,10 +348,10 @@ export const Checkout = () => {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Dhanmondi"
+                      placeholder=""
                       value={thana}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, thana: e.target.value })}
-                      className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                      className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
                     />
                   </div>
 
@@ -226,7 +372,7 @@ export const Checkout = () => {
                           setShippingInfo({ ...shippingInfo, district: e.target.value });
                           setIsDistrictOpen(true);
                         }}
-                        className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans pr-10"
+                        className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans pr-10"
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
                         <ChevronDown className="w-4 h-4" />
@@ -299,7 +445,7 @@ export const Checkout = () => {
                       <input
                         type="text"
                         required={!sameAsBilling}
-                        placeholder="e.g. Recipient Full Name"
+                        placeholder=""
                         value={shipFullName || ''}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, fullName: e.target.value })}
                         className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
@@ -314,11 +460,13 @@ export const Checkout = () => {
                       <input
                         type="tel"
                         required={!sameAsBilling}
-                        placeholder="e.g. 017XXXXXXXX"
+                        placeholder="+8801712345678"
                         value={shipPhone || ''}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
-                        className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                        onChange={(e) => handleShippingPhoneChange(e.target.value)}
+                        onBlur={(e) => setShipPhoneError(validatePhoneValue(e.target.value))}
+                        className={`w-full bg-black/50 border ${shipPhoneError ? 'border-rose-500' : 'border-white/15'} focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans`}
                       />
+                      {shipPhoneError && <p className="mt-1.5 text-[10px] text-rose-400">{shipPhoneError}</p>}
                     </div>
 
                     {/* Shipping Street Address */}
@@ -328,7 +476,7 @@ export const Checkout = () => {
                       </label>
                       <input
                         type="text"
-                        placeholder="House No, Road No, Area"
+                        placeholder=""
                         value={shipAddress}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, address: e.target.value })}
                         className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
@@ -342,7 +490,7 @@ export const Checkout = () => {
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Gulshan"
+                        placeholder=""
                         value={shipThana}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, thana: e.target.value })}
                         className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
@@ -473,7 +621,7 @@ export const Checkout = () => {
 
                       {paymentMethod === 'instore' && (
                         <div className="text-[11px] text-amber-300 font-sans italic bg-amber-950/30 p-2.5 border border-amber-500/20 rounded-sm">
-                          In-Store Pickup selected.
+                          Office Pickup selected.
                         </div>
                       )}
                     </div>
@@ -482,7 +630,7 @@ export const Checkout = () => {
               </div>
 
               {/* Order Notes Section */}
-              <div className="space-y-3 bg-luxury-dark/10 p-6 border border-white/10 rounded-sm">
+              <div className="space-y-3 bg-zinc-900/90 p-6 border border-zinc-700/60 rounded-sm shadow-xl">
                 <label className="block text-xs font-sans font-bold uppercase tracking-widest text-gold flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-gold" />
@@ -495,28 +643,24 @@ export const Checkout = () => {
                   value={shippingInfo.notes || ''}
                   onChange={(e) => setShippingInfo({ ...shippingInfo, notes: e.target.value })}
                   placeholder="Notes about your order, e.g. special instructions for delivery or fragrance preferences..."
-                  className="w-full bg-black/60 border border-white/10 focus:border-gold/60 text-xs font-sans text-zinc-200 p-3.5 rounded-sm outline-none transition-all placeholder:text-zinc-600 resize-y"
+                  className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-xs font-sans text-zinc-200 p-3.5 rounded-sm outline-none transition-all placeholder:text-zinc-500 resize-y"
                 />
               </div>
 
               {/* New Customer Banner */}
-              <div className="bg-gradient-to-r from-amber-950/40 via-black to-black border border-gold/30 p-6 rounded-sm space-y-3 shadow-lg">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <h4 className="text-xs sm:text-sm font-sans font-bold uppercase tracking-wider text-luxury-white flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-gold shrink-0" />
-                      <span>New Customer?</span>
-                    </h4>
-                    <p className="text-xs text-zinc-300 font-sans font-light leading-relaxed">
-                      Create an account to enjoy discounts & offers on your purchases.
-                    </p>
-                  </div>
-
-                  {user ? (
-                    <div className="bg-gold/10 border border-gold/30 px-3.5 py-2 rounded-xs text-[11px] font-mono text-gold whitespace-nowrap self-start sm:self-center">
-                      ✓ Account: {user.name || user.email}
+              {!user && (
+                <div className="bg-zinc-900/90 border border-zinc-700/60 p-6 rounded-sm space-y-3 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <h4 className="text-xs sm:text-sm font-sans font-bold uppercase tracking-wider text-luxury-white flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-gold shrink-0" />
+                        <span>New Customer?</span>
+                      </h4>
+                      <p className="text-xs text-zinc-300 font-sans font-light leading-relaxed">
+                        Create an account to enjoy discounts & offers on your purchases.
+                      </p>
                     </div>
-                  ) : (
+
                     <button
                       type="button"
                       onClick={() => setAuthModal(true, 'register')}
@@ -524,17 +668,18 @@ export const Checkout = () => {
                     >
                       Create Account
                     </button>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
+
             </div>
 
             {/* Right Column: Payment Method Selection & Order Summary Sidebar */}
             <div className="lg:col-span-5 space-y-6">
               
               {/* Payment Method Selection on Right Side */}
-              <div className="bg-luxury-dark/30 border border-gold/20 p-6 rounded-sm space-y-5">
-                <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-gold border-b border-gold/20 pb-3 flex items-center gap-2">
+              <div className="bg-zinc-900/90 border border-zinc-700/60 p-6 rounded-sm space-y-5 shadow-xl">
+                <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-gold border-b border-zinc-800 pb-3 flex items-center gap-2">
                   Payment Method Selection
                 </h3>
 
@@ -542,7 +687,7 @@ export const Checkout = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {/* COD Option */}
                   <label className={`cursor-pointer rounded-sm border p-3 text-[10px] uppercase tracking-wider font-semibold text-center flex flex-col items-center justify-center min-h-[52px] transition-all ${
-                    paymentMethod === 'cod' ? 'border-gold bg-gold/15 text-gold font-bold shadow-md' : 'border-white/10 bg-black/40 text-zinc-300 hover:border-gold/30'
+                    paymentMethod === 'cod' ? 'border-gold bg-gold/15 text-gold font-bold shadow-md' : 'border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-gold/40'
                   }`}>
                     <input
                       type="radio"
@@ -557,7 +702,7 @@ export const Checkout = () => {
 
                   {/* Pickup Option */}
                   <label className={`cursor-pointer rounded-sm border p-3 text-[10px] uppercase tracking-wider font-semibold text-center flex flex-col items-center justify-center min-h-[52px] transition-all ${
-                    paymentMethod === 'instore' ? 'border-gold bg-gold/15 text-gold font-bold shadow-md' : 'border-white/10 bg-black/40 text-zinc-300 hover:border-gold/30'
+                    paymentMethod === 'instore' ? 'border-gold bg-gold/15 text-gold font-bold shadow-md' : 'border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-gold/40'
                   }`}>
                     <input
                       type="radio"
@@ -574,7 +719,7 @@ export const Checkout = () => {
                   <label className={`cursor-pointer rounded-sm border p-3 text-[10px] uppercase tracking-wider font-semibold text-center flex flex-col items-center justify-center min-h-[52px] transition-all ${
                     ['bkash', 'nagad', 'bank_transfer', 'other'].includes(paymentMethod)
                       ? 'border-gold bg-gold/20 text-gold font-bold shadow-md ring-1 ring-gold/40'
-                      : 'border-white/10 bg-black/40 text-zinc-300 hover:border-gold/30'
+                      : 'border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-gold/40'
                   }`}>
                     <input
                       type="radio"
@@ -594,7 +739,7 @@ export const Checkout = () => {
 
                 {/* Info for Cash On Delivery */}
                 {paymentMethod === 'cod' && (
-                  <div className="p-4 bg-black/60 border border-gold/30 rounded-sm space-y-3 text-xs font-sans text-zinc-200 text-left">
+                  <div className="p-4 bg-zinc-800/90 border border-zinc-700/80 rounded-sm space-y-3 text-xs font-sans text-zinc-200 text-left">
                     <div className="border-b border-white/10 pb-2">
                       <h4 className="font-bold text-gold text-xs">Disclaimer: Please read carefully before placing your order.</h4>
                     </div>
@@ -644,12 +789,18 @@ export const Checkout = () => {
                 {paymentMethod === 'instore' && (
                   <div className="p-3.5 bg-amber-950/20 border border-amber-500/30 rounded-sm space-y-2 text-left">
                     <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
-                      <Store className="w-4 h-4 text-amber-400" /> In-Store Pickup Instruction
+                      <Store className="w-4 h-4 text-amber-400" /> Office Pickup Instruction
                     </div>
                     <div className="flex items-start gap-2 text-[11px] text-amber-200/90 font-sans leading-relaxed">
                       <PhoneCall className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                       <span>
-                        Before visiting our store for pickup Please call us to confirm product availability & stock: <a href="tel:+8801869151550" className="underline font-bold text-amber-300">+880 1869-151550</a>
+                        Before visiting our office for pickup please call us to confirm product availability & stock: <a href="tel:+8801869151550" className="underline font-bold text-amber-300">+880 1869-151550</a>
+                        <div className="mt-2 text-[11px] text-amber-200">
+                          <strong className="text-amber-300">Office Address:</strong> Ground Floor, House 20, Road 10, Sector 13, Uttara, Dhaka
+                        </div>
+                        <div className="mt-1 text-[11px]">
+                          <a href="https://maps.app.goo.gl/33jAhzCYG5gZ8K8y6" target="_blank" rel="noopener noreferrer" className="underline text-amber-300">see in map</a>
+                        </div>
                       </span>
                     </div>
                   </div>
@@ -749,7 +900,7 @@ export const Checkout = () => {
                             <label className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-1 font-semibold">Bank Name / Details</label>
                             <input
                               type="text"
-                              placeholder="e.g. City Bank, EBL"
+                              placeholder=""
                               value={paymentDetails?.bankName || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, bankName: e.target.value })}
                               className="w-full bg-black border border-white/15 focus:border-gold text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm"
@@ -760,7 +911,7 @@ export const Checkout = () => {
                             <label className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-1 font-semibold">Bank Account / Reference ID</label>
                             <input
                               type="text"
-                              placeholder="Your Account No. or Reference"
+                              placeholder=""
                               value={paymentDetails?.bankAccountNumber || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, bankAccountNumber: e.target.value })}
                               className="w-full bg-black border border-white/15 focus:border-gold text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-mono"
@@ -774,7 +925,7 @@ export const Checkout = () => {
                             </label>
                             <input
                               type="number"
-                              placeholder="e.g. 1000"
+                              placeholder=""
                               value={paymentDetails?.bankAmount || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, bankAmount: e.target.value })}
                               className="w-full bg-black border border-gold/50 focus:border-gold text-gold text-xs px-3 py-2.5 outline-none rounded-sm font-mono font-bold"
@@ -815,7 +966,7 @@ export const Checkout = () => {
                             <label className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-1 font-semibold">bKash Number</label>
                             <input
                               type="tel"
-                              placeholder="017XXXXXXXX"
+                              placeholder=""
                               value={paymentDetails?.bkashNumber || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, bkashNumber: e.target.value })}
                               className="w-full bg-black border border-pink-500/30 focus:border-pink-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-mono"
@@ -826,7 +977,7 @@ export const Checkout = () => {
                             <label className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-1 font-semibold">bKash Transaction ID</label>
                             <input
                               type="text"
-                              placeholder="8N7A6D5EE7M"
+                              placeholder=""
                               value={paymentDetails?.bkashTxnId || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, bkashTxnId: e.target.value })}
                               className="w-full bg-black border border-pink-500/30 focus:border-pink-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-mono"
@@ -840,7 +991,7 @@ export const Checkout = () => {
                             </label>
                             <input
                               type="number"
-                              placeholder="e.g. 1000"
+                              placeholder=""
                               value={paymentDetails?.bkashAmount || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, bkashAmount: e.target.value })}
                               className="w-full bg-black border border-pink-500/50 focus:border-pink-400 text-pink-300 text-xs px-3 py-2.5 outline-none rounded-sm font-mono font-bold"
@@ -881,7 +1032,7 @@ export const Checkout = () => {
                             <label className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-1 font-semibold">Nagad Number</label>
                             <input
                               type="tel"
-                              placeholder="017XXXXXXXX"
+                              placeholder=""
                               value={paymentDetails?.nagadNumber || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, nagadNumber: e.target.value })}
                               className="w-full bg-black border border-orange-500/30 focus:border-orange-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-mono"
@@ -892,7 +1043,7 @@ export const Checkout = () => {
                             <label className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-1 font-semibold">Nagad Transaction ID</label>
                             <input
                               type="text"
-                              placeholder="8N7A6D5EE7M"
+                              placeholder=""
                               value={paymentDetails?.nagadTxnId || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, nagadTxnId: e.target.value })}
                               className="w-full bg-black border border-orange-500/30 focus:border-orange-500 text-zinc-200 text-xs px-3 py-2.5 outline-none rounded-sm font-mono"
@@ -906,7 +1057,7 @@ export const Checkout = () => {
                             </label>
                             <input
                               type="number"
-                              placeholder="e.g. 1000"
+                              placeholder=""
                               value={paymentDetails?.nagadAmount || ''}
                               onChange={(e) => setPaymentDetails({ ...paymentDetails, nagadAmount: e.target.value })}
                               className="w-full bg-black border border-orange-500/50 focus:border-orange-400 text-orange-300 text-xs px-3 py-2.5 outline-none rounded-sm font-mono font-bold"
@@ -935,10 +1086,10 @@ export const Checkout = () => {
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="e.g. GOLDEN20, MAJESTY"
+                      placeholder=""
                       value={promoCode || ''}
                       onChange={(e) => setPromoCode(e.target.value)}
-                      className="flex-1 bg-black/60 border border-white/15 focus:border-gold text-xs font-mono text-zinc-200 px-3.5 py-2.5 outline-none rounded-sm transition-all uppercase placeholder:normal-case placeholder:text-zinc-600"
+                      className="flex-1 bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-xs font-mono text-zinc-200 px-3.5 py-2.5 outline-none rounded-sm transition-all uppercase placeholder:normal-case placeholder:text-zinc-500"
                     />
                     <button
                       type="button"
@@ -966,9 +1117,9 @@ export const Checkout = () => {
               </div>
 
               {/* Order Items & Summary Sidebar */}
-              <div className="bg-luxury-dark/20 border border-gold/15 p-6 rounded-sm space-y-6">
-                <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-zinc-300 border-b border-white/5 pb-4">
-                  COUTURE SELECTION LEDGER
+              <div className="bg-zinc-900/90 border border-zinc-700/60 p-6 rounded-sm space-y-6 shadow-xl">
+                <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-zinc-300 border-b border-zinc-800 pb-4">
+                  ORDER SUMMARY
                 </h3>
 
                 {/* Product list */}
@@ -1046,14 +1197,6 @@ export const Checkout = () => {
                     </div>
                   );
                 })()}
-
-                {/* Quality Creed */}
-                <div className="border-t border-white/5 pt-4 space-y-1.5 text-center sm:text-left">
-                  <span className="text-[9px] uppercase tracking-widest text-gold font-mono block font-semibold">THE SOVEREIGN PROMISE</span>
-                  <p className="text-[10px] text-zinc-500 font-sans font-light leading-relaxed">
-                    Meticulously decanted and sealed in velvet-lined protective packaging. Satisfaction guaranteed with 30-day returns protocol.
-                  </p>
-                </div>
               </div>
 
               {/* Confirm Order Button on the Right Side */}
@@ -1126,7 +1269,7 @@ export const Checkout = () => {
         <div className="mt-16 border-t border-gold/15 pt-12 space-y-10">
           
           {/* Top Card: Important Note */}
-          <div className="max-w-4xl mx-auto bg-amber-950/20 border border-amber-500/30 p-6 sm:p-8 rounded-sm text-center space-y-3 shadow-xl">
+          <div className="max-w-4xl mx-auto bg-zinc-900/95 border border-amber-500/40 p-6 sm:p-8 rounded-sm text-center space-y-3 shadow-2xl">
             <h3 className="text-amber-400 font-sans font-bold text-sm sm:text-base tracking-wide flex items-center justify-center gap-2">
               <span>⚠️</span>
               <span>Important Note</span>
@@ -1134,7 +1277,7 @@ export const Checkout = () => {
             <p className="text-zinc-200 text-xs sm:text-sm font-sans font-medium leading-relaxed max-w-2xl mx-auto">
               If you are unsure about a fragrance, we highly recommend trying a 2ml tester first before purchasing a larger size.
             </p>
-            <p className="text-zinc-400 text-xs font-sans font-light leading-relaxed max-w-3xl mx-auto pt-1 border-t border-amber-500/15">
+            <p className="text-zinc-400 text-xs font-sans font-light leading-relaxed max-w-3xl mx-auto pt-1 border-t border-zinc-800">
               Please note that disliking a perfume’s scent profile is not considered a valid reason for return or refund. Fragrance preference is subjective and may vary from person to person.
             </p>
           </div>
@@ -1152,8 +1295,8 @@ export const Checkout = () => {
           {/* 3 Columns Layout */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-2">
             {/* Column 1: When Your Parcel Arrives */}
-            <div className="p-6 bg-black/60 border border-gold/20 hover:border-gold/40 rounded-sm space-y-4 shadow-lg transition-all">
-              <h3 className="text-sm font-serif font-semibold text-gold tracking-wider border-b border-white/10 pb-3">
+            <div className="p-6 bg-zinc-900/90 border border-zinc-700/60 hover:border-gold/40 rounded-sm space-y-4 shadow-xl transition-all">
+              <h3 className="text-sm font-serif font-semibold text-gold tracking-wider border-b border-zinc-800 pb-3">
                 When Your Parcel Arrives
               </h3>
               <ul className="space-y-2.5 text-xs text-zinc-300 font-sans font-light list-disc list-inside leading-relaxed">
@@ -1165,8 +1308,8 @@ export const Checkout = () => {
             </div>
 
             {/* Column 2: Eligible for Return / Refund */}
-            <div className="p-6 bg-black/60 border border-gold/20 hover:border-gold/40 rounded-sm space-y-4 shadow-lg transition-all">
-              <h3 className="text-sm font-serif font-semibold text-gold tracking-wider border-b border-white/10 pb-3">
+            <div className="p-6 bg-zinc-900/90 border border-zinc-700/60 hover:border-gold/40 rounded-sm space-y-4 shadow-xl transition-all">
+              <h3 className="text-sm font-serif font-semibold text-gold tracking-wider border-b border-zinc-800 pb-3">
                 Eligible for Return / Refund
               </h3>
               <div className="space-y-3 text-xs text-zinc-300 font-sans font-light leading-relaxed">
@@ -1182,8 +1325,8 @@ export const Checkout = () => {
             </div>
 
             {/* Column 3: How to Report */}
-            <div className="p-6 bg-black/60 border border-gold/20 hover:border-gold/40 rounded-sm space-y-4 shadow-lg transition-all">
-              <h3 className="text-sm font-serif font-semibold text-gold tracking-wider border-b border-white/10 pb-3">
+            <div className="p-6 bg-zinc-900/90 border border-zinc-700/60 hover:border-gold/40 rounded-sm space-y-4 shadow-xl transition-all">
+              <h3 className="text-sm font-serif font-semibold text-gold tracking-wider border-b border-zinc-800 pb-3">
                 How to Report
               </h3>
               <div className="space-y-3 text-xs text-zinc-300 font-sans font-light leading-relaxed">

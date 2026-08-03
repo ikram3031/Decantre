@@ -1,13 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '../ProductCard';
 import { useApp } from '../../context/AppContext';
 
-export const MoreProducts = ({ title = "More Fragrances You May Like", category, currentProductId, limit = 8 }) => {
+export const RecentlyViewedProducts = ({ currentProductId, limit = 8 }) => {
   const { 
     products, 
-    productsError,
     wishlist, 
     toggleWishlist, 
     cardSelections, 
@@ -17,56 +16,48 @@ export const MoreProducts = ({ title = "More Fragrances You May Like", category,
     calculateItemPrice,
     currentTheme 
   } = useApp();
-
+  
+  const [recentIds, setRecentIds] = useState([]);
   const isLight = currentTheme === 'light';
 
-  if (productsError) {
-    return (
-      <section className="py-10 border-t border-zinc-200/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="p-6 border border-amber-500/20 bg-amber-500/5 rounded-sm">
-            <p className="text-amber-400 font-sans text-xs">{productsError}</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('recently_viewed');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          // Filter out the current product being viewed
+          const filteredIds = parsed.filter(id => String(id) !== String(currentProductId));
+          setRecentIds(filteredIds);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [currentProductId]);
 
-  // Filter products: exclude current product
-  let filtered = products.filter(p => String(p.id) !== String(currentProductId));
+  if (recentIds.length === 0) return null;
 
-  // If category is provided, prefer same category, otherwise fill with others
-  if (category) {
-    const sameCategory = filtered.filter(p => p.category?.toLowerCase() === category.toLowerCase());
-    const otherCategory = filtered.filter(p => p.category?.toLowerCase() !== category.toLowerCase());
-    filtered = [...sameCategory, ...otherCategory];
-  }
+  // Map the IDs back to the actual product objects, maintaining order
+  const recentProducts = recentIds
+    .map(id => products.find(p => String(p.id) === String(id)))
+    .filter(Boolean)
+    .slice(0, limit);
 
-  const itemsToDisplay = filtered.slice(0, limit);
-
-  if (itemsToDisplay.length === 0) {
-    return null;
-  }
+  if (recentProducts.length === 0) return null;
 
   return (
     <section className="py-10 border-t border-zinc-200/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 mb-8">
           <h3 className={`text-xl sm:text-2xl font-serif tracking-wide ${isLight ? 'text-zinc-900' : 'text-gold'}`}>
-            {title}
+            Recently Viewed Products
           </h3>
-          <Link
-            to={category ? `/shop?${new URLSearchParams({ category }).toString()}` : '/shop'}
-            className="text-xs uppercase tracking-widest text-gold hover:underline font-bold flex items-center gap-1.5 shrink-0"
-          >
-            <span>View All</span>
-            <ArrowRight className="w-3.5 h-3.5 text-gold" />
-          </Link>
         </div>
 
-        {/* 2-Column Grid Layout for Mobile View */}
+        {/* Grid Layout: 2 Columns for Mobile, up to 4 for Desktop */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-          {itemsToDisplay.map((p) => (
+          {recentProducts.map((p) => (
             <ProductCard
               key={p.id}
               product={p}
@@ -86,4 +77,4 @@ export const MoreProducts = ({ title = "More Fragrances You May Like", category,
   );
 };
 
-export default MoreProducts;
+export default RecentlyViewedProducts;

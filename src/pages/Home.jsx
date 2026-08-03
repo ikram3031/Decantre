@@ -44,12 +44,7 @@ export const Home = () => {
     fetchBrands
   } = useApp();
 
-  // fetch remote products, categories and brands on mount
-  useEffect(() => {
-    if (typeof fetchProducts === 'function') fetchProducts();
-    if (typeof fetchCategories === 'function') fetchCategories();
-    if (typeof fetchBrands === 'function') fetchBrands();
-  }, [fetchProducts, fetchCategories, fetchBrands]);
+
 
   // Show top 3 spotlight products on home page to keep layout premium, with link to view more
   const spotlightProducts = filteredProducts.slice(0, 3);
