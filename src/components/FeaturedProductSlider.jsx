@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import luxuryPerfumeHero from '../assets/images/luxury_perfume_hero_1784311872347.jpg';
-import perfumeUnisex from '../assets/images/perfume_unisex_1784311906469.jpg';
-import perfumeForHer from '../assets/images/perfume_for_her_1784311895919.jpg';
+// Fallback image URL for missing slider hero assets
+const FALLBACK_IMAGE_URL = 'https://server.decantrebd.com/uploads/product-placeholder.webp';
+const luxuryPerfumeHero = FALLBACK_IMAGE_URL;
+const perfumeUnisex = FALLBACK_IMAGE_URL;
+const perfumeForHer = FALLBACK_IMAGE_URL;
 
 const featuredSlides = [
   {

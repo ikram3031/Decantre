@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import perfumeForHim from '../assets/images/perfume_for_him_1784311883603.jpg';
-import perfumeForHer from '../assets/images/perfume_for_her_1784311895919.jpg';
-import perfumeUnisex from '../assets/images/perfume_unisex_1784311906469.jpg';
+// Fallback image URL for missing category assets
+const FALLBACK_IMAGE_URL = 'https://server.decantrebd.com/src/uploads/product-placeholder.webp';
+const perfumeForHim = FALLBACK_IMAGE_URL;
+const perfumeForHer = FALLBACK_IMAGE_URL;
+const perfumeUnisex = FALLBACK_IMAGE_URL;
 
 export const CategoryNav = ({ setSelectedCategory }) => {
   const navigate = useNavigate();

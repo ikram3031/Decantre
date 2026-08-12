@@ -197,7 +197,7 @@ export const useAppStore = create((set, get) => {
       district: '',
       zip: ''
     },
-    shippingInfo: {
+    billingInfo: {
       fullName: '',
       phone: '',
       email: '',
@@ -305,9 +305,13 @@ export const useAppStore = create((set, get) => {
       const nextAddress = typeof updater === 'function' ? updater(state.shippingAddress) : updater;
       return { shippingAddress: nextAddress };
     }),
+    setBillingInfo: (updater) => set((state) => {
+      const nextInfo = typeof updater === 'function' ? updater(state.billingInfo) : updater;
+      return { billingInfo: nextInfo };
+    }),
     setShippingInfo: (updater) => set((state) => {
-      const nextInfo = typeof updater === 'function' ? updater(state.shippingInfo) : updater;
-      return { shippingInfo: nextInfo };
+      const nextInfo = typeof updater === 'function' ? updater(state.billingInfo) : updater;
+      return { billingInfo: nextInfo };
     }),
     setPaymentDetails: (updater) => set((state) => {
       const nextDetails = typeof updater === 'function' ? updater(state.paymentDetails) : updater;
@@ -498,19 +502,19 @@ export const useAppStore = create((set, get) => {
     handleCheckoutSubmit: async (e) => {
       if (e) e.preventDefault();
       const cart = get().cart;
-      const shippingInfo = get().shippingInfo;
+      const billingInfo = get().billingInfo || get().shippingInfo; // Billing form inputs
+      const shippingAddress = get().shippingAddress; // Recipient shipping inputs
       const paymentMethod = get().paymentMethod;
       const sameAsBilling = get().sameAsBilling;
-      const shippingAddress = get().shippingAddress;
       const paymentDetails = get().paymentDetails;
       if (cart.length === 0) return;
 
       const requiredBilling = [
-        shippingInfo.fullName,
-        shippingInfo.phone,
-        shippingInfo.email,
-        shippingInfo.address,
-        shippingInfo.district
+        billingInfo.fullName,
+        billingInfo.phone,
+        billingInfo.email,
+        billingInfo.address,
+        billingInfo.district
       ];
 
       if (requiredBilling.some((field) => !field || !field.trim())) {
@@ -554,16 +558,40 @@ export const useAppStore = create((set, get) => {
       try {
         const pricing = get().getCartPricing();
 
+        // 1. Prepare billingInfo payload for backend API
+        const billingInfoPayload = {
+          fullName: billingInfo.fullName,
+          phone: billingInfo.phone,
+          email: billingInfo.email,
+          address: billingInfo.address,
+          thana: billingInfo.thana || '',
+          district: billingInfo.district,
+          zip: billingInfo.zip || ''
+        };
+
+        // 2. Prepare shippingInfo payload for backend API
+        const shippingInfoPayload = (paymentMethod !== 'instore' && !sameAsBilling)
+          ? {
+              fullName: shippingAddress.fullName || billingInfo.fullName,
+              phone: shippingAddress.phone || billingInfo.phone,
+              address: shippingAddress.address,
+              thana: shippingAddress.thana || '',
+              district: shippingAddress.district,
+              zip: shippingAddress.zip || ''
+            }
+          : {
+              fullName: billingInfo.fullName,
+              phone: billingInfo.phone,
+              address: billingInfo.address,
+              thana: billingInfo.thana || '',
+              district: billingInfo.district,
+              zip: billingInfo.zip || ''
+            };
+
+        // 3. Assemble API Order Payload (matching /api/v1/orders/new-order spec)
         const payload = {
-          fullName: shippingInfo.fullName,
-          phone: shippingInfo.phone,
-          email: shippingInfo.email,
-          address: shippingInfo.address,
-          city: shippingInfo.city,
-          thana: shippingInfo.thana,
-          district: shippingInfo.district,
-          zip: shippingInfo.zip,
-          giftWrap: shippingInfo.giftWrap,
+          billingInfo: billingInfoPayload,
+          shippingInfo: shippingInfoPayload,
           paymentMethod,
           subtotal: pricing.cartSubtotal,
           shippingFee: pricing.shippingFee,
@@ -605,10 +633,24 @@ export const useAppStore = create((set, get) => {
         sameAsBilling: true,
         shippingZone: 'inside-dhaka',
         shippingAddress: {
+          fullName: '',
+          phone: '',
           address: '',
+          city: '',
           thana: '',
           district: '',
           zip: ''
+        },
+        billingInfo: {
+          fullName: '',
+          phone: '',
+          email: '',
+          address: '',
+          city: '',
+          thana: '',
+          district: '',
+          zip: '',
+          giftWrap: false
         },
         shippingInfo: {
           fullName: '',
@@ -678,7 +720,7 @@ export const useAppStore = create((set, get) => {
       const cart = get().cart;
       const appliedDiscount = get().appliedDiscount;
       const paymentMethod = get().paymentMethod;
-      const shippingInfo = get().shippingInfo;
+      const billingInfo = get().billingInfo || get().shippingInfo;
       const sameAsBilling = get().sameAsBilling;
       const shippingAddress = get().shippingAddress;
 
@@ -687,7 +729,7 @@ export const useAppStore = create((set, get) => {
 
       let shippingFee = 0;
       if (paymentMethod !== 'instore' && cartSubtotal > 0) {
-        const activeDistrict = (sameAsBilling ? (shippingInfo.district || '') : (shippingAddress.district || '')).trim().toLowerCase();
+        const activeDistrict = (sameAsBilling ? (billingInfo.district || '') : (shippingAddress.district || '')).trim().toLowerCase();
         if (activeDistrict === 'dhaka' || activeDistrict.includes('dhaka')) {
           shippingFee = 80;
         } else {

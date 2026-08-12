@@ -63,7 +63,7 @@ export const Layout = () => {
     currentTheme
   } = useApp();
 
-  const themeConfig = currentTheme === 'light' ? 'bg-white text-black' : 'bg-[#050505] text-[#f5f5f5]';
+  const themeConfig = currentTheme === 'light' ? 'bg-white text-[#050505]' : 'bg-[#050505] text-[#f5f5f5]';
 
   return (
     <RouteTransition>
