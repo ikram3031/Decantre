@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Sparkles, Search } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { formatBDT } from '../utils/formatCurrency';
+import { useApp } from '../core/context/AppContext';
+import { formatBDT } from '../core/utils/formatCurrency';
 import { ProductCard } from '../components/ProductCard';
 import { ProductGridSkeleton } from '../components/Skeleton';
+import { getDefaultSelection } from '../core/store/productHelpers';
+
 
 export const SearchResults = () => {
   const {
@@ -144,7 +146,7 @@ export const SearchResults = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
           {!isLoadingProducts && allProducts.map((prod) => {
-            const currentSel = cardSelections[prod.id] || { size: '100ml', concentration: 'Eau de Parfum' };
+            const currentSel = cardSelections[prod.id] || getDefaultSelection(prod);
             return (
               <ProductCard
                 key={prod.id}

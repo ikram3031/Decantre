@@ -6,7 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+src/config.theme.client.json
 .vscode/
 *.vscode
 .vscode*
-dashboard/
+dashboard

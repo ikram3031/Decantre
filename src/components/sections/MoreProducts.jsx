@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '../ProductCard';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../core/context/AppContext';
 
 export const MoreProducts = ({ title = "More Fragrances You May Like", category, currentProductId, limit = 8 }) => {
   const { 
@@ -37,9 +37,12 @@ export const MoreProducts = ({ title = "More Fragrances You May Like", category,
 
   // If category is provided, prefer same category, otherwise fill with others
   if (category) {
-    const sameCategory = filtered.filter(p => p.category?.toLowerCase() === category.toLowerCase());
-    const otherCategory = filtered.filter(p => p.category?.toLowerCase() !== category.toLowerCase());
-    filtered = [...sameCategory, ...otherCategory];
+    const categoryStr = typeof category === 'object' ? (category.name || category.title || '') : String(category);
+    if (categoryStr) {
+      const sameCategory = filtered.filter(p => p.category?.toLowerCase() === categoryStr.toLowerCase());
+      const otherCategory = filtered.filter(p => p.category?.toLowerCase() !== categoryStr.toLowerCase());
+      filtered = [...sameCategory, ...otherCategory];
+    }
   }
 
   const itemsToDisplay = filtered.slice(0, limit);

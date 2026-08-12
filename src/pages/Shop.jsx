@@ -1,13 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, Sparkles, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useApp } from '../context/AppContext';
-import { formatBDT } from '../utils/formatCurrency';
+import { useApp } from '../core/context/AppContext';
+import { formatBDT } from '../core/utils/formatCurrency';
 import { ProductCard } from '../components/ProductCard';
 import { ProductGridSkeleton } from '../components/Skeleton';
 import { Pagination } from '../components/ui/Pagination';
+import { PriceRangeSlider } from '../components/PriceRangeSlider';
 import menuData from '../data/menuData.json';
+import { getDefaultSelection } from '../core/store/productHelpers';
+
 
 const staticBrandHierarchy = menuData.brandHierarchy || {};
 
@@ -40,8 +43,9 @@ export const Shop = () => {
   const categoryParam = searchParams.get('category');
   const brandParam = searchParams.get('brand');
   const searchParam = searchParams.get('search');
+  const minPriceParam = searchParams.get('minPrice');
+  const maxPriceParam = searchParams.get('maxPrice');
 
-  const [maxPrice, setMaxPrice] = useState(25000);
   const [sortOrder, setSortOrder] = useState('newest');
   const [brandFilters, setBrandFilters] = useState([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -73,30 +77,16 @@ export const Shop = () => {
     return () => window.removeEventListener('resize', updatePageSize);
   }, []);
 
-  // Compute dynamic min/max price boundaries from the currently loaded products
-  const priceLimits = useMemo(() => {
-    const prices = allProducts.map((p) => p.basePrice).filter((p) => p > 0);
-    if (prices.length === 0) return { min: 140, max: 25000 };
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices)
-    };
-  }, [allProducts]);
+  // Compute stable min/max price boundaries for the decants and bottles range
+  const priceLimits = {
+    min: 100,
+    max: 30000
+  };
 
-  // Sync initial max price selection with loaded products range
-  useEffect(() => {
-    if (allProducts.length > 0) {
-      const prices = allProducts.map((p) => p.basePrice).filter((p) => p > 0);
-      if (prices.length > 0) {
-        setMaxPrice(Math.max(...prices));
-      }
-    }
-  }, [allProducts]);
-
-  // Mapped client-side filter for the price range
+  // Mapped client-side filter for the price range (Now backend handled)
   const displayedProducts = useMemo(() => {
-    return allProducts.filter((prod) => prod.basePrice <= maxPrice);
-  }, [allProducts, maxPrice]);
+    return allProducts;
+  }, [allProducts]);
 
   const categoryOptions = useMemo(
     () => [{ id: 'all', name: 'All', slug: 'All', product_count: totalProducts || allProducts.length }, ...categories],
@@ -105,7 +95,7 @@ export const Shop = () => {
 
   const gridColumnsClass = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6';
 
-  // Group brands into Parent-Child hierarchy (Niche / Designer -> Alphabetic Ranges -> Brand items)
+  // Group brands into Parent-Child hierarchy (Niche / Designer / Arabian -> Alphabetic Ranges -> Brand items)
   const structuredBrandHierarchy = useMemo(() => {
     const nicheGroups = { 'A-E': [], 'F-J': [], 'K-O': [], 'P-T': [], 'U-Z': [] };
     const designerGroups = { 'A-E': [], 'F-J': [], 'K-O': [], 'P-T': [], 'U-Z': [] };
@@ -120,22 +110,34 @@ export const Shop = () => {
     };
 
     if (brands && brands.length > 0) {
+      // Identify the 3 parent brands (those with parent === null)
+      const parentBrands = brands.filter(b => typeof b === 'object' && !b.parent);
+      const parentIdMap = {}; // parentId -> category key ('niche' | 'designer' | 'arabian')
+      for (const p of parentBrands) {
+        const slug = (p.slug || p.name || '').toLowerCase();
+        if (slug.includes('niche')) parentIdMap[p.id || p._id] = 'niche';
+        else if (slug.includes('designer')) parentIdMap[p.id || p._id] = 'designer';
+        else if (slug.includes('arabian') || slug.includes('uae')) parentIdMap[p.id || p._id] = 'arabian';
+      }
+
+      // Group child brands by their parent reference
       brands.forEach((b) => {
-        const name = typeof b === 'string' ? b : (b.name || b.slug || '');
+        if (typeof b !== 'object') return;
+        // Skip parent brands themselves
+        if (!b.parent) return;
+        const name = b.name || b.slug || '';
         if (!name) return;
-        const brandObj = typeof b === 'object' ? b : {};
+
+        const parentRef = typeof b.parent === 'object' ? (b.parent.id || b.parent._id || b.parent) : b.parent;
+        const catKey = parentIdMap[parentRef] || 'niche'; // fallback to niche
+
         const firstChar = name.trim().charAt(0).toUpperCase();
         const groupKey = getGroup(firstChar);
-        const type = (brandObj.type || brandObj.category || '').toLowerCase();
+        const item = { id: b.id || b._id || name, name, slug: b.slug || name };
 
-        const item = { id: brandObj.id || name, name, slug: brandObj.slug || name };
-
-        if (type.includes('arabian') || type.includes('uae')) {
-          if (!arabianGroups[groupKey].some(i => i.name === name)) arabianGroups[groupKey].push(item);
-        } else if (type.includes('designer')) {
-          if (!designerGroups[groupKey].some(i => i.name === name)) designerGroups[groupKey].push(item);
-        } else {
-          if (!nicheGroups[groupKey].some(i => i.name === name)) nicheGroups[groupKey].push(item);
+        const targetGroups = catKey === 'arabian' ? arabianGroups : catKey === 'designer' ? designerGroups : nicheGroups;
+        if (!targetGroups[groupKey].some(i => i.name === name)) {
+          targetGroups[groupKey].push(item);
         }
       });
     }
@@ -186,7 +188,7 @@ export const Shop = () => {
 
   useEffect(() => {
     if (brandParam) {
-      setBrandFilters([brandParam]);
+      setBrandFilters(brandParam.split(',').filter(Boolean));
     } else {
       setBrandFilters([]);
     }
@@ -231,15 +233,23 @@ export const Shop = () => {
     if (selectedCategory && selectedCategory !== 'All') {
       opts.category = categoryVal;
     }
-    if (brandFilters.length === 1) {
-      const targetBrand = brandFilters[0];
-      const selectedBrandObj = brands.find(
-        b => b.slug === targetBrand || b.name === targetBrand || b.id === targetBrand || toSlug(b.slug || b.name) === toSlug(targetBrand)
-      );
-      opts.brand = selectedBrandObj ? (selectedBrandObj.id || selectedBrandObj.slug || selectedBrandObj.name) : targetBrand;
+    if (brandFilters.length > 0) {
+      const resolvedBrands = brandFilters.map(targetBrand => {
+        const selectedBrandObj = brands.find(
+          b => b.slug === targetBrand || b.name === targetBrand || b.id === targetBrand || toSlug(b.slug || b.name) === toSlug(targetBrand)
+        );
+        return selectedBrandObj ? (selectedBrandObj.id || selectedBrandObj.slug || selectedBrandObj.name) : targetBrand;
+      });
+      opts.brand = resolvedBrands.join(',');
     }
     if (searchQuery) {
       opts.q = searchQuery;
+    }
+    if (minPriceParam) {
+      opts.minPrice = Number(minPriceParam);
+    }
+    if (maxPriceParam) {
+      opts.maxPrice = Number(maxPriceParam);
     }
 
     setIsLoadingProducts(true);
@@ -264,12 +274,12 @@ export const Shop = () => {
   };
 
   useEffect(() => {
-    setAllProducts([]);
+    // Keep previous data of allProducts to prevent jarring flashes/layout shifts
     setPage(1);
     setTotalPages(1);
     setTotalProducts(0);
     loadProductsPage(1, false);
-  }, [fetchProducts, selectedCategory, brandFilters, searchQuery, sortOrder, categories, brands]);
+  }, [fetchProducts, selectedCategory, brandFilters, searchQuery, sortOrder, categories, brands, minPriceParam, maxPriceParam]);
 
   const productGridRef = React.useRef(null);
 
@@ -283,21 +293,73 @@ export const Shop = () => {
 
   const handleBrandToggle = (brandSlug) => {
     const params = new URLSearchParams(searchParams);
+    const currentBrands = brandParam ? brandParam.split(',') : [];
+    
+    // Find parent-child associations
+    const parentCategories = ['niche', 'designer', 'arabian'];
+    
+    let updated = [...currentBrands];
+    
     if (brandSlug === 'All') {
       params.delete('brand');
-    } else {
-      if (brandParam === brandSlug) {
-        params.delete('brand');
+    } else if (parentCategories.includes(brandSlug)) {
+      // Toggling a Parent Category
+      if (updated.includes(brandSlug)) {
+        // Uncheck parent
+        updated = updated.filter(b => b !== brandSlug);
       } else {
-        params.set('brand', brandSlug);
+        // Check parent
+        updated.push(brandSlug);
+        // Remove all child brands belonging to this parent since parent covers them all
+        const parentObj = structuredBrandHierarchy.find(p => p.id === brandSlug);
+        if (parentObj) {
+          const childSlugs = [];
+          Object.values(parentObj.ranges).forEach(rangeList => {
+            rangeList.forEach(brand => {
+              childSlugs.push(String(brand.slug || brand.name).toLowerCase().trim().replace(/\s+/g, '-'));
+            });
+          });
+          updated = updated.filter(b => !childSlugs.includes(b));
+        }
       }
+    } else {
+      // Toggling a Child Brand (brandSlug is always pre-slugified)
+      if (updated.includes(brandSlug)) {
+        updated = updated.filter(b => b !== brandSlug);
+      } else {
+        updated.push(brandSlug);
+        
+        // Find which parent category this child belongs to and uncheck that parent
+        let foundParentId = null;
+        for (const parent of structuredBrandHierarchy) {
+          for (const rangeList of Object.values(parent.ranges)) {
+            if (rangeList.some(brand => {
+              return String(brand.slug || brand.name).toLowerCase().trim().replace(/\s+/g, '-') === brandSlug;
+            })) {
+              foundParentId = parent.id;
+              break;
+            }
+          }
+          if (foundParentId) break;
+        }
+        
+        if (foundParentId && updated.includes(foundParentId)) {
+          updated = updated.filter(b => b !== foundParentId);
+        }
+      }
+    }
+    
+    if (updated.length > 0) {
+      params.set('brand', updated.join(','));
+    } else {
+      params.delete('brand');
     }
     setSearchParams(params, { preventScrollReset: true });
   };
 
   const handleCategorySelect = (categorySlug) => {
     const params = new URLSearchParams(searchParams);
-    if (categorySlug === 'All') {
+    if (categorySlug?.toLowerCase() === 'all') {
       params.delete('category');
     } else {
       params.set('category', categorySlug);
@@ -311,7 +373,55 @@ export const Shop = () => {
     setSearchParams(params, { preventScrollReset: true });
   };
 
+  const handlePriceRangeChange = useCallback(({ min, max }) => {
+    setSearchParams(prevParams => {
+      const params = new URLSearchParams(prevParams);
+      let changed = false;
+
+      if (min === priceLimits.min && max === priceLimits.max) {
+        if (params.has('minPrice') || params.has('maxPrice')) {
+          params.delete('minPrice');
+          params.delete('maxPrice');
+          changed = true;
+        }
+      } else {
+        if (params.get('minPrice') !== String(min)) {
+          params.set('minPrice', min);
+          changed = true;
+        }
+        if (params.get('maxPrice') !== String(max)) {
+          params.set('maxPrice', max);
+          changed = true;
+        }
+      }
+      return changed ? params : prevParams;
+    }, { preventScrollReset: true });
+  }, [setSearchParams, priceLimits.min, priceLimits.max]);
+
   const isLight = currentTheme === 'light';
+
+  const selectedBrandsList = useMemo(() => {
+    return brandParam ? brandParam.split(',') : [];
+  }, [brandParam]);
+
+  const isAnyFilterApplied = useMemo(() => {
+    return (
+      (selectedCategory && selectedCategory !== 'All') ||
+      brandFilters.length > 0 ||
+      searchQuery !== '' ||
+      minPriceParam !== null ||
+      maxPriceParam !== null ||
+      sortOrder !== 'newest'
+    );
+  }, [selectedCategory, brandFilters, searchQuery, minPriceParam, maxPriceParam, sortOrder]);
+
+  const handleResetAll = () => {
+    setSearchParams(new URLSearchParams(), { preventScrollReset: true });
+    setSortOrder('newest');
+    setBrandFilters([]);
+    setSelectedCategory('All');
+    setSearchQuery('');
+  };
 
   const renderFilterContent = () => (
     <div className="space-y-8 text-left">
@@ -323,8 +433,35 @@ export const Shop = () => {
       </div>
 
       <div className="space-y-6">
+        {/* Reset All Button */}
+        <div className={`flex items-center justify-between border-b ${isLight ? 'border-zinc-200' : 'border-white/5'} pb-3`}>
+          <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Active Filters</span>
+          <button
+            type="button"
+            onClick={handleResetAll}
+            disabled={!isAnyFilterApplied}
+            className={`text-[10px] uppercase tracking-wider font-bold transition-all ${
+              isAnyFilterApplied
+                ? 'text-gold hover:text-gold/80 cursor-pointer underline underline-offset-4'
+                : `${isLight ? 'text-zinc-400' : 'text-zinc-600'} cursor-not-allowed opacity-50`
+            }`}
+          >
+            Reset All
+          </button>
+        </div>
         <div className="space-y-3">
-          <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Category</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Category</span>
+            {selectedCategory && selectedCategory !== 'All' && (
+              <button
+                type="button"
+                onClick={() => handleCategorySelect('All')}
+                className="text-[10px] uppercase tracking-wide text-gold hover:underline cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <div className="space-y-2">
             {categoryOptions.map((category) => {
               const catSlug = category.slug ? String(category.slug).toLowerCase().trim().replace(/\s+/g, '-') : category.slug;
@@ -340,7 +477,7 @@ export const Shop = () => {
                   }`}
                 >
                   <span>{category.name}</span>
-                  {category.product_count !== undefined ? (
+                  {category.slug === 'All' && category.product_count !== undefined ? (
                     <span className="ml-2 text-[10px] text-zinc-500">({category.product_count})</span>
                   ) : null}
                 </button>
@@ -352,30 +489,71 @@ export const Shop = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Brands</span>
-            <button
-              type="button"
-              onClick={handleClearBrands}
-              className="text-[10px] uppercase tracking-wide text-gold hover:underline animate-fade-in cursor-pointer"
-            >
-              Clear
-            </button>
+            {selectedBrandsList.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearBrands}
+                className="text-[10px] uppercase tracking-wide text-gold hover:underline cursor-pointer"
+              >
+                Clear All
+              </button>
+            )}
           </div>
+
+          {/* Selected Brand Chips */}
+          {selectedBrandsList.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pb-2">
+              {selectedBrandsList.map((slug) => {
+                const matchedBrand = brands.find(b => (b.slug || b.name || '').toLowerCase().trim().replace(/\s+/g, '-') === slug.toLowerCase());
+                const dispName = matchedBrand ? (matchedBrand.name || matchedBrand.slug) : slug;
+                return (
+                  <div
+                    key={slug}
+                    className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-gold/10 border border-gold/30 text-[10px] text-gold font-sans font-medium"
+                  >
+                    <span>{dispName}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleBrandToggle(slug)}
+                      className="hover:text-white text-gold cursor-pointer transition-colors font-bold text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div className="space-y-3">
             {structuredBrandHierarchy.map((parent) => {
               const isParentExpanded = expandedParents[parent.id] === true;
               const rangeKeys = Object.keys(parent.ranges);
               if (rangeKeys.length === 0) return null;
 
+              const parentSlug = parent.id;
+              const isParentSelected = selectedBrandsList.includes(parentSlug);
+
               return (
                 <div key={parent.id} className={`border rounded-[4px] overflow-hidden ${isLight ? 'border-zinc-200 bg-zinc-50' : 'border-white/10 bg-luxury-dark/40'}`}>
-                  <button
-                    type="button"
-                    onClick={() => toggleParent(parent.id)}
-                    className="w-full flex items-center justify-between p-2.5 text-xs font-semibold text-gold cursor-pointer"
-                  >
-                    <span>{parent.name}</span>
-                    <span className="text-zinc-400 font-bold">{isParentExpanded ? '−' : '+'}</span>
-                  </button>
+                  <div className="w-full flex items-center justify-between p-2.5 text-xs font-semibold">
+                    <label className="flex items-center gap-2.5 cursor-pointer text-zinc-300 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={isParentSelected}
+                        onChange={() => handleBrandToggle(parentSlug)}
+                        className={`h-3.5 w-3.5 accent-gold rounded-[3px] border cursor-pointer ${isLight ? 'border-zinc-300 bg-zinc-50' : 'border-white/10 bg-luxury-dark'}`}
+                      />
+                      <span className="text-gold font-semibold select-none">{parent.name}</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => toggleParent(parent.id)}
+                      className="px-2 text-zinc-400 font-bold hover:text-gold cursor-pointer transition-colors"
+                    >
+                      {isParentExpanded ? '−' : '+'}
+                    </button>
+                  </div>
 
                   {isParentExpanded && (
                     <div className="px-3 pb-3 space-y-3 border-t border-white/5 pt-2">
@@ -387,18 +565,16 @@ export const Shop = () => {
                           <div className="space-y-1.5 pl-1">
                             {parent.ranges[range].map((brand) => {
                               const brandSlug = String(brand.slug || brand.name).toLowerCase().trim().replace(/\s+/g, '-');
-                              const isChecked = brandFilters.some(
-                                b => b === brand.slug || b === brand.name || String(b).toLowerCase().trim().replace(/\s+/g, '-') === brandSlug
-                              );
+                              const isChecked = selectedBrandsList.includes(brandSlug);
                               return (
                                 <label key={brand.id || brand.name} className={`flex items-center gap-2.5 text-xs cursor-pointer ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
                                   <input
                                     type="checkbox"
                                     checked={isChecked}
-                                    onChange={() => handleBrandToggle(brand.slug || brand.name)}
+                                    onChange={() => handleBrandToggle(brandSlug)}
                                     className={`h-3.5 w-3.5 accent-gold rounded-[3px] border cursor-pointer ${isLight ? 'border-zinc-300 bg-zinc-50' : 'border-white/10 bg-luxury-dark'}`}
                                   />
-                                  <span className="truncate">{brand.name}</span>
+                                  <span className="truncate select-none">{brand.name}</span>
                                 </label>
                               );
                             })}
@@ -413,24 +589,15 @@ export const Shop = () => {
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Maximum Price</span>
-            <span className="text-xs font-mono text-gold font-semibold">{formatBDT(maxPrice)}</span>
-          </div>
-          <input
-            type="range"
-            min={priceLimits.min}
-            max={priceLimits.max}
-            step={Math.max(1, Math.ceil((priceLimits.max - priceLimits.min) / 100))}
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(Number(e.target.value))}
-            className="w-full accent-gold bg-zinc-800 h-1 rounded-[4px] cursor-pointer"
+        <div className="space-y-3 pb-4">
+          <PriceRangeSlider 
+            minLimit={priceLimits.min}
+            maxLimit={priceLimits.max}
+            initialMin={minPriceParam ? Number(minPriceParam) : undefined}
+            initialMax={maxPriceParam ? Number(maxPriceParam) : undefined}
+            onChange={handlePriceRangeChange}
+            isLight={isLight}
           />
-          <div className="flex justify-between text-[9px] text-zinc-600 font-mono">
-            <span>{formatBDT(priceLimits.min)}</span>
-            <span>{formatBDT(priceLimits.max)}</span>
-          </div>
         </div>
       </div>
 
@@ -582,22 +749,37 @@ export const Shop = () => {
             </div>
 
             {totalPages > 1 && (
-              <div className="flex flex-col items-center gap-3 border-t border-white/5 pt-4 lg:hidden">
-                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">
-                  Page {page} of {totalPages}
-                </span>
-                <Pagination
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={(nextPage) => handlePageChange(nextPage)}
-                  isLight={isLight}
-                  className="justify-center"
-                />
+              <div className="flex items-center justify-between border-b border-white/5 pb-4 lg:hidden w-full gap-4">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                  className={`h-9 px-4 rounded-[4px] border ${
+                    isLight 
+                      ? 'border-zinc-200 text-zinc-800 hover:bg-zinc-50' 
+                      : 'border-gold/20 text-gold hover:bg-gold/10'
+                  } text-[10px] uppercase tracking-widest font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-30 flex-1 text-center`}
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                  className={`h-9 px-4 rounded-[4px] border ${
+                    isLight 
+                      ? 'border-zinc-200 text-zinc-800 hover:bg-zinc-50' 
+                      : 'border-gold/20 text-gold hover:bg-gold/10'
+                  } text-[10px] uppercase tracking-widest font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-30 flex-1 text-center`}
+                >
+                  Next
+                </button>
               </div>
             )}
 
-            {/* Loading skeleton */}
-            {isLoadingProducts && (
+            {/* Loading skeleton (Only on initial load when no products are present) */}
+            {isLoadingProducts && displayedProducts.length === 0 && (
               <ProductGridSkeleton count={6} />
             )}
 
@@ -633,37 +815,61 @@ export const Shop = () => {
               </div>
             )}
 
-            {/* Perfume list */}
-            <div className={gridColumnsClass}>
-              {!isLoadingProducts && displayedProducts.map((prod) => {
-                const currentSel = cardSelections[prod.id] || { size: '100ml', concentration: 'Eau de Parfum' };
-                return (
-                  <ProductCard 
-                    key={prod.id}
-                    product={prod}
-                    currentSel={currentSel}
-                    onSizeChange={(size) => {
-                      setCardSelections(prev => ({
-                        ...prev,
-                        [prod.id]: { ...currentSel, size }
-                      }));
-                    }}
-                    onConcentrationChange={(concentration) => {
-                      setCardSelections(prev => ({
-                        ...prev,
-                        [prod.id]: { ...currentSel, concentration }
-                      }));
-                    }}
-                    wishlist={wishlist}
-                    toggleWishlist={toggleWishlist}
-                    handleOpenProductDetail={handleOpenProductDetail}
-                    handleAddToCart={handleAddToCart}
-                    calculateItemPrice={calculateItemPrice}
-                    isLargeCard={false}
-                  />
-                );
-              })}
-            </div>
+            {/* Perfume list with premium loader overlay */}
+            {displayedProducts.length > 0 && (
+              <div className="relative">
+                <AnimatePresence>
+                  {isLoadingProducts && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className={`absolute inset-0 z-10 ${isLight ? 'bg-white/40' : 'bg-black/40'} backdrop-blur-[2px] flex items-center justify-center rounded-sm`}
+                    >
+                      <div className={`flex flex-col items-center gap-3 border p-6 rounded-md shadow-2xl ${isLight ? 'bg-white border-zinc-200 text-black' : 'bg-luxury-dark border-gold/20 text-white'}`}>
+                        {/* Premium Golden Spinner */}
+                        <div className="relative w-10 h-10">
+                          <div className="absolute inset-0 rounded-full border-2 border-gold/20"></div>
+                          <div className="absolute inset-0 rounded-full border-2 border-t-gold animate-spin"></div>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">Updating Collection...</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className={`${gridColumnsClass} transition-all duration-300 ${isLoadingProducts ? 'opacity-40 pointer-events-none filter blur-[1px]' : ''}`}>
+                  {displayedProducts.map((prod) => {
+                    const currentSel = cardSelections[prod.id] || getDefaultSelection(prod);
+                    return (
+                      <ProductCard 
+                        key={prod.id}
+                        product={prod}
+                        currentSel={currentSel}
+                        onSizeChange={(size) => {
+                          setCardSelections(prev => ({
+                            ...prev,
+                            [prod.id]: { ...currentSel, size }
+                          }));
+                        }}
+                        onConcentrationChange={(concentration) => {
+                          setCardSelections(prev => ({
+                            ...prev,
+                            [prod.id]: { ...currentSel, concentration }
+                          }));
+                        }}
+                        wishlist={wishlist}
+                        toggleWishlist={toggleWishlist}
+                        handleOpenProductDetail={handleOpenProductDetail}
+                        handleAddToCart={handleAddToCart}
+                        calculateItemPrice={calculateItemPrice}
+                        isLargeCard={false}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {totalPages > 1 && (
               <div className="flex flex-col items-center gap-3 border-t border-white/5 pt-4">

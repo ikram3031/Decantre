@@ -1,10 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { AppProvider } from './core/context/AppContext';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Catalog } from './pages/Catalog';
-import { Atelier } from './pages/Atelier';
 import { Reviews } from './pages/Reviews';
 import { Season } from './pages/Season';
 import { Combo } from './pages/Combo';
@@ -34,7 +33,7 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="catalog" element={<Catalog />} />
-            <Route path="atelier" element={<Atelier />} />
+            {/* AGY: Removed Atelier route element */}
             <Route path="reviews" element={<Reviews />} />
 
             {/* Newly added routes */}

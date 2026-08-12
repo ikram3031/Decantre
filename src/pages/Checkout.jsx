@@ -17,9 +17,89 @@ import {
   Tag
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { formatBDT as fmtBDT } from '../utils/formatCurrency';
-import { useApp } from '../context/AppContext';
-import { DISTRICTS as districtData } from '../lib/districts.js';
+import { formatBDT as fmtBDT } from '../core/utils/formatCurrency';
+import { useApp } from '../core/context/AppContext';
+import { DISTRICTS as districtData } from '../core/lib/districts.js';
+
+const DISTRICT_THANAS = {
+  Dhaka: [
+    { name: 'Savar' },
+    { name: 'Ashulia' },
+    { name: 'Dhamrai' },
+    { name: 'Keraniganj' },
+    { name: 'Nawabganj' },
+    { name: 'Dohar' },
+    { name: 'Adabor' },
+    { name: 'Badda' },
+    { name: 'Banani' },
+    { name: 'Bangshal' },
+    { name: 'Cantonment' },
+    { name: 'Chawkbazar' },
+    { name: 'Dakshinkhan' },
+    { name: 'Darussalam' },
+    { name: 'Demra' },
+    { name: 'Dhanmondi' },
+    { name: 'Gendaria' },
+    { name: 'Gulshan' },
+    { name: 'Hazaribagh' },
+    { name: 'Jatrabari' },
+    { name: 'Kadamtali' },
+    { name: 'Kafrul' },
+    { name: 'Kalabagan' },
+    { name: 'Kamrangirchar' },
+    { name: 'Khilgaon' },
+    { name: 'Khilkhet' },
+    { name: 'Kotwali' },
+    { name: 'Lalbagh' },
+    { name: 'Mirpur' },
+    { name: 'Mohammadpur' },
+    { name: 'Motijheel' },
+    { name: 'Mugda' },
+    { name: 'New Market' },
+    { name: 'Pallabi' },
+    { name: 'Paltan' },
+    { name: 'Ramna' },
+    { name: 'Rampura' },
+    { name: 'Sabujbagh' },
+    { name: 'Shah Ali' },
+    { name: 'Shahbagh' },
+    { name: 'Sher-e-Bangla Nagar' },
+    { name: 'Shyampur' },
+    { name: 'Sutrapur' },
+    { name: 'Tejgaon' },
+    { name: 'Tejgaon Industrial Area' },
+    { name: 'Turag' },
+    { name: 'Uttara Paschim' },
+    { name: 'Uttara Purba' },
+    { name: 'Uttarkhan' },
+    { name: 'Vatara' },
+    { name: 'Wari' }
+  ],
+  Gazipur: [
+    { name: 'Tongi' },
+    { name: 'Gazipur Sadar' },
+    { name: 'Konabari' },
+    { name: 'Kashimpur' },
+    { name: 'Kaliakair' },
+    { name: 'Kaliganj' },
+    { name: 'Kapasia' },
+    { name: 'Sreepur' }
+  ],
+  Narayanganj: [
+    { name: 'Narayanganj Sadar' },
+    { name: 'Bandar' },
+    { name: 'Fatullah' },
+    { name: 'Siddhirganj' },
+    { name: 'Rupganj' },
+    { name: 'Sonargaon' },
+    { name: 'Araihazar' }
+  ]
+};
+
+// Sort Thanas alphabetically at startup
+Object.keys(DISTRICT_THANAS).forEach(key => {
+  DISTRICT_THANAS[key].sort((a, b) => a.name.localeCompare(b.name));
+});
 
 export const Checkout = () => {
   const {
@@ -37,6 +117,7 @@ export const Checkout = () => {
     isProcessingOrder,
     handleCheckoutSubmit,
     orderCompleted,
+    orderNumber,
     cartSubtotal,
     discountAmount,
     shippingFee,
@@ -47,8 +128,10 @@ export const Checkout = () => {
     promoCode,
     setPromoCode,
     applyPromoCode,
+    removePromoCode,
     promoError,
-    appliedDiscount
+    appliedDiscount,
+    appliedCoupon
   } = useApp();
 
   const navigate = useNavigate();
@@ -103,6 +186,8 @@ export const Checkout = () => {
   const [agreedToTerms, setAgreedToTerms] = React.useState(false);
   const [isDistrictOpen, setIsDistrictOpen] = React.useState(false);
   const [isShipDistrictOpen, setIsShipDistrictOpen] = React.useState(false);
+  const [isThanaOpen, setIsThanaOpen] = React.useState(false);
+  const [isShipThanaOpen, setIsShipThanaOpen] = React.useState(false);
   const [emailError, setEmailError] = React.useState('');
   const [phoneError, setPhoneError] = React.useState('');
   const [shipPhoneError, setShipPhoneError] = React.useState('');
@@ -177,6 +262,10 @@ export const Checkout = () => {
     const shippingPhoneValidationError = paymentMethod !== 'instore' && !sameAsBilling
       ? validatePhoneValue(shipPhone || '')
       : '';
+    const billingDistrict = (district || '').trim();
+    const billingThana = (thana || '').trim();
+    const shippingDistrict = (shipDistrict || '').trim();
+    const shippingThana = (shipThana || '').trim();
 
     setEmailError(emailValidationError);
     setPhoneError(phoneValidationError);
@@ -193,13 +282,37 @@ export const Checkout = () => {
     }
 
     if (phoneValidationError) {
-      addToast('Please enter a valid Bangladeshi phone number in format +8801[3-8]XXXXXXXX.', 'error');
+      addToast('Please enter a valid Bangladeshi phone number in format +8801[3-9]XXXXXXXX.', 'error');
       return;
     }
 
     if (shippingPhoneValidationError) {
-      addToast('Please enter a valid recipient phone number in format +8801[3-8]XXXXXXXX.', 'error');
+      addToast('Please enter a valid recipient phone number in format +8801[3-9]XXXXXXXX.', 'error');
       return;
+    }
+
+    if (['Dhaka', 'Gazipur', 'Narayanganj'].includes(billingDistrict) && !billingThana) {
+      addToast('Please select a Thana / Upazila for the selected billing district.', 'error');
+      return;
+    }
+
+    if (paymentMethod !== 'instore' && !sameAsBilling && ['Dhaka', 'Gazipur', 'Narayanganj'].includes(shippingDistrict) && !shippingThana) {
+      addToast('Please select a Thana / Upazila for the selected shipping district.', 'error');
+      return;
+    }
+
+    setShippingInfo((prev) => ({
+      ...prev,
+      district: billingDistrict,
+      thana: billingThana
+    }));
+
+    if (paymentMethod !== 'instore' && !sameAsBilling) {
+      setShippingAddress((prev) => ({
+        ...prev,
+        district: shippingDistrict,
+        thana: shippingThana
+      }));
     }
 
     handleCheckoutSubmit(e);
@@ -233,9 +346,12 @@ export const Checkout = () => {
   // Reactive redirect to thank you page on success
   useEffect(() => {
     if (orderCompleted) {
-      navigate('/thank-you');
+      const nextPath = orderNumber
+        ? `/thank-you?orderId=${encodeURIComponent(orderNumber)}`
+        : '/thank-you';
+      navigate(nextPath, { replace: true });
     }
-  }, [orderCompleted, navigate]);
+  }, [orderCompleted, navigate, orderNumber]);
 
   return (
     <div className="py-12 sm:py-20 bg-luxury-black animate-fade-in text-left">
@@ -341,20 +457,6 @@ export const Checkout = () => {
                     />
                   </div>
 
-                  {/* Thana */}
-                  <div>
-                    <label className="text-[10px] uppercase tracking-widest text-zinc-300 block mb-1.5 font-semibold">
-                      Thana / Upazila
-                    </label>
-                    <input
-                      type="text"
-                      placeholder=""
-                      value={thana}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, thana: e.target.value })}
-                      className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
-                    />
-                  </div>
-
                   {/* District Dropdown */}
                   <div className="relative">
                     <label className="text-[10px] uppercase tracking-widest text-zinc-300 block mb-1.5 font-semibold">
@@ -369,7 +471,7 @@ export const Checkout = () => {
                         onFocus={() => setIsDistrictOpen(true)}
                         onBlur={() => setTimeout(() => setIsDistrictOpen(false), 200)}
                         onChange={(e) => {
-                          setShippingInfo({ ...shippingInfo, district: e.target.value });
+                          setShippingInfo({ ...shippingInfo, district: e.target.value, thana: '' });
                           setIsDistrictOpen(true);
                         }}
                         className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans pr-10"
@@ -380,7 +482,8 @@ export const Checkout = () => {
                     </div>
                     {isDistrictOpen && (
                       <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-zinc-950 border border-gold/30 rounded-sm z-50 py-1 shadow-2xl divide-y divide-white/5 scrollbar-thin">
-                        {districtData
+                        {[...districtData]
+                          .sort((a, b) => a.name.localeCompare(b.name))
                           .filter(d => d.name.toLowerCase().includes((district || '').toLowerCase()))
                           .map((d) => (
                             <button
@@ -388,7 +491,7 @@ export const Checkout = () => {
                               type="button"
                               onMouseDown={(e) => {
                                 e.preventDefault();
-                                setShippingInfo({ ...shippingInfo, district: d.name });
+                                setShippingInfo({ ...shippingInfo, district: d.name, thana: '' });
                                 setIsDistrictOpen(false);
                               }}
                               className="w-full text-left px-4 py-2 text-zinc-300 hover:text-white hover:bg-gold/20 text-xs transition-colors font-sans cursor-pointer"
@@ -399,6 +502,64 @@ export const Checkout = () => {
                         {districtData.filter(d => d.name.toLowerCase().includes((district || '').toLowerCase())).length === 0 && (
                           <div className="px-4 py-2 text-zinc-500 text-xs font-sans">
                             No districts found
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Thana */}
+                  <div className="relative">
+                    <label className="text-[10px] uppercase tracking-widest text-zinc-300 block mb-1.5 font-semibold">
+                      Thana / Upazila {['Dhaka', 'Gazipur', 'Narayanganj'].includes(district) && <span className="text-rose-400">*</span>}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required={['Dhaka', 'Gazipur', 'Narayanganj'].includes(district)}
+                        placeholder={['Dhaka', 'Gazipur', 'Narayanganj'].includes(district) ? "Select or type Thana" : "Enter Thana / Upazila"}
+                        value={thana}
+                        onFocus={() => {
+                          if (['Dhaka', 'Gazipur', 'Narayanganj'].includes(district)) {
+                            setIsThanaOpen(true);
+                          }
+                        }}
+                        onBlur={() => setTimeout(() => setIsThanaOpen(false), 200)}
+                        onChange={(e) => {
+                          setShippingInfo({ ...shippingInfo, thana: e.target.value });
+                          if (['Dhaka', 'Gazipur', 'Narayanganj'].includes(district)) {
+                            setIsThanaOpen(true);
+                          }
+                        }}
+                        className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans pr-10"
+                      />
+                      {['Dhaka', 'Gazipur', 'Narayanganj'].includes(district) && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      )}
+                    </div>
+                    {isThanaOpen && ['Dhaka', 'Gazipur', 'Narayanganj'].includes(district) && (
+                      <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-zinc-950 border border-gold/30 rounded-sm z-50 py-1 shadow-2xl divide-y divide-white/5 scrollbar-thin">
+                        {(DISTRICT_THANAS[district] || [])
+                          .filter(t => t.name.toLowerCase().includes((thana || '').toLowerCase()))
+                          .map((t) => (
+                            <button
+                              key={t.name}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setShippingInfo({ ...shippingInfo, thana: t.name });
+                                setIsThanaOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2 text-zinc-300 hover:text-white hover:bg-gold/20 text-xs transition-colors font-sans cursor-pointer"
+                            >
+                              {t.name}
+                            </button>
+                          ))}
+                        {(DISTRICT_THANAS[district] || []).filter(t => t.name.toLowerCase().includes((thana || '').toLowerCase())).length === 0 && (
+                          <div className="px-4 py-2 text-zinc-500 text-xs font-sans">
+                            No thanas found
                           </div>
                         )}
                       </div>
@@ -484,19 +645,6 @@ export const Checkout = () => {
                     </div>
 
                     {/* Shipping Thana */}
-                    <div>
-                      <label className="text-[10px] uppercase tracking-widest text-zinc-300 block mb-1.5 font-semibold">
-                        Thana / Upazila
-                      </label>
-                      <input
-                        type="text"
-                        placeholder=""
-                        value={shipThana}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, thana: e.target.value })}
-                        className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
-                      />
-                    </div>
-
                     {/* Shipping District */}
                     <div className="relative">
                       <label className="text-[10px] uppercase tracking-widest text-zinc-300 block mb-1.5 font-semibold">
@@ -511,7 +659,7 @@ export const Checkout = () => {
                           onFocus={() => setIsShipDistrictOpen(true)}
                           onBlur={() => setTimeout(() => setIsShipDistrictOpen(false), 200)}
                           onChange={(e) => {
-                            setShippingAddress({ ...shippingAddress, district: e.target.value });
+                            setShippingAddress({ ...shippingAddress, district: e.target.value, thana: '' });
                             setIsShipDistrictOpen(true);
                           }}
                           className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans pr-10"
@@ -522,7 +670,8 @@ export const Checkout = () => {
                       </div>
                       {isShipDistrictOpen && (
                         <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-zinc-950 border border-gold/30 rounded-sm z-50 py-1 shadow-2xl divide-y divide-white/5 scrollbar-thin">
-                          {districtData
+                          {[...districtData]
+                            .sort((a, b) => a.name.localeCompare(b.name))
                             .filter(d => d.name.toLowerCase().includes((shipDistrict || '').toLowerCase()))
                             .map((d) => (
                               <button
@@ -530,7 +679,7 @@ export const Checkout = () => {
                                 type="button"
                                 onMouseDown={(e) => {
                                   e.preventDefault();
-                                  setShippingAddress({ ...shippingAddress, district: d.name });
+                                  setShippingAddress({ ...shippingAddress, district: d.name, thana: '' });
                                   setIsShipDistrictOpen(false);
                                 }}
                                 className="w-full text-left px-4 py-2 text-zinc-300 hover:text-white hover:bg-gold/20 text-xs transition-colors font-sans cursor-pointer"
@@ -541,6 +690,64 @@ export const Checkout = () => {
                           {districtData.filter(d => d.name.toLowerCase().includes((shipDistrict || '').toLowerCase())).length === 0 && (
                             <div className="px-4 py-2 text-zinc-500 text-xs font-sans">
                               No districts found
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Shipping Thana */}
+                    <div className="relative">
+                      <label className="text-[10px] uppercase tracking-widest text-zinc-300 block mb-1.5 font-semibold">
+                        Shipping Thana / Upazila {['Dhaka', 'Gazipur', 'Narayanganj'].includes(shipDistrict) && <span className="text-rose-400">*</span>}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          required={['Dhaka', 'Gazipur', 'Narayanganj'].includes(shipDistrict) && !sameAsBilling}
+                          placeholder={['Dhaka', 'Gazipur', 'Narayanganj'].includes(shipDistrict) ? "Select or type Thana" : "Enter Thana / Upazila"}
+                          value={shipThana}
+                          onFocus={() => {
+                            if (['Dhaka', 'Gazipur', 'Narayanganj'].includes(shipDistrict)) {
+                              setIsShipThanaOpen(true);
+                            }
+                          }}
+                          onBlur={() => setTimeout(() => setIsShipThanaOpen(false), 200)}
+                          onChange={(e) => {
+                            setShippingAddress({ ...shippingAddress, thana: e.target.value });
+                            if (['Dhaka', 'Gazipur', 'Narayanganj'].includes(shipDistrict)) {
+                              setIsShipThanaOpen(true);
+                            }
+                          }}
+                          className="w-full bg-black/50 border border-white/15 focus:border-gold text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans pr-10"
+                        />
+                        {['Dhaka', 'Gazipur', 'Narayanganj'].includes(shipDistrict) && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                            <ChevronDown className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                      {isShipThanaOpen && ['Dhaka', 'Gazipur', 'Narayanganj'].includes(shipDistrict) && (
+                        <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-zinc-950 border border-gold/30 rounded-sm z-50 py-1 shadow-2xl divide-y divide-white/5 scrollbar-thin">
+                          {(DISTRICT_THANAS[shipDistrict] || [])
+                            .filter(t => t.name.toLowerCase().includes((shipThana || '').toLowerCase()))
+                            .map((t) => (
+                              <button
+                                key={t.name}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setShippingAddress({ ...shippingAddress, thana: t.name });
+                                  setIsShipThanaOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-zinc-300 hover:text-white hover:bg-gold/20 text-xs transition-colors font-sans cursor-pointer"
+                              >
+                                {t.name}
+                              </button>
+                            ))}
+                          {(DISTRICT_THANAS[shipDistrict] || []).filter(t => t.name.toLowerCase().includes((shipThana || '').toLowerCase())).length === 0 && (
+                            <div className="px-4 py-2 text-zinc-500 text-xs font-sans">
+                              No thanas found
                             </div>
                           )}
                         </div>
@@ -567,11 +774,11 @@ export const Checkout = () => {
 
                   return (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {/* Option 1: Inside Dhaka */}
                         <div
                           className={`p-3.5 rounded-sm border flex items-center justify-between transition-all ${
-                            isDhaka && paymentMethod !== 'instore'
+                            shippingFee === 80 && paymentMethod !== 'instore'
                               ? 'border-gold bg-gold/15 text-gold font-bold shadow-md'
                               : 'border-white/10 bg-black/40 text-zinc-500 opacity-60'
                           }`}
@@ -581,7 +788,7 @@ export const Checkout = () => {
                               type="radio"
                               name="shippingChargeOption"
                               disabled
-                              checked={isDhaka && paymentMethod !== 'instore'}
+                              checked={shippingFee === 80 && paymentMethod !== 'instore'}
                               readOnly
                               className="h-4 w-4 accent-gold cursor-not-allowed"
                             />
@@ -593,10 +800,10 @@ export const Checkout = () => {
                           <span className="text-xs font-mono font-bold text-gold">৳80</span>
                         </div>
 
-                        {/* Option 2: Outside Dhaka */}
+                        {/* Option 2: Dhaka Suburbs */}
                         <div
                           className={`p-3.5 rounded-sm border flex items-center justify-between transition-all ${
-                            !isDhaka && paymentMethod !== 'instore'
+                            shippingFee === 100 && paymentMethod !== 'instore'
                               ? 'border-gold bg-gold/15 text-gold font-bold shadow-md'
                               : 'border-white/10 bg-black/40 text-zinc-500 opacity-60'
                           }`}
@@ -606,7 +813,32 @@ export const Checkout = () => {
                               type="radio"
                               name="shippingChargeOption"
                               disabled
-                              checked={!isDhaka && paymentMethod !== 'instore'}
+                              checked={shippingFee === 100 && paymentMethod !== 'instore'}
+                              readOnly
+                              className="h-4 w-4 accent-gold cursor-not-allowed"
+                            />
+                            <div className="text-left">
+                              <span className="text-xs font-sans block font-semibold uppercase tracking-wider">Dhaka Suburbs</span>
+                              <span className="text-[10px] font-sans text-zinc-400 block">24 – 72 Hours</span>
+                            </div>
+                          </div>
+                          <span className="text-xs font-mono font-bold text-gold">৳100</span>
+                        </div>
+
+                        {/* Option 3: Outside Dhaka */}
+                        <div
+                          className={`p-3.5 rounded-sm border flex items-center justify-between transition-all ${
+                            shippingFee === 120 && paymentMethod !== 'instore'
+                              ? 'border-gold bg-gold/15 text-gold font-bold shadow-md'
+                              : 'border-white/10 bg-black/40 text-zinc-500 opacity-60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="radio"
+                              name="shippingChargeOption"
+                              disabled
+                              checked={shippingFee === 120 && paymentMethod !== 'instore'}
                               readOnly
                               className="h-4 w-4 accent-gold cursor-not-allowed"
                             />
@@ -1076,9 +1308,9 @@ export const Checkout = () => {
                       <Tag className="w-4 h-4 text-gold" />
                       <span>Apply Coupon Code</span>
                     </span>
-                    {appliedDiscount > 0 && (
+                    {appliedCoupon && (
                       <span className="text-emerald-400 font-mono text-[11px] font-bold">
-                        ({appliedDiscount * 100}% Applied)
+                        ({appliedCoupon.code} Applied)
                       </span>
                     )}
                   </label>
@@ -1086,18 +1318,29 @@ export const Checkout = () => {
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder=""
+                      placeholder={appliedCoupon ? `Applied: ${appliedCoupon.code}` : ""}
                       value={promoCode || ''}
                       onChange={(e) => setPromoCode(e.target.value)}
-                      className="flex-1 bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-xs font-mono text-zinc-200 px-3.5 py-2.5 outline-none rounded-sm transition-all uppercase placeholder:normal-case placeholder:text-zinc-500"
+                      disabled={!!appliedCoupon}
+                      className="flex-1 bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-xs font-mono text-zinc-200 px-3.5 py-2.5 outline-none rounded-sm transition-all uppercase placeholder:normal-case placeholder:text-zinc-500 disabled:opacity-60 disabled:cursor-not-allowed"
                     />
-                    <button
-                      type="button"
-                      onClick={applyPromoCode}
-                      className="bg-gold hover:bg-gold/80 text-black px-4 py-2.5 text-xs font-sans font-bold uppercase tracking-wider rounded-sm transition-all shadow-md shrink-0 cursor-pointer"
-                    >
-                      Apply
-                    </button>
+                    {appliedCoupon ? (
+                      <button
+                        type="button"
+                        onClick={removePromoCode}
+                        className="bg-rose-700 hover:bg-rose-800 text-white px-4 py-2.5 text-xs font-sans font-bold uppercase tracking-wider rounded-sm transition-all shadow-md shrink-0 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={applyPromoCode}
+                        className="bg-gold hover:bg-gold/80 text-black px-4 py-2.5 text-xs font-sans font-bold uppercase tracking-wider rounded-sm transition-all shadow-md shrink-0 cursor-pointer"
+                      >
+                        Apply
+                      </button>
+                    )}
                   </div>
 
                   {promoError && (
@@ -1107,10 +1350,17 @@ export const Checkout = () => {
                     </p>
                   )}
 
-                  {appliedDiscount > 0 && (
+                  {appliedCoupon && (
                     <p className="text-emerald-400 text-[11px] font-sans font-light flex items-center gap-1.5 bg-emerald-950/20 border border-emerald-500/30 p-2.5 rounded-sm">
                       <IconCheck className="w-3.5 h-3.5 shrink-0" />
-                      <span>Coupon applied successfully! You saved <strong>{appliedDiscount * 100}%</strong> on subtotal.</span>
+                      <span>
+                        Coupon <strong>{appliedCoupon.code}</strong> applied successfully! You saved{' '}
+                        <strong>
+                          {appliedCoupon.discountType === 'percentage'
+                            ? `${appliedCoupon.discountValue}%`
+                            : `৳${appliedCoupon.discountValue}`}
+                        </strong>.
+                      </span>
                     </p>
                   )}
                 </div>

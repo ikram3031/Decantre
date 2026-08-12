@@ -1,7 +1,9 @@
 import React from 'react';
 import { SlidersHorizontal, Sparkles } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../core/context/AppContext';
 import { ProductCard } from '../components/ProductCard';
+import { getDefaultSelection } from '../core/store/productHelpers';
+
 
 export const Catalog = () => {
   const {
@@ -100,7 +102,7 @@ export const Catalog = () => {
         {/* Perfume catalog cards list */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProducts.map((prod) => {
-            const currentSel = cardSelections[prod.id] || { size: '100ml', concentration: 'Eau de Parfum' };
+            const currentSel = cardSelections[prod.id] || getDefaultSelection(prod);
             return (
               <ProductCard 
                 key={prod.id}

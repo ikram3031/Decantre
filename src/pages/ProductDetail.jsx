@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
-import { formatBDT } from '../utils/formatCurrency';
-import { mapRemoteProduct, resolveBrandName, resolveCategoryName } from '../store/productHelpers';
-import { fetchProductDetails, fetchProducts } from '../lib/api';
+import { useAppStore } from '../core/store/useAppStore';
+import { formatBDT } from '../core/utils/formatCurrency';
+import { mapRemoteProduct, resolveBrandName, resolveCategoryName } from '../core/store/productHelpers';
+import { fetchProductDetails, fetchProducts } from '../core/lib/api';
 import { MoreProducts } from '../components/sections/MoreProducts';
 import { RecentlyViewedProducts } from '../components/sections/RecentlyViewedProducts';
 
@@ -24,6 +24,7 @@ const addToRecentlyViewed = (id) => {
     console.error(e);
   }
 };
+
 import { 
   ArrowLeft, 
   ShoppingCart, 
@@ -49,18 +50,17 @@ import {
 export const ProductDetail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { 
-    products, 
-    wishlist, 
-    toggleWishlist, 
-    handleAddToCart, 
-    cart,
-    setIsCartOpen,
-    addToast,
-    user,
-    setAuthModal,
-    currentTheme
-  } = useApp();
+  
+  // Use specific selectors to avoid subscribing to the entire store
+  const products = useAppStore((state) => state.products);
+  const wishlist = useAppStore((state) => state.wishlist);
+  const toggleWishlist = useAppStore((state) => state.toggleWishlist);
+  const handleAddToCart = useAppStore((state) => state.handleAddToCart);
+  const setIsCartOpen = useAppStore((state) => state.setIsCartOpen);
+  const addToast = useAppStore((state) => state.addToast);
+  const user = useAppStore((state) => state.user);
+  const setAuthModal = useAppStore((state) => state.setAuthModal);
+  const currentTheme = useAppStore((state) => state.currentTheme);
 
   const isLight = currentTheme === 'light';
   const did = searchParams.get('did') || searchParams.get('id');
@@ -103,6 +103,8 @@ export const ProductDetail = () => {
       return;
     }
 
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
     const loadProductDetail = async () => {
       setIsLoading(true);
       setError(null);
@@ -111,7 +113,6 @@ export const ProductDetail = () => {
         if (fetched) {
           setProduct(fetched);
           setIsLoading(false);
-          // Add to recently viewed in localStorage
           addToRecentlyViewed(fetched.id);
           return;
         }
@@ -142,7 +143,7 @@ export const ProductDetail = () => {
     };
 
     loadProductDetail();
-  }, [did, products]);
+  }, [did]);
 
   // Dynamic variations directly from API
   const decantSwatches = React.useMemo(() => {
@@ -169,6 +170,14 @@ export const ProductDetail = () => {
       setSelectedSize(decantSwatches[0].size);
     }
   }, [decantSwatches, selectedSize]);
+
+  const activeSwatch = decantSwatches.find(s => s.size === selectedSize) || decantSwatches[0] || { size: 'Full Bottle', price: product?.price || product?.basePrice };
+
+  const isOutOfStock = React.useMemo(() => {
+    if (!product) return false;
+    const status = String(product.stockStatus || '').toLowerCase().trim();
+    return status === 'outofstock' || status === 'out of stock';
+  }, [product]);
 
   if (isLoading) {
     return (
@@ -200,22 +209,7 @@ export const ProductDetail = () => {
     );
   }
 
-  const activeSwatch = decantSwatches.find(s => s.size === selectedSize) || decantSwatches[0] || {};
   const unitPrice = activeSwatch.price ?? product.basePrice ?? 980;
-
-  const isSwatchOutOfStock = React.useMemo(() => {
-    if (!product) return true;
-    if (product.stockStatus === 'outofstock') return true;
-    if (activeSwatch && activeSwatch.raw) {
-      const swatchRaw = activeSwatch.raw;
-      return (
-        swatchRaw.stock_status === 'outofstock' || 
-        swatchRaw.stockStatus === 'outofstock' || 
-        swatchRaw.stockQuantity === 0
-      );
-    }
-    return product.stockQuantity === 0;
-  }, [product, activeSwatch]);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -278,7 +272,7 @@ export const ProductDetail = () => {
                   onLoad={() => setImageLoaded(true)}
                   referrerPolicy="no-referrer"
                 />
-                {isSwatchOutOfStock && (
+                {isOutOfStock && (
                   <div className="absolute top-4 right-4 z-10 bg-red-600/90 backdrop-blur-sm text-white text-[10px] font-sans font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-md">
                     Out of Stock
                   </div>
@@ -298,9 +292,16 @@ export const ProductDetail = () => {
               >
                 {resolveCategoryName(product.category)}
               </Link>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-medium leading-tight tracking-tight">
-                {product.name}
-              </h1>
+              <div className="flex items-center justify-between gap-3">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-medium leading-tight tracking-tight">
+                  {product.name}
+                </h1>
+                {isOutOfStock && (
+                  <span className="bg-red-600 text-white text-[10px] font-sans font-bold uppercase tracking-wider px-3 py-1 rounded-sm shrink-0">
+                    Out of Stock
+                  </span>
+                )}
+              </div>
               <span className="text-xs uppercase tracking-widest text-zinc-400 font-sans font-medium block">
                 Brand: <strong className="text-gold font-semibold">{resolveBrandName(product.brand)}</strong>
               </span>
@@ -338,54 +339,52 @@ export const ProductDetail = () => {
             </div>
 
             {/* 3-Column Variation Swatches */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-sans uppercase tracking-widest text-zinc-400 font-bold">
-                  Select Decant Size:
-                </span>
-                <button 
-                  onClick={() => setIsSizeGuideOpen(true)}
-                  className="text-[10px] uppercase tracking-wider text-gold hover:underline cursor-pointer"
-                >
-                  Size & Spray Guide
-                </button>
-              </div>
+            {product.type === 'variant' && decantSwatches.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-sans uppercase tracking-widest text-zinc-400 font-bold">
+                    Select Decant Size:
+                  </span>
+                  <button 
+                    onClick={() => setIsSizeGuideOpen(true)}
+                    className="text-[10px] uppercase tracking-wider text-gold hover:underline cursor-pointer"
+                  >
+                    Size & Spray Guide
+                  </button>
+                </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {decantSwatches.map((swatch) => {
-                  const isSelected = selectedSize === swatch.size;
-                  const isSwatchOut = swatch.raw && (
-                    swatch.raw.stock_status === 'outofstock' || 
-                    swatch.raw.stockStatus === 'outofstock' || 
-                    swatch.raw.stockQuantity === 0
-                  );
-                  return (
-                    <button
-                      key={swatch.size}
-                      onClick={() => setSelectedSize(swatch.size)}
-                      className={`p-3.5 rounded-sm border text-left transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
-                        isSelected
-                          ? 'border-gold bg-gold/15 text-gold font-bold shadow-md ring-1 ring-gold/50'
-                          : isLight
-                            ? 'border-zinc-200 bg-white text-zinc-800 hover:border-black'
-                            : 'border-white/10 bg-black/40 text-zinc-300 hover:border-gold/40'
-                      }`}
-                    >
-                      <span className="text-xs font-mono font-bold block">{swatch.label}</span>
-                      <span className="text-[11px] text-gold font-mono font-semibold block mt-1">{formatBDT(swatch.price)}</span>
-                      {swatch.sprays && (
-                        <span className="text-[10px] text-zinc-400 font-mono block mt-2">{swatch.sprays}</span>
-                      )}
-                      {isSwatchOut && (
-                        <span className="absolute top-1 right-1 text-[7px] uppercase font-bold text-red-500 bg-red-500/10 px-1 py-0.5 rounded">
-                          Out of Stock
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {decantSwatches.map((swatch) => {
+                    const isSelected = selectedSize === swatch.size;
+                    return (
+                      <button
+                        key={swatch.size}
+                        disabled={isOutOfStock}
+                        onClick={() => {
+                          if (isOutOfStock) return;
+                          setSelectedSize(swatch.size);
+                        }}
+                        className={`p-3.5 rounded-sm border text-left transition-all flex flex-col justify-between relative overflow-hidden ${
+                          isOutOfStock
+                            ? 'border-zinc-800 bg-zinc-900/50 text-zinc-600 cursor-not-allowed opacity-50 pointer-events-none'
+                            : isSelected
+                              ? 'border-gold bg-gold/15 text-gold font-bold shadow-md ring-1 ring-gold/50 cursor-pointer'
+                              : isLight
+                                ? 'border-zinc-200 bg-white text-zinc-800 hover:border-black cursor-pointer'
+                                : 'border-white/10 bg-black/40 text-zinc-300 hover:border-gold/40 cursor-pointer'
+                        }`}
+                      >
+                        <span className="text-xs font-mono font-bold block">{swatch.label}</span>
+                        <span className="text-[11px] text-gold font-mono font-semibold block mt-1">{formatBDT(swatch.price)}</span>
+                        {swatch.sprays && (
+                          <span className="text-[10px] text-zinc-400 font-mono block mt-2">{swatch.sprays}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quantity Picker */}
             <div className="space-y-2">
@@ -395,8 +394,11 @@ export const ProductDetail = () => {
               <div className="inline-flex items-center border border-gold/40 rounded-sm bg-black/60 overflow-hidden">
                 <button 
                   type="button"
-                  onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                  className="w-10 h-10 flex items-center justify-center bg-gold text-black hover:bg-gold/90 transition-colors font-bold cursor-pointer"
+                  disabled={isOutOfStock}
+                  onClick={() => !isOutOfStock && setQuantity(prev => Math.max(1, prev - 1))}
+                  className={`w-10 h-10 flex items-center justify-center font-bold transition-colors ${
+                    isOutOfStock ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-gold text-black hover:bg-gold/90 cursor-pointer'
+                  }`}
                 >
                   <Minus className="w-4 h-4" />
                 </button>
@@ -405,8 +407,11 @@ export const ProductDetail = () => {
                 </span>
                 <button 
                   type="button"
-                  onClick={() => setQuantity(prev => prev + 1)}
-                  className="w-10 h-10 flex items-center justify-center bg-gold text-black hover:bg-gold/90 transition-colors font-bold cursor-pointer"
+                  disabled={isOutOfStock}
+                  onClick={() => !isOutOfStock && setQuantity(prev => prev + 1)}
+                  className={`w-10 h-10 flex items-center justify-center font-bold transition-colors ${
+                    isOutOfStock ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-gold text-black hover:bg-gold/90 cursor-pointer'
+                  }`}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -416,35 +421,35 @@ export const ProductDetail = () => {
             {/* Action Buttons: Add to Cart & Buy Now */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button
-                disabled={isSwatchOutOfStock}
+                disabled={isOutOfStock}
                 onClick={() => {
-                  if (isSwatchOutOfStock) return;
+                  if (isOutOfStock) return;
                   handleAddToCart(product, activeSwatch.size, 'Eau de Parfum', quantity, unitPrice);
                 }}
-                className={`w-full py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 ${
-                  isSwatchOutOfStock
-                    ? 'bg-zinc-800 text-zinc-500 shadow-none cursor-not-allowed opacity-50'
-                    : 'bg-gold hover:bg-gold/90 text-black shadow-gold/10 cursor-pointer'
+                className={`w-full py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                  isOutOfStock
+                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50 shadow-none'
+                    : 'bg-gold hover:bg-gold/90 text-black shadow-lg shadow-gold/10 cursor-pointer'
                 }`}
               >
                 <ShoppingCart className="w-4 h-4" />
-                {isSwatchOutOfStock ? 'SOLD OUT' : 'ADD TO CART'}
+                {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
               </button>
 
               <button
-                disabled={isSwatchOutOfStock}
+                disabled={isOutOfStock}
                 onClick={() => {
-                  if (isSwatchOutOfStock) return;
+                  if (isOutOfStock) return;
                   handleBuyNow();
                 }}
                 className={`w-full py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 border ${
-                  isSwatchOutOfStock
+                  isOutOfStock
                     ? 'bg-transparent text-zinc-500 border-zinc-800 cursor-not-allowed opacity-50'
                     : 'bg-black text-gold border-gold hover:bg-gold hover:text-black cursor-pointer'
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
-                {isSwatchOutOfStock ? 'SOLD OUT' : 'BUY NOW'}
+                {isOutOfStock ? 'OUT OF STOCK' : 'BUY NOW'}
               </button>
             </div>
 

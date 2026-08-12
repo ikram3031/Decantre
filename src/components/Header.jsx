@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Compass, Heart, ShoppingBag, Search, Menu, X, ChevronDown, ChevronUp, ChevronRight, User, LogIn, Sparkles, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../core/context/AppContext';
 import SearchDropdown from './SearchDropdown';
 
 import menuData from '../data/menuData.json';
@@ -39,21 +39,45 @@ export const Header = ({
       return 'U-Z';
     };
 
+    let nicheParent = null;
+    let designerParent = null;
+    let arabianParent = null;
+
     if (brands && brands.length > 0) {
+      // Identify the 3 parent brands (those with parent === null)
+      const parentBrands = brands.filter(b => typeof b === 'object' && !b.parent);
+      const parentIdMap = {};
+      for (const p of parentBrands) {
+        const slug = (p.slug || p.name || '').toLowerCase();
+        if (slug.includes('niche')) {
+          parentIdMap[p.id || p._id] = 'niche';
+          nicheParent = p;
+        } else if (slug.includes('designer')) {
+          parentIdMap[p.id || p._id] = 'designer';
+          designerParent = p;
+        } else if (slug.includes('arabian') || slug.includes('uae')) {
+          parentIdMap[p.id || p._id] = 'arabian';
+          arabianParent = p;
+        }
+      }
+
+      // Group child brands by their parent reference
       brands.forEach((b) => {
-        const name = typeof b === 'string' ? b : (b.name || b.slug || '');
+        if (typeof b !== 'object' || !b.parent) return;
+        const name = b.name || b.slug || '';
         if (!name) return;
-        const brandObj = typeof b === 'object' ? b : {};
+
+        const parentRef = typeof b.parent === 'object' ? (b.parent.id || b.parent._id || b.parent) : b.parent;
+        const catKey = parentIdMap[parentRef] || 'niche';
+
         const firstChar = name.trim().charAt(0).toUpperCase();
         const groupKey = getGroup(firstChar);
-        const type = (brandObj.type || brandObj.category || '').toLowerCase();
-
-        if (type.includes('arabian') || type.includes('uae')) {
-          if (!arabianGroups[groupKey].includes(name)) arabianGroups[groupKey].push(name);
-        } else if (type.includes('designer')) {
-          if (!designerGroups[groupKey].includes(name)) designerGroups[groupKey].push(name);
-        } else {
-          if (!nicheGroups[groupKey].includes(name)) nicheGroups[groupKey].push(name);
+        const targetGroups = catKey === 'arabian' ? arabianGroups : catKey === 'designer' ? designerGroups : nicheGroups;
+        if (!targetGroups[groupKey].some(item => item.name === name)) {
+          targetGroups[groupKey].push({
+            name,
+            slug: b.slug
+          });
         }
       });
     }
@@ -63,24 +87,38 @@ export const Header = ({
       const res = {};
       Object.keys(groups).forEach((key) => {
         if (groups[key].length > 0) {
-          groups[key].sort();
+          groups[key].sort((a, b) => a.name.localeCompare(b.name));
           res[key] = groups[key];
         }
       });
-      return Object.keys(res).length > 0 ? res : fallbackStatic;
+      if (Object.keys(res).length > 0) {
+        return res;
+      }
+      
+      const fallbackRes = {};
+      Object.keys(fallbackStatic).forEach((key) => {
+        fallbackRes[key] = fallbackStatic[key].map((name) => ({
+          name,
+          slug: String(name).toLowerCase().trim().replace(/\s+/g, '-')
+        }));
+      });
+      return fallbackRes;
     };
 
     return {
       niche: {
-        name: 'Niche Perfumes',
+        name: nicheParent?.name || 'Niche Perfumes',
+        slug: nicheParent?.slug || 'niche',
         ranges: filterRanges(nicheGroups, brandHierarchy.niche?.ranges || {})
       },
       designer: {
-        name: 'Designer Fragrances',
+        name: designerParent?.name || 'Designer Fragrances',
+        slug: designerParent?.slug || 'designer',
         ranges: filterRanges(designerGroups, brandHierarchy.designer?.ranges || {})
       },
       arabian: {
-        name: 'Arabian & UAE Fragrances',
+        name: arabianParent?.name || 'Arabian & UAE Fragrances',
+        slug: arabianParent?.slug || 'arabian',
         ranges: filterRanges(arabianGroups, brandHierarchy.arabian?.ranges || {})
       }
     };
@@ -165,7 +203,8 @@ export const Header = ({
   // Navigate to shop filtered by selected brand
   const handleBrandClick = (brandName) => {
     setActiveDropdown(null);
-    navigate(`/shop?${buildQueryString({ brand: brandName })}`);
+    const slugified = String(brandName).toLowerCase().trim().replace(/\s+/g, '-');
+    navigate(`/shop?${buildQueryString({ brand: slugified })}`);
   };
 
   // Top search panel states
@@ -302,7 +341,7 @@ export const Header = ({
           <Link to="/" className="flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
             {!logoFailed ? (
               <img 
-                src="https://decantrebd.com/wp-content/uploads/2026/03/decantre-color-logo-transparent.webp" 
+                src="https://server.decantrebd.com/uploads/logo.webp" 
                 alt="DECANTRE" 
                 className={`w-auto max-w-full object-contain transition-all duration-300 ${isScrolled ? 'h-12 md:h-16' : 'h-16 md:h-20 lg:h-22'}`}
                 onError={() => setLogoFailed(true)}
@@ -531,10 +570,10 @@ export const Header = ({
                 {/* 4. Brand */}
                 <div className="bg-zinc-900/80 border border-white/10 rounded-sm overflow-hidden">
                   <div className="w-full flex items-center justify-between py-2.5 px-4 bg-zinc-900/90 hover:bg-zinc-800/80 transition-colors">
+                    {/* AGY: Removed navigation link to deleted /atelier page, clicking Brand text now just expands/toggles the sub-menu */}
                     <button
                       onClick={() => {
-                        navigate('/atelier');
-                        handleNavLinkClick();
+                        toggleNode('brand');
                       }}
                       className="font-semibold text-zinc-100 hover:text-gold text-left cursor-pointer flex-grow"
                     >
@@ -558,7 +597,7 @@ export const Header = ({
                             <div className="w-full flex items-center justify-between py-2 px-3 bg-zinc-900/90 hover:bg-zinc-800/90 transition-colors">
                                 <button
                                   onClick={() => {
-                                    navigate(`/shop?${buildQueryString({ brand: cat.name.toLowerCase() })}`);
+                                    navigate(`/shop?${buildQueryString({ brand: cat.slug })}`);
                                     handleNavLinkClick();
                                   }}
                                   className="text-xs font-semibold text-zinc-200 hover:text-gold text-left cursor-pointer flex-grow flex items-center justify-between pr-2"
@@ -597,16 +636,16 @@ export const Header = ({
 
                                       {isRangeExpanded && (
                                         <div className="pl-3 pr-2 py-1.5 flex flex-col gap-1 bg-black/60 border-t border-white/5">
-                                          {cat.ranges[range].map((brandName) => (
+                                          {cat.ranges[range].map((brandObj) => (
                                             <button
-                                              key={brandName}
+                                              key={brandObj.name}
                                               onClick={() => {
-                                                handleBrandClick(brandName);
+                                                navigate(`/shop?${buildQueryString({ brand: brandObj.slug })}`);
                                                 handleNavLinkClick();
                                               }}
                                               className="w-full text-left py-1 px-2 text-[11px] text-zinc-300 hover:text-gold hover:bg-white/5 rounded-xs transition-colors flex items-center justify-between cursor-pointer font-sans"
                                             >
-                                              <span>{brandName}</span>
+                                              <span>{brandObj.name}</span>
                                             </button>
                                           ))}
                                         </div>

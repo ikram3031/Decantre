@@ -1,8 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, Lock, User, Key, ShieldCheck, ShoppingBag, LogOut, Award, ArrowLeft, RefreshCw, Phone } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { loginMember, registerMember, verifyMemberOtp, resendMemberOtp } from '../lib/api';
+import { useApp } from '../core/context/AppContext';
+import {
+  loginMember,
+  registerMember,
+  verifyMemberOtp,
+  resendMemberOtp,
+  forgotMemberPassword,
+  resetMemberPassword,
+  checkMemberEmail, // Import email checking API helper
+} from '../core/lib/api';
+
 
 export const AuthModal = () => {
   const {
@@ -14,15 +23,37 @@ export const AuthModal = () => {
     addToast
   } = useApp();
 
-  const [mode, setMode] = useState(authModalMode); // 'login' | 'register' | 'otp' | 'profile'
+  // Mapping developer jargon and backend validation failures to clean, descriptive customer-facing messages
+  const getFriendlyErrorMessage = (error, defaultMsg = 'An unexpected error occurred. Please try again.') => {
+    const rawMessage = error?.message || String(error);
+    if (!rawMessage) return defaultMsg;
+
+    const lowerMsg = rawMessage.toLowerCase();
+    if (lowerMsg.includes('authorization header missing') || lowerMsg.includes('jwt malformed') || lowerMsg.includes('unauthorized')) {
+      return 'Your authentication session has expired. Please log in again.';
+    }
+    if (lowerMsg.includes('invalid credentials') || lowerMsg.includes('password does not match') || lowerMsg.includes('incorrect password')) {
+      return 'Invalid email or password. Please verify and try again.';
+    }
+    if (lowerMsg.includes('failed to fetch') || lowerMsg.includes('networkerror')) {
+      return 'Network connection issue. Please check your internet connection.';
+    }
+    return rawMessage;
+  };
+
+
+  const [mode, setMode] = useState(authModalMode); // 'login' | 'register' | 'otp' | 'profile' | 'forgot' | 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [otpContext, setOtpContext] = useState('register');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [loginStep, setLoginStep] = useState(1); // 1: check email status, 2: password input flow
+
 
   // OTP State (6 Digits)
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
@@ -39,9 +70,10 @@ export const AuthModal = () => {
   // Synchronize internal state with global state trigger
   React.useEffect(() => {
     setMode(authModalMode);
+    setLoginStep(1); // Reset login flow step back to email check
   }, [authModalMode, isAuthModalOpen]);
 
-  // OTP Countdown Timer — auto-resends when it reaches 0
+  // OTP Countdown Timer
   useEffect(() => {
     if (mode !== 'otp') return;
     if (resendTimer <= 0) return;
@@ -50,8 +82,6 @@ export const AuthModal = () => {
       setResendTimer((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          // Auto-trigger resend when timer expires
-          handleAutoResend();
           return 0;
         }
         return prev - 1;
@@ -59,19 +89,20 @@ export const AuthModal = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, resendTimer]);
 
   if (!isAuthModalOpen) return null;
 
   const handleClose = () => {
     setAuthModal(false);
+    setLoginStep(1); // Reset step back to 1 on modal close
     // Reset fields
     setEmail('');
     setPassword('');
     setConfirmPassword('');
     setName('');
     setPhone('');
+    setOtpContext('register');
     setOtpValues(['', '', '', '', '', '']);
   };
 
@@ -82,31 +113,27 @@ export const AuthModal = () => {
     return emailRegex.test(trimmed) ? '' : 'Please enter a valid email address.';
   };
 
+  // Normalize raw suffix input → strips leading 0 → returns 10-digit suffix only
   const normalizePhoneValue = (value) => {
-    const raw = (value || '').toString().trim();
-    if (!raw) return '';
-
-    const digitsOnly = raw.replace(/[^\d+]/g, '');
-    if (digitsOnly.startsWith('+880')) return digitsOnly;
-    if (digitsOnly.startsWith('880')) return `+${digitsOnly}`;
-    if (digitsOnly.startsWith('01')) return `+880${digitsOnly.slice(1)}`;
-    if (/^1[3-8]\d{8}$/.test(digitsOnly)) return `+880${digitsOnly}`;
-    return digitsOnly;
+    const digits = (value || '').replace(/\D/g, '');
+    if (!digits) return '';
+    // Strip leading 0 so user can enter 01XXXXXXXXX or 1XXXXXXXXX
+    return digits.startsWith('0') ? digits.slice(1) : digits;
   };
 
-  const validatePhoneValue = (value) => {
-    const normalized = normalizePhoneValue(value);
-    if (!normalized) return 'Phone number is required.';
-    const phoneRegex = /^\+8801[3-8]\d{8}$/;
-    return phoneRegex.test(normalized)
+  // Validate the suffix (10 digits) by constructing the full +880 number
+  const validatePhoneValue = (suffix) => {
+    if (!suffix) return 'Phone number is required.';
+    const full = `+880${suffix}`;
+    return /^\+8801[3-9]\d{8}$/.test(full)
       ? ''
-      : 'Please enter a valid Bangladeshi number in format +8801[3-8]XXXXXXXX.';
+      : 'Enter a valid number: 1[3-9]XXXXXXXX (after +880)';
   };
 
   const handlePhoneChange = (value) => {
-    const normalized = normalizePhoneValue(value);
-    setPhone(normalized);
-    setPhoneError(validatePhoneValue(normalized));
+    const suffix = normalizePhoneValue(value);
+    setPhone(suffix); // store only the suffix, +880 prefix is fixed in UI
+    if (phoneError) setPhoneError(validatePhoneValue(suffix));
   };
 
   const handleOTPChange = (index, value) => {
@@ -154,26 +181,49 @@ export const AuthModal = () => {
 
     setIsLoading(true);
     try {
-      const response = await verifyMemberOtp({ email, otp: code });
-      const userData = response.user || response.data?.user || response.data || {};
-      const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
-      const refreshToken = response.refreshToken || response.data?.refreshToken;
+      const response = await verifyMemberOtp({ email, otp: code, context: otpContext });
+      const isVerified = response.isEmailVerified ?? response.data?.isEmailVerified ?? true;
 
+      if (otpContext === 'forgot') {
+        setMode('reset');
+        setPassword('');
+        setConfirmPassword('');
+        addToast('OTP verified successfully. Set your new password to continue.', 'success');
+        return;
+      }
+
+      if (response.requiresPasswordReset || response.data?.requiresPasswordReset) {
+        setOtpContext('forgot');
+        setMode('reset');
+        setPassword('');
+        setConfirmPassword('');
+        addToast('OTP verified successfully. Please reset your password to activate your account.', 'success');
+        return;
+      }
+
+      if (!isVerified) {
+        addToast('Verification could not be completed. Please try again.', 'error');
+        return;
+      }
+
+      const userData = response.user || response.data?.user || response.data || {};
       const displayName = userData.name || name || email.split('@')[0];
       const verifiedUser = {
         name: displayName,
         email: userData.email || email,
         phone: userData.phone || phone,
         tier: userData.tier || 'Privé Connoisseur',
-        raw: userData
+        raw: userData,
       };
 
-      setUser(verifiedUser, { accessToken, refreshToken });
+      const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
+      const refreshToken = response.refreshToken || response.data?.refreshToken;
+
+      setUser(verifiedUser, accessToken || refreshToken ? { accessToken, refreshToken } : null);
       addToast(`OTP verified successfully! Welcome, ${displayName}.`, 'success');
       handleClose();
     } catch (err) {
-      // Show generic error for any backend failure
-      addToast('An unexpected error occurred. Please try again.', 'error');
+      addToast(getFriendlyErrorMessage(err, 'An unexpected error occurred. Please try again.'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -185,21 +235,11 @@ export const AuthModal = () => {
     await triggerResend();
   };
 
-  // Called automatically when timer hits 0
-  const handleAutoResend = async () => {
-    if (isResending) return;
-    await triggerResend({ auto: true });
-  };
-
-  const triggerResend = async ({ auto = false } = {}) => {
+  const triggerResend = async () => {
     setIsResending(true);
     try {
       await resendMemberOtp({ email });
-      if (auto) {
-        addToast('OTP expired — a new code has been sent to your email.', 'info');
-      } else {
-        addToast('A new 6-digit verification code has been dispatched to your email.', 'success');
-      }
+      addToast('A new 6-digit verification code has been dispatched to your email.', 'success');
       setResendTimer(180);
       setOtpValues(['', '', '', '', '', '']);
       otpInputsRef.current[0]?.focus();
@@ -212,43 +252,76 @@ export const AuthModal = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      addToast('Please enter both your email and password.', 'error');
+
+    // Step 1: Query email verification status
+    if (loginStep === 1) {
+      if (!email) {
+        addToast('Please enter your email address.', 'error');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const response = await checkMemberEmail({ email });
+
+        // Trigger OTP verification flow if user email is unverified
+        if (response.requiresOtp || response.isEmailVerified === false) {
+          setOtpContext('login');
+          setMode('otp');
+          setResendTimer(180);
+          addToast('Verification required. Enter the 6-digit code sent to your email.', 'info');
+          return;
+        }
+
+        // Email verified, proceed to password submission step
+        setLoginStep(2);
+        addToast('Email verified. Please enter your password.', 'success');
+      } catch (err) {
+        addToast(getFriendlyErrorMessage(err, 'Email check failed. Please check the address.'), 'error');
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const response = await loginMember({ email, password });
-      
-      // If backend signals OTP required
-      if (response.requiresOtp || response.data?.requiresOtp) {
-        setMode('otp');
-        setResendTimer(180);
-        addToast('Verification required. Enter the 6-digit code sent to your email.', 'info');
+    // Step 2: Validate password and log in
+    if (loginStep === 2) {
+      if (!email || !password) {
+        addToast('Please enter both your email and password.', 'error');
         return;
       }
 
-      const userData = response.user || response.data?.user || response.data || {};
-      const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
-      const refreshToken = response.refreshToken || response.data?.refreshToken;
+      setIsLoading(true);
+      try {
+        const response = await loginMember({ email, password });
 
-      const displayName = userData.name || userData.fullName || email.split('@')[0];
-      const loggedInUser = {
-        name: displayName,
-        email: userData.email || email,
-        tier: userData.tier || 'Elite Connoisseur',
-        raw: userData
-      };
+        if (response.requiresOtp || response.isEmailVerified === false || response.data?.requiresOtp || response.data?.isEmailVerified === false) {
+          setOtpContext('login');
+          setMode('otp');
+          setResendTimer(180);
+          addToast('Verification required. Enter the 6-digit code sent to your email.', 'info');
+          return;
+        }
 
-      setUser(loggedInUser, { accessToken, refreshToken });
-      addToast(`Login successful! Welcome back, ${displayName}.`, 'success');
-      handleClose();
-    } catch (err) {
-      // Generic login error
-      addToast('Login failed. Please try again.', 'error');
-    } finally {
-      setIsLoading(false);
+        const userData = response.user || response.data?.user || response.data || {};
+        const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
+        const refreshToken = response.refreshToken || response.data?.refreshToken;
+
+        const displayName = userData.name || userData.fullName || email.split('@')[0];
+        const loggedInUser = {
+          name: displayName,
+          email: userData.email || email,
+          tier: userData.tier || 'Elite Connoisseur',
+          raw: userData,
+        };
+
+        setUser(loggedInUser, { accessToken, refreshToken });
+        addToast(`Login successful! Welcome back, ${displayName}.`, 'success');
+        handleClose();
+      } catch (err) {
+        addToast(getFriendlyErrorMessage(err, 'Login failed. Please try again.'), 'error');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -269,7 +342,7 @@ export const AuthModal = () => {
       return;
     }
     if (phoneValidationError) {
-      addToast('Please enter a valid Bangladeshi phone number in format +8801[3-8]XXXXXXXX.', 'error');
+      addToast('Please enter a valid Bangladeshi phone number.', 'error');
       return;
     }
     if (password !== confirmPassword) {
@@ -283,16 +356,15 @@ export const AuthModal = () => {
 
     setIsLoading(true);
     try {
-      const normalizedPhone = normalizePhoneValue(phone);
+      // Combine fixed +880 prefix with the stored suffix to form a full BD number
       const memberPayload = {
         name: name.trim(),
         email: email.trim(),
-        phone: normalizedPhone,
+        phone: `+880${phone}`,
         password,
       };
 
       const response = await registerMember(memberPayload);
-      
       const userData = response.user || response.data || response;
       const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
       const refreshToken = response.refreshToken || response.data?.refreshToken;
@@ -304,20 +376,89 @@ export const AuthModal = () => {
           email: userData.email || email,
           phone: userData.phone || phone,
           tier: 'Privé Connoisseur',
-          raw: userData
+          raw: userData,
         };
         setUser(registeredUser, { accessToken, refreshToken });
         addToast(`Welcome to Decantre, ${displayName}!`, 'success');
         handleClose();
       } else {
-        // Switch to OTP verification UI if backend requires verification
+        setOtpContext('register');
         setMode('otp');
         setResendTimer(180);
         addToast('Account created! Please verify the 6-digit code sent to your email.', 'success');
       }
     } catch (err) {
-      // Generic registration error
-      addToast('Registration failed. Please try again later.', 'error');
+      addToast(getFriendlyErrorMessage(err, 'Registration failed. Please try again later.'), 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    const emailValidationError = validateEmail(email);
+    setEmailError(emailValidationError);
+
+    if (emailValidationError) {
+      addToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await forgotMemberPassword({ email });
+      setOtpContext('forgot');
+      setMode('otp');
+      setResendTimer(180);
+      addToast('A password reset OTP has been sent to your email.', 'success');
+    } catch (err) {
+      addToast(getFriendlyErrorMessage(err, 'Unable to request a password reset right now.'), 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!password || !confirmPassword) {
+      addToast('Please enter and confirm your new password.', 'error');
+      return;
+    }
+    if (password.length < 6) {
+      addToast('Password must be at least 6 characters.', 'error');
+      return;
+    }
+    if (password !== confirmPassword) {
+      addToast('Your new passwords do not match.', 'error');
+      return;
+    }
+
+    const code = otpValues.join('');
+    if (code.length !== 6) {
+      addToast('Please enter the full 6-digit verification code.', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await resetMemberPassword({ email, otp: code, password });
+      const userData = response.user || response.data?.user || response.data || {};
+      const accessToken = response.accessToken || response.data?.accessToken;
+      const refreshToken = response.refreshToken || response.data?.refreshToken;
+      const displayName = userData.name || email.split('@')[0];
+      const refreshedUser = {
+        name: displayName,
+        email: userData.email || email,
+        phone: userData.phone || '',
+        tier: userData.tier || 'Privé Connoisseur',
+        raw: userData,
+      };
+
+      setUser(refreshedUser, { accessToken, refreshToken });
+      addToast('Password reset complete. Your new member session is active.', 'success');
+      handleClose();
+    } catch (err) {
+      addToast(getFriendlyErrorMessage(err, 'Password reset failed. Please try again.'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -332,7 +473,7 @@ export const AuthModal = () => {
   return (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-[999] flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-0 bg-black/80 backdrop-blur-md"
+        className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
         onClick={handleClose}
       >
         <motion.div
@@ -340,7 +481,7 @@ export const AuthModal = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
-          className="relative w-full max-w-md max-h-[calc(100vh-2rem)] bg-zinc-900/95 border border-zinc-700/80 rounded-sm overflow-hidden shadow-2xl p-6 sm:p-8 overflow-y-auto"
+          className="relative w-full max-w-md max-h-[calc(100vh-3rem)] bg-zinc-900/95 border border-zinc-700/80 rounded-sm overflow-hidden shadow-2xl p-6 sm:p-8 overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Decorative Top Accent Line */}
@@ -361,12 +502,125 @@ export const AuthModal = () => {
               Decantre
             </span>
             <h2 className="text-2xl sm:text-3xl font-serif font-light text-white tracking-widest uppercase">
-              {mode === 'profile' ? 'My Profile' : mode === 'otp' ? 'OTP Verification' : mode === 'login' ? 'Member Login' : 'Become a Member'}
+              {mode === 'profile' ? 'My Profile' : mode === 'otp' ? 'OTP Verification' : mode === 'login' ? 'Member Login' : mode === 'forgot' ? 'Forgot Password' : mode === 'reset' ? 'Reset Password' : 'Become a Member'}
             </h2>
           </div>
 
-          {/* Mode Render: OTP VERIFICATION VIEW */}
-          {mode === 'otp' ? (
+          {/* Mode Render: forgot password */}
+          {mode === 'forgot' ? (
+            <form onSubmit={handleForgotPassword} className="space-y-6">
+              <div className="text-center space-y-2">
+                <p className="text-xs text-zinc-300 font-sans font-light leading-relaxed">
+                  Enter your registered email to receive a password reset OTP.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
+                  <input
+                    type="email"
+                    placeholder=""
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setEmailError(validateEmail(e.target.value));
+                    }}
+                    onBlur={(e) => setEmailError(validateEmail(e.target.value))}
+                    className={`w-full bg-zinc-800/80 border ${emailError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500`}
+                    required
+                  />
+                  {emailError && <p className="mt-1.5 text-[10px] text-rose-400">{emailError}</p>}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className="text-zinc-500 hover:text-white flex items-center gap-1 cursor-pointer bg-transparent border-none"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full max-w-[220px] py-3 bg-gradient-to-r from-gold via-[#DAA520] to-gold hover:opacity-90 disabled:opacity-50 text-black font-sans text-xs uppercase tracking-[0.25em] font-bold transition-opacity flex items-center justify-center gap-2 cursor-pointer rounded-none border-none shadow-md"
+                >
+                  {isLoading ? (
+                    <div className="w-4 h-4 rounded-full border-2 border-black border-r-transparent animate-spin" />
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Send OTP</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          ) : mode === 'reset' ? (
+            <form onSubmit={handleResetPassword} className="space-y-6">
+              <div className="text-center space-y-2">
+                <p className="text-xs text-zinc-300 font-sans font-light leading-relaxed">
+                  Create a new password for:
+                </p>
+                <p className="text-xs font-mono text-gold font-semibold">"{email}"</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
+                  New Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
+                  <input
+                    type="password"
+                    placeholder=""
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <Key className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
+                  <input
+                    type="password"
+                    placeholder=""
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-4 bg-gradient-to-r from-gold via-[#DAA520] to-gold hover:opacity-90 disabled:opacity-50 text-black font-sans text-xs uppercase tracking-[0.25em] font-bold transition-opacity flex items-center justify-center gap-2 cursor-pointer rounded-none border-none shadow-md"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 rounded-full border-2 border-black border-r-transparent animate-spin" />
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Reset Password</span>
+                  </>
+                )}
+              </button>
+            </form>
+          ) : mode === 'otp' ? (
             <form onSubmit={handleVerifyOTP} className="space-y-6">
               <div className="text-center space-y-2">
                 <p className="text-xs text-zinc-300 font-sans font-light leading-relaxed">
@@ -542,19 +796,26 @@ export const AuthModal = () => {
                   <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
                     Phone Number
                   </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
-                    <input
-                      type="tel"
-                      placeholder="+8801712345678"
-                      value={phone}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      onBlur={(e) => setPhoneError(validatePhoneValue(e.target.value))}
-                      className={`w-full bg-zinc-800/80 border ${phoneError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500`}
-                      required
-                    />
-                    {phoneError && <p className="mt-1.5 text-[10px] text-rose-400">{phoneError}</p>}
+                  {/* Fixed +880 prefix block — ইউজার শুধু 1XXXXXXXXX বা 01XXXXXXXXX দেবে */}
+                  <div className={`flex items-stretch bg-zinc-800/80 border ${phoneError ? 'border-rose-500' : 'border-zinc-700/80'} focus-within:border-gold/60 rounded-sm transition-colors`}>
+                    <span className="flex items-center px-3 text-xs text-zinc-400 font-medium border-r border-zinc-700/80 select-none shrink-0">
+                      +880
+                    </span>
+                    <div className="relative flex-1">
+                      <Phone className="w-4 h-4 text-gold/60 absolute left-3 top-3.5" />
+                      <input
+                        type="tel"
+                        placeholder="1712345678"
+                        value={phone}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        onBlur={() => setPhoneError(validatePhoneValue(phone))}
+                        maxLength={11}
+                        className="w-full bg-transparent py-3.5 pl-9 pr-3 text-xs font-sans text-white focus:outline-none placeholder-zinc-500"
+                        required
+                      />
+                    </div>
                   </div>
+                  {phoneError && <p className="mt-1.5 text-[10px] text-rose-400">{phoneError}</p>}
                 </div>
               )}
 
@@ -568,34 +829,49 @@ export const AuthModal = () => {
                     type="email"
                     placeholder=""
                     value={email}
+                    disabled={mode === 'login' && loginStep === 2}
                     onChange={(e) => {
                       setEmail(e.target.value);
                       setEmailError(validateEmail(e.target.value));
                     }}
                     onBlur={(e) => setEmailError(validateEmail(e.target.value))}
-                    className={`w-full bg-zinc-800/80 border ${emailError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500`}
+                    className={`w-full bg-zinc-800/80 border ${emailError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500 disabled:opacity-50`}
                     required
                   />
                   {emailError && <p className="mt-1.5 text-[10px] text-rose-400">{emailError}</p>}
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
-                  <input
-                    type="password"
-                    placeholder=""
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500"
-                    required
-                  />
+              {/* Password field only shown directly for registration or step 2 of login */}
+              {(mode === 'register' || (mode === 'login' && loginStep === 2)) && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
+                      Password
+                    </label>
+                    {mode === 'login' && loginStep === 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setLoginStep(1)}
+                        className="text-[10px] uppercase tracking-wider text-gold hover:underline cursor-pointer bg-transparent border-none outline-none flex items-center gap-1 font-bold"
+                      >
+                        <ArrowLeft className="w-3 h-3" /> Change Email
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
+                    <input
+                      type="password"
+                      placeholder=""
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {mode === 'register' && (
                 <div className="space-y-1.5">
@@ -628,22 +904,35 @@ export const AuthModal = () => {
                   ) : (
                     <>
                       <ShieldCheck className="w-4 h-4" />
-                      <span>{mode === 'login' ? 'Log In' : 'Become a Member'}</span>
+                      <span>
+                        {mode === 'login'
+                          ? (loginStep === 1 ? 'Next' : 'Log In')
+                          : 'Become a Member'}
+                      </span>
                     </>
                   )}
                 </button>
               </div>
 
               {/* Toggle Mode */}
-              <div className="text-center pt-2">
+              <div className="text-center pt-2 space-y-2">
                 {mode === 'login' ? (
-                  <button
-                    type="button"
-                    onClick={() => setMode('register')}
-                    className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-gold transition-colors font-sans cursor-pointer bg-transparent border-none outline-none"
-                  >
-                    Don't have an account? <span className="text-gold font-bold underline">Register here</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setMode('forgot')}
+                      className="block w-full text-[10px] uppercase tracking-widest text-zinc-500 hover:text-gold transition-colors font-sans cursor-pointer bg-transparent border-none outline-none"
+                    >
+                      Forgot your password? <span className="text-gold font-bold underline">Reset here</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode('register')}
+                      className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-gold transition-colors font-sans cursor-pointer bg-transparent border-none outline-none"
+                    >
+                      Don't have an account? <span className="text-gold font-bold underline">Register here</span>
+                    </button>
+                  </>
                 ) : (
                   <button
                     type="button"
