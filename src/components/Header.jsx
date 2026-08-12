@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Compass, Heart, ShoppingBag, Search, Menu, X, ChevronDown, ChevronUp, ChevronRight, User, LogIn, Sparkles, LogOut } from 'lucide-react';
+import { Compass, Heart, ShoppingBag, Search, Menu, X, ChevronDown, ChevronUp, ChevronRight, User, LogIn, Sparkles, LogOut, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../core/context/AppContext';
 import SearchDropdown from './SearchDropdown';
@@ -355,9 +355,21 @@ export const Header = ({
           </Link>
         </div>
 
-        {/* Right Side: Search -> Wishlist -> Cart -> Profile/Login */}
+        {/* Right Side: Theme Toggle -> Search -> Wishlist -> Cart -> Profile/Login */}
         <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
-          {/* Light/Dark mode toggle is HIDDEN as requested */}
+          {/* Light/Dark mode toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 text-gold hover:text-white transition-colors relative cursor-pointer flex items-center justify-center"
+            aria-label="Toggle theme"
+            title={`Switch to ${currentTheme === 'dark' ? 'Light' : 'Dark'} mode`}
+          >
+            {currentTheme === 'dark' ? (
+              <Sun className="w-5 h-5 text-gold" />
+            ) : (
+              <Moon className="w-5 h-5 text-gold" />
+            )}
+          </button>
 
           {/* Search Icon */}
           <button 

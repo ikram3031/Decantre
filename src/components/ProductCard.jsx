@@ -4,7 +4,8 @@ import { Heart, ShoppingCart } from 'lucide-react';
 import { formatBDT } from '../core/utils/formatCurrency';
 import { useApp } from '../core/context/AppContext';
 import { resolveBrandName, resolveCategoryName } from '../core/store/productHelpers';
-import defaultPerfumeImage from '../assets/images/perfume_for_him_1784311883603.jpg';
+// Fallback image URL for missing product card assets
+const defaultPerfumeImage = 'https://server.decantrebd.com/uploads/product-placeholder.webp';
 
 export const ProductCard = ({
   product,
