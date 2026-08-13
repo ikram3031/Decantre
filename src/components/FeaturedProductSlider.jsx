@@ -2,38 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../core/context/AppContext';
-
-import localHero from '../assets/main-banner.webp';
-import localUnisex from '../assets/images/Unisex.webp';
-import localHer from '../assets/images/For her.webp';
-
-const remoteHero = 'https://server.decantrebd.com/uploads/luxury_perfume_hero_1784311872347.jpg';
-const remoteUnisex = 'https://server.decantrebd.com/uploads/perfume_unisex_1784311906469.jpg';
-const remoteHer = 'https://server.decantrebd.com/uploads/perfume_for_her_1784311895919.jpg';
+// Fallback image URL for missing slider hero assets
+const FALLBACK_IMAGE_URL = 'https://server.decantrebd.com/uploads/product-placeholder.webp';
+const luxuryPerfumeHero = FALLBACK_IMAGE_URL;
+const perfumeUnisex = FALLBACK_IMAGE_URL;
+const perfumeForHer = FALLBACK_IMAGE_URL;
 
 const featuredSlides = [
   {
     title: "DECANTRE DE MAJESTÉ",
     subtitle: "The Sovereign Golden Oud",
     description: "A breathtaking encounter between golden royal saffron, deep Cambodian oud, and burnished leather. Experience the peak of luxurious scent chemistry.",
-    bgImage: remoteHero,
-    localImage: localHero,
+    bgImage: luxuryPerfumeHero,
     productId: 'oud-imperial'
   },
   {
     title: "SAFFRON MYSTIQUE",
     subtitle: "A Sacred Alchemy",
     description: "A modern classic designed in collaboration with elite French master perfumers. Deeply sophisticated, intensely persistent, and proudly unisex.",
-    bgImage: remoteUnisex,
-    localImage: localUnisex,
+    bgImage: perfumeUnisex,
     productId: 'saffron-mystique'
   },
   {
     title: "NECTAR DE SAPHIR",
     subtitle: "Unmatched Feminine Grace",
     description: "Crystalline rose buds drenched in sweet golden nectar and vanilla orchid. A vibrant aura that leaves an unforgettable trail of absolute elegance.",
-    bgImage: remoteHer,
-    localImage: localHer,
+    bgImage: perfumeForHer,
     productId: 'nectar-de-saphir'
   }
 ];
@@ -71,10 +65,6 @@ export const FeaturedProductSlider = () => {
             <img 
               src={slide.bgImage} 
               alt={slide.title} 
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = slide.localImage;
-              }}
               className="w-full h-full object-cover object-center opacity-30 mix-blend-luminosity scale-105 transition-transform duration-[6000ms] ease-out"
               referrerPolicy="no-referrer"
             />
@@ -139,10 +129,6 @@ export const FeaturedProductSlider = () => {
                   <img 
                     src={slide.bgImage} 
                     alt="Close view" 
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = slide.localImage;
-                    }}
                     className="w-full h-full object-cover rounded-sm transition-all duration-[4000ms] group-hover:scale-105"
                     referrerPolicy="no-referrer"
                   />
