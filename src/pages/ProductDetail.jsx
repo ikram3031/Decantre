@@ -304,7 +304,12 @@ export const ProductDetail = () => {
                 )}
               </div>
               <span className="text-xs uppercase tracking-widest text-zinc-400 font-sans font-medium block">
-                Brand: <strong className="text-gold font-semibold">{resolveBrandName(product.brand)}</strong>
+                Brand: <Link
+                  to={`/shop?${new URLSearchParams({ brand: resolveBrandName(product.brand) || 'All' }).toString()}`}
+                  className="text-gold font-semibold hover:underline"
+                >
+                  {resolveBrandName(product.brand)}
+                </Link>
               </span>
 
               {/* Star Rating */}
