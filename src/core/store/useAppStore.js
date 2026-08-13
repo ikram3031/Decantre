@@ -567,14 +567,26 @@ export const useAppStore = create((set, get) => {
         const pricing = get().getCartPricing();
 
         const payload = {
-          fullName: shippingInfo.fullName,
-          phone: shippingInfo.phone,
-          email: shippingInfo.email,
-          address: shippingInfo.address,
-          city: shippingInfo.city,
-          thana: shippingInfo.thana,
-          district: shippingInfo.district,
-          zip: shippingInfo.zip,
+          billingInfo: {
+            fullName: shippingInfo.fullName,
+            phone: shippingInfo.phone,
+            email: shippingInfo.email,
+            address: shippingInfo.address,
+            city: shippingInfo.city,
+            thana: shippingInfo.thana,
+            district: shippingInfo.district,
+            zip: shippingInfo.zip
+          },
+          shippingInfo: !sameAsBilling ? {
+            fullName: shippingAddress.fullName,
+            phone: shippingAddress.phone,
+            address: shippingAddress.address,
+            city: shippingAddress.city,
+            thana: shippingAddress.thana,
+            district: shippingAddress.district,
+            zip: shippingAddress.zip
+          } : null,
+          shipToDifferentAddress: !sameAsBilling,
           giftWrap: shippingInfo.giftWrap,
           paymentMethod,
           subtotal: pricing.cartSubtotal,
