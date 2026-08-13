@@ -391,7 +391,7 @@ export const ProductDetail = () => {
               <span className="text-xs font-sans uppercase tracking-widest text-zinc-400 font-bold block">
                 Quantity
               </span>
-              <div className="inline-flex items-center border border-gold/40 rounded-sm bg-black/60 overflow-hidden">
+              <div className={`inline-flex items-center border ${isLight ? 'border-[#050505]' : 'border-gold/40'} rounded-sm overflow-hidden`}>
                 <button 
                   type="button"
                   disabled={isOutOfStock}
@@ -402,7 +402,7 @@ export const ProductDetail = () => {
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-12 text-center text-sm font-mono font-bold text-white">
+                <span className={`w-12 h-10 flex items-center justify-center text-sm font-mono font-bold ${isLight ? 'bg-white text-black border-x border-[#050505]' : 'bg-transparent text-white'}`}>
                   {quantity}
                 </span>
                 <button 
@@ -457,9 +457,13 @@ export const ProductDetail = () => {
             <div className="grid grid-cols-2 gap-3">
               <button 
                 onClick={handleShare}
-                className="w-full bg-black/40 text-zinc-300 border border-white/10 hover:border-gold hover:text-gold py-3 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className={`w-full py-3 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer border ${
+                  isLight 
+                    ? 'bg-transparent text-[#050505] border-[#050505] hover:bg-[#050505]/10' 
+                    : 'bg-black/40 text-zinc-300 border-white/10 hover:border-gold hover:text-gold'
+                }`}
               >
-                <Share2 className="w-4 h-4 text-gold" />
+                <Share2 className={`w-4 h-4 ${isLight ? 'text-black' : 'text-gold'}`} />
                 SHARE
               </button>
               <button 
@@ -467,16 +471,18 @@ export const ProductDetail = () => {
                 className={`w-full py-3 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer border ${
                   wishlist.includes(product.id)
                     ? 'bg-rose-500/10 border-rose-500/40 text-rose-500'
-                    : 'bg-black/40 text-zinc-300 border-white/10 hover:border-gold hover:text-gold'
+                    : isLight
+                      ? 'bg-transparent text-[#050505] border-[#050505] hover:bg-[#050505]/10'
+                      : 'bg-black/40 text-zinc-300 border-white/10 hover:border-gold hover:text-gold'
                 }`}
               >
-                <Heart className={`w-4 h-4 ${wishlist.includes(product.id) ? 'fill-rose-500 text-rose-500' : 'text-gold'}`} />
+                <Heart className={`w-4 h-4 ${wishlist.includes(product.id) ? 'fill-rose-500 text-rose-500' : isLight ? 'text-black' : 'text-gold'}`} />
                 WISHLIST
               </button>
             </div>
 
             {/* Description & Olfactory Notes breakdown */}
-            <div className={`p-6 border ${isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-zinc-950/80 border-gold/15'} rounded-sm space-y-4`}>
+            <div className="p-6 border bg-zinc-950/80 border-gold/15 rounded-sm space-y-4">
               <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-gold border-b border-gold/15 pb-2">
                 Description
               </h3>
@@ -506,7 +512,7 @@ export const ProductDetail = () => {
             </div>
 
             {/* Customer Reviews Section */}
-            <div className={`p-6 border ${isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-zinc-950/80 border-gold/15'} rounded-sm space-y-6`}>
+            <div className="p-6 border bg-zinc-950/80 border-gold/15 rounded-sm space-y-6">
               <div className="flex items-center justify-between border-b border-gold/15 pb-3">
                 <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-gold flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-gold" /> Customer Reviews

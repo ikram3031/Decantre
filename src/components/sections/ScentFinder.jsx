@@ -15,7 +15,7 @@ export const ScentFinder = () => {
           <Compass className="w-4 h-4 text-gold" />
         </div>
         <span className="text-[9px] uppercase tracking-[0.25em] text-gold font-sans font-semibold block">Scent Guidance Decantre</span>
-        <h2 className="text-xl sm:text-2xl font-serif font-light tracking-wide text-luxury-white">
+        <h2 className="text-xl sm:text-2xl font-serif font-light tracking-wide text-[#050505] dark:text-luxury-white">
           FIND YOUR PERFECT SIGNATURE AURA
         </h2>
         <p className="text-zinc-500 font-sans font-light text-xs max-w-lg mx-auto leading-relaxed">

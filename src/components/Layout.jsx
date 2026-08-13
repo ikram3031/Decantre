@@ -63,6 +63,14 @@ export const Layout = () => {
     currentTheme
   } = useApp();
 
+  React.useEffect(() => {
+    if (currentTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [currentTheme]);
+
   const themeConfig = currentTheme === 'light' ? 'bg-white text-[#050505]' : 'bg-[#050505] text-[#f5f5f5]';
 
   return (

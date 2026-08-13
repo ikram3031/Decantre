@@ -14,7 +14,7 @@ export const Featured = () => {
           <span className="text-[9px] uppercase tracking-[0.2em] text-gold font-sans font-semibold block mb-0.5">
             Handpicked Excellence
           </span>
-          <h3 className="text-xl sm:text-2xl font-serif text-luxury-white">Featured</h3>
+          <h3 className="text-xl sm:text-2xl font-serif text-[#050505] dark:text-luxury-white">Featured</h3>
         </div>
 
         {productsError ? (

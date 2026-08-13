@@ -317,7 +317,7 @@ export const Header = ({
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <header id="main-header" className={`sticky top-0 z-50 transition-all duration-300 translate-y-0 ${isScrolled ? 'bg-black/95 shadow-xl border-b border-gold/35' : 'bg-black/90 backdrop-blur-md border-b border-gold/20'}`}>
+    <header id="main-header" className={`sticky top-0 z-50 transition-all duration-300 translate-y-0 ${isScrolled ? 'bg-black shadow-xl border-b border-gold/35' : 'bg-black border-b border-gold/20'}`}>
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${isScrolled ? 'h-16 md:h-20' : 'h-20 md:h-24'} flex items-center justify-between w-full relative`}>
         
         {/* Left Side: Decorative Icon + Menu Items + Desktop Nav Links */}
