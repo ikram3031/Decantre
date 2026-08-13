@@ -362,8 +362,9 @@ export const useAppStore = create((set, get) => {
         unitPrice = get().calculateItemPrice(basePrice, size, concentration);
       }
       const cart = get().cart;
+      const safeConcentration = concentration || 'Eau de Parfum';
       const existingIndex = cart.findIndex(
-        (item) => item.product.id === product.id && item.size === size && item.concentration === concentration
+        (item) => item.product.id === product.id && item.size === size && item.concentration === safeConcentration
       );
 
       let newCart = [...cart];
@@ -371,17 +372,17 @@ export const useAppStore = create((set, get) => {
         newCart[existingIndex].quantity += qty;
       } else {
         newCart.push({
-          id: `${product.id}-${size}-${concentration.replace(/\s+/g, '')}`,
+          id: `${product.id}-${size}-${safeConcentration.replace(/\s+/g, '')}`,
           product,
           size,
-          concentration,
+          concentration: safeConcentration,
           quantity: qty,
           unitPrice
         });
       }
 
       get().saveCart(newCart);
-      get().addToast(`Added ${qty}x ${product.name} (${size} - ${concentration}) to your cart.`, 'success');
+      get().addToast(`Added ${qty}x ${product.name} (${size} - ${safeConcentration}) to your cart.`, 'success');
     },
 
     handleAddComboToCart: (combo, qty = 1) => {
