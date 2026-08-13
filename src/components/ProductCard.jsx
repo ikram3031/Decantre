@@ -114,7 +114,7 @@ export const ProductCard = ({
               onClick={() => !isOutOfStock && onSizeChange(size)}
               className={`w-full text-center py-1 rounded-sm text-[11px] font-sans font-medium transition-all duration-200 border ${
                 isOutOfStock
-                  ? 'bg-zinc-900/40 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-50 pointer-events-none'
+                  ? (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-400 cursor-not-allowed pointer-events-none' : 'bg-zinc-900/40 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-50 pointer-events-none')
                   : currentSel.size === size
                     ? (isLight ? 'bg-black text-white border-black cursor-pointer' : 'bg-gold text-black border-gold font-bold cursor-pointer')
                     : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900 cursor-pointer' : 'bg-black/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 cursor-pointer')
@@ -149,7 +149,7 @@ export const ProductCard = ({
             }}
             className={`font-bold uppercase tracking-wider text-[9px] px-3 py-1.5 rounded-[3px] transition-all flex items-center justify-center gap-1 font-sans border ${
               isOutOfStock
-                ? 'bg-zinc-800 text-zinc-500 border-zinc-800 cursor-not-allowed opacity-50'
+                ? (isLight ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed' : 'bg-zinc-800 text-zinc-500 border-zinc-800 cursor-not-allowed opacity-50')
                 : isLight 
                   ? 'bg-black text-white hover:bg-zinc-800 border-black cursor-pointer' 
                   : 'border-gold text-gold hover:bg-gold hover:text-black bg-transparent cursor-pointer'

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { fetchProducts } from '../core/lib/api';
+import { searchProductsAPI } from '../core/lib/api';
 import { ShoppingCart } from 'lucide-react';
 
 export const SearchDropdown = ({ query, onSelect, maxResults = 6, placeholder = 'Search...' }) => {
@@ -33,8 +33,8 @@ export const SearchDropdown = ({ query, onSelect, maxResults = 6, placeholder = 
 
     const timer = setTimeout(async () => {
       try {
-        // Use fetchProducts helper with q param
-        const items = await fetchProducts({ q, limit: maxResults });
+        // Use dedicated search API with analytics tracking
+        const items = await searchProductsAPI(q, maxResults);
         if (!mounted.current || isCancelled) return;
         setResults(items.slice(0, maxResults));
       } catch (err) {

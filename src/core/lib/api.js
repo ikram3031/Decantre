@@ -229,6 +229,103 @@ export async function fetchProducts(opts = {}) {
 }
 
 /**
+ * Search Products (lightweight autocomplete with analytics tracking)
+ * Uses the dedicated /api/v1/search endpoint which also tracks popular/recent searches.
+ * @param {string} q - Search query
+ * @param {number} [limit=12] - Max results
+ * @returns {Promise<Array<{id, name, category, brand, image}>>}
+ */
+export async function searchProductsAPI(q, limit = 12) {
+	const apiBaseUrl = getApiBaseUrl();
+	if (!q || !q.trim()) return [];
+	const params = new URLSearchParams({ q: q.trim(), limit: String(limit) });
+	try {
+		const { accessToken } = getStoredMemberTokens();
+		const headers = {};
+		if (accessToken) {
+			headers["Authorization"] = `Bearer ${accessToken}`;
+		}
+		const res = await fetchWithRetry(
+			`${apiBaseUrl}/api/v1/search?${params.toString()}`,
+			{ method: "GET", headers },
+			8000,
+			2,
+		);
+		if (!res.ok) throw new Error(`Search error: ${res.status}`);
+		const json = await res.json();
+		return Array.isArray(json.data) ? json.data : [];
+	} catch (err) {
+		console.error("searchProductsAPI Error:", err);
+		return [];
+	}
+}
+
+/**
+ * Fetch Popular Search Terms
+ * @param {number} [limit=10] - Max terms to return
+ * @returns {Promise<Array<{keyword: string, count: number}>>}
+ */
+export async function fetchPopularSearches(limit = 10) {
+	const apiBaseUrl = getApiBaseUrl();
+	try {
+		const res = await fetchWithRetry(
+			`${apiBaseUrl}/api/v1/search/popular?limit=${limit}`,
+			{ method: "GET" },
+			8000,
+			2,
+		);
+		if (!res.ok) throw new Error(`Popular searches error: ${res.status}`);
+		const json = await res.json();
+		return Array.isArray(json.data) ? json.data : [];
+	} catch (err) {
+		console.error("fetchPopularSearches Error:", err);
+		return [];
+	}
+}
+
+/**
+ * Fetch Recent Searches (requires auth)
+ * @returns {Promise<Array<{id: string, query: string, searchedAt: string}>>}
+ */
+export async function fetchRecentSearches() {
+	const apiBaseUrl = getApiBaseUrl();
+	try {
+		const res = await authFetch(
+			`${apiBaseUrl}/api/v1/search/recent`,
+			{ method: "GET" },
+			8000,
+		);
+		if (!res.ok) return [];
+		const json = await res.json();
+		return Array.isArray(json.data) ? json.data : [];
+	} catch (err) {
+		console.error("fetchRecentSearches Error:", err);
+		return [];
+	}
+}
+
+/**
+ * Clear Recent Search History (requires auth)
+ * @param {string} [query] - Specific query to remove, or omit to clear all
+ * @returns {Promise<boolean>}
+ */
+export async function clearRecentSearch(query) {
+	const apiBaseUrl = getApiBaseUrl();
+	try {
+		const params = query ? `?q=${encodeURIComponent(query)}` : "";
+		const res = await authFetch(
+			`${apiBaseUrl}/api/v1/search/recent${params}`,
+			{ method: "DELETE" },
+			8000,
+		);
+		return res.ok;
+	} catch (err) {
+		console.error("clearRecentSearch Error:", err);
+		return false;
+	}
+}
+
+/**
  * Fetch Product Details
  */
 export async function fetchProductDetails(slugOrId) {

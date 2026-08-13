@@ -225,7 +225,7 @@ export const useAppStore = create((set, get) => {
     isProcessingOrder: false,
     orderNumber: null,
     toasts: [],
-    currentTheme: localStorage.getItem('luxury_theme') || 'dark',
+    currentTheme: 'dark',
 
     // 2. Direct State Setters
     toggleTheme: () => set((state) => {

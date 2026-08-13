@@ -71,7 +71,7 @@ export const Layout = () => {
     }
   }, [currentTheme]);
 
-  const themeConfig = currentTheme === 'light' ? 'bg-white text-[#050505]' : 'bg-[#050505] text-[#f5f5f5]';
+  const themeConfig = 'bg-background text-foreground';
 
   return (
     <RouteTransition>

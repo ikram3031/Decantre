@@ -97,8 +97,8 @@ export const BestSelling = () => {
                 onClick={() => setFilter(type)}
                 className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-[3px] text-[10px] sm:text-xs font-sans font-bold uppercase tracking-wider transition-all duration-300 border cursor-pointer ${
                   isActive
-                    ? (isLight ? 'bg-black text-white border-black' : 'bg-gold text-black border-gold')
-                    : (isLight ? 'border-gold/60 text-gold hover:bg-gold hover:text-white bg-transparent' : 'border-gold/60 text-gold hover:bg-gold hover:text-black bg-transparent')
+                    ? (isLight ? 'bg-black text-gold border-black font-bold' : 'bg-gold text-black border-gold')
+                    : (isLight ? 'border-black text-black hover:bg-black hover:text-gold bg-transparent' : 'border-gold/60 text-gold hover:bg-gold hover:text-black bg-transparent')
                 }`}
               >
                 {type}
