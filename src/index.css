@@ -282,3 +282,38 @@ select:focus {
 .thumb::-moz-range-thumb:hover {
   transform: scale(1.25);
 }
+
+/* Light mode overrides for non-header containers, checkout inputs, and cards */
+html:not(.dark) :not(#main-header):not(#main-header *):not(.mobile-menu):not(.mobile-menu *) {
+  &.bg-zinc-900\/90,
+  &.bg-zinc-900,
+  &.bg-zinc-950\/80,
+  &.bg-zinc-950 {
+    background-color: #f9f9fb !important;
+    border-color: #e4e4e7 !important;
+    color: #18181b !important;
+  }
+
+  &.bg-zinc-800\/80,
+  &.bg-zinc-800\/90,
+  &.bg-zinc-800 {
+    background-color: #ffffff !important;
+    color: #18181b !important;
+    border-color: #e4e4e7 !important;
+  }
+
+  &.text-zinc-200,
+  &.text-zinc-300,
+  &.text-zinc-400 {
+    color: #27272a !important;
+  }
+
+  &.text-zinc-500 {
+    color: #71717a !important;
+  }
+
+  &.text-white,
+  &.text-luxury-white {
+    color: #09090b !important;
+  }
+}

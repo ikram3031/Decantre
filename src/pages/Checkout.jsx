@@ -130,10 +130,11 @@ export const Checkout = () => {
     applyPromoCode,
     removePromoCode,
     promoError,
-    appliedDiscount,
-    appliedCoupon
+    appliedCoupon,
+    currentTheme
   } = useApp();
 
+  const isLight = currentTheme === 'light';
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -354,13 +355,13 @@ export const Checkout = () => {
   }, [orderCompleted, navigate, orderNumber]);
 
   return (
-    <div className="py-12 sm:py-20 bg-luxury-black animate-fade-in text-left">
+    <div className={`py-12 sm:py-20 ${isLight ? 'bg-white text-zinc-900' : 'bg-luxury-black text-luxury-white'} animate-fade-in text-left`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
         {/* Page Header */}
         <div className="text-center space-y-4 mb-12 relative py-10 border-b border-gold/15">
           <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">Secured Sourcing Ledger</span>
-          <h1 className="text-3xl sm:text-5xl font-serif font-light text-luxury-white tracking-wide">
+          <h1 className={`text-3xl sm:text-5xl font-serif font-light ${isLight ? 'text-black' : 'text-luxury-white'} tracking-wide`}>
             SECURE CHECKOUT
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-xl mx-auto leading-relaxed">

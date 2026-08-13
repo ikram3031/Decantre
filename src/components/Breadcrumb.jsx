@@ -63,7 +63,7 @@ export const Breadcrumb = ({ items }) => {
                   {isCompleted ? (
                     <Link
                       to={step.path}
-                      className="text-zinc-300 hover:text-white transition-colors font-medium hover:underline"
+                      className={`${isLight ? 'text-zinc-600 hover:text-black' : 'text-zinc-300 hover:text-white'} transition-colors font-medium hover:underline`}
                     >
                       {step.label}
                     </Link>
@@ -72,7 +72,7 @@ export const Breadcrumb = ({ items }) => {
                       {step.label}
                     </span>
                   ) : (
-                    <span className="text-zinc-500 font-normal">{step.label}</span>
+                    <span className={`${isLight ? 'text-zinc-400' : 'text-zinc-500'} font-normal`}>{step.label}</span>
                   )}
                 </div>
               </React.Fragment>

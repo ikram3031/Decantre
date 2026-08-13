@@ -9,8 +9,11 @@ export const ThankYou = () => {
     shippingInfo,
     orderNumber: apiOrderNumber,
     handleResetCheckout,
-    addToast
+    addToast,
+    currentTheme
   } = useApp();
+
+  const isLight = currentTheme === 'light';
 
   const searchParams = new URLSearchParams(location.search);
   const orderIdFromUrl = searchParams.get('orderId') || searchParams.get('orderNumber') || searchParams.get('id');
@@ -29,11 +32,11 @@ export const ThankYou = () => {
   }, [addToast]);
 
   return (
-    <div className="py-12 sm:py-20 bg-luxury-black animate-fade-in text-left">
+    <div className={`py-12 sm:py-20 ${isLight ? 'bg-white text-zinc-900' : 'bg-luxury-black text-luxury-white'} animate-fade-in text-left`}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         
         {/* Success Header Card */}
-        <div className="bg-zinc-900/90 border border-zinc-700/60 p-8 sm:p-12 rounded-sm text-center space-y-6 relative overflow-hidden shadow-2xl">
+        <div className={`border p-8 sm:p-12 rounded-sm text-center space-y-6 relative overflow-hidden shadow-2xl ${isLight ? 'bg-zinc-50 border-zinc-200 text-zinc-800' : 'bg-zinc-900/90 border-zinc-700/60 text-zinc-200'}`}>
           <div className="absolute -inset-px bg-gradient-to-b from-gold/5 via-transparent to-transparent pointer-events-none"></div>
           
           {/* Success Check Icon */}
@@ -43,10 +46,10 @@ export const ThankYou = () => {
 
           <div className="space-y-2">
             <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">Order Confirmed</span>
-            <h1 className="text-3xl sm:text-4xl font-serif font-light text-luxury-white tracking-wide">
+            <h1 className={`text-3xl sm:text-4xl font-serif font-light tracking-wide ${isLight ? 'text-black' : 'text-luxury-white'}`}>
               THANK YOU FOR YOUR ORDER
             </h1>
-            <p className="text-zinc-400 text-xs sm:text-sm font-sans font-light max-w-md mx-auto leading-relaxed">
+            <p className={`text-xs sm:text-sm font-sans font-light max-w-md mx-auto leading-relaxed ${isLight ? 'text-zinc-600' : 'text-zinc-400'}`}>
               We have received your order and are processing it. A confirmation details summary is shown below.
             </p>
           </div>
@@ -55,31 +58,31 @@ export const ThankYou = () => {
 
           {/* Order metadata */}
           <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-semibold pt-2">
-            <div className="border border-zinc-700/50 bg-zinc-800/80 p-3 rounded-sm">
+            <div className={`border p-3 rounded-sm ${isLight ? 'border-zinc-200 bg-white text-zinc-800' : 'border-zinc-700/50 bg-zinc-800/80 text-zinc-400'}`}>
               <span className="block text-[8px] text-zinc-400 mb-1">Order No</span>
               <span className="text-gold font-bold">{orderNumber}</span>
             </div>
-            <div className="border border-zinc-700/50 bg-zinc-800/80 p-3 rounded-sm">
+            <div className={`border p-3 rounded-sm ${isLight ? 'border-zinc-200 bg-white text-zinc-800' : 'border-zinc-700/50 bg-zinc-800/80 text-zinc-400'}`}>
               <span className="block text-[8px] text-zinc-400 mb-1">Order Date</span>
-              <span className="text-zinc-200">{formattedDate}</span>
+              <span className={isLight ? 'text-zinc-800' : 'text-zinc-200'}>{formattedDate}</span>
             </div>
           </div>
         </div>
 
         {/* Delivery Details */}
-        <div className="mt-10 border border-zinc-700/60 bg-zinc-900/90 p-6 sm:p-8 rounded-sm space-y-6 shadow-xl">
-          <div className="flex items-center gap-2.5 border-b border-zinc-700/50 pb-4">
+        <div className={`mt-10 border p-6 sm:p-8 rounded-sm space-y-6 shadow-xl ${isLight ? 'bg-zinc-50 border-zinc-200 text-zinc-800' : 'bg-zinc-900/90 border-zinc-700/60 text-zinc-200'}`}>
+          <div className={`flex items-center gap-2.5 border-b pb-4 ${isLight ? 'border-zinc-200' : 'border-zinc-700/50'}`}>
             <Sparkles className="w-5 h-5 text-gold shrink-0" />
-            <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-zinc-200">
+            <h3 className={`text-xs font-sans font-bold uppercase tracking-widest ${isLight ? 'text-zinc-800' : 'text-zinc-200'}`}>
               DELIVERY INFORMATION
             </h3>
           </div>
 
-          <div className="space-y-4 text-xs font-sans font-light text-zinc-300 leading-relaxed">
+          <div className={`space-y-4 text-xs font-sans font-light leading-relaxed ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
             {shippingInfo.fullName ? (
               <div className="space-y-2">
                 <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold block">Shipping Address</span>
-                <p className="font-mono text-zinc-300">
+                <p className={`font-mono ${isLight ? 'text-zinc-800' : 'text-zinc-300'}`}>
                   {shippingInfo.fullName}<br />
                   {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.zip}<br />
                   <span className="text-gold/80 italic">{shippingInfo.phone} ({shippingInfo.email})</span>
@@ -92,9 +95,9 @@ export const ThankYou = () => {
         </div>
 
         {/* Next steps */}
-        <div className="mt-10 bg-zinc-900/90 border border-zinc-700/60 p-6 rounded-sm space-y-4 shadow-xl">
-          <h4 className="text-xs font-sans font-bold uppercase tracking-wider text-zinc-200">WHAT HAPPENS NEXT</h4>
-          <ul className="space-y-3 text-xs font-sans font-light text-zinc-300">
+        <div className={`mt-10 border p-6 rounded-sm space-y-4 shadow-xl ${isLight ? 'bg-zinc-50 border-zinc-200 text-zinc-800' : 'bg-zinc-900/90 border-zinc-700/60 text-zinc-200'}`}>
+          <h4 className={`text-xs font-sans font-bold uppercase tracking-wider ${isLight ? 'text-zinc-800' : 'text-zinc-200'}`}>WHAT HAPPENS NEXT</h4>
+          <ul className={`space-y-3 text-xs font-sans font-light ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
             <li className="flex gap-2">
               <span className="text-gold font-mono">•</span>
               <span>Our team will prepare and pack your order within 24 hours.</span>
