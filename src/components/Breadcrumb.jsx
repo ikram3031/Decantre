@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams, useParams } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { useApp } from '../core/context/AppContext';
 
 export const Breadcrumb = ({ items }) => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { slug } = useParams();
   const { currentTheme, products } = useApp();
   const isLight = currentTheme === 'light';
 
@@ -122,8 +123,8 @@ export const Breadcrumb = ({ items }) => {
       } else if (brandParam) {
         breadcrumbItems.push({ label: `Brand: ${brandParam}` });
       }
-    } else if (path === '/product' && didParam) {
-      const prod = products.find(p => String(p.id) === String(didParam));
+    } else if (path.startsWith('/product/') && slug) {
+      const prod = products.find(p => p.slug === slug || String(p.id) === String(slug));
       breadcrumbItems.push({ label: 'Shop', link: '/shop' });
       if (prod && prod.category) {
         breadcrumbItems.push({ label: prod.category, link: `/shop?${new URLSearchParams({ category: prod.category }).toString()}` });

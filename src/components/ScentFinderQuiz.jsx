@@ -173,7 +173,7 @@ export const ScentFinderQuiz = ({
               </button>
               <button 
                 onClick={() => {
-                  navigate(`/product?did=${quizRecommendation.id}`);
+                  navigate(`/product/${quizRecommendation.slug || quizRecommendation.id}`);
                   setIsQuizOpen(false);
                 }}
                 className="flex-1 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-900 text-[9px] font-bold uppercase tracking-widest py-3 rounded-none transition-all cursor-pointer"

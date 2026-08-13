@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link, useParams } from 'react-router-dom';
 import { useAppStore } from '../core/store/useAppStore';
 import { formatBDT } from '../core/utils/formatCurrency';
 import { mapRemoteProduct, resolveBrandName, resolveCategoryName } from '../core/store/productHelpers';
@@ -63,7 +63,8 @@ export const ProductDetail = () => {
   const currentTheme = useAppStore((state) => state.currentTheme);
 
   const isLight = currentTheme === 'light';
-  const did = searchParams.get('did') || searchParams.get('id');
+  const { slug } = useParams();
+  const did = slug || searchParams.get('slug') || searchParams.get('did') || searchParams.get('id');
 
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,7 +119,7 @@ export const ProductDetail = () => {
         }
 
         if (products && products.length > 0) {
-          const found = products.find(p => p.id === did || String(p.raw?.id) === String(did));
+          const found = products.find(p => p.slug === did || p.id === did || String(p.raw?.id) === String(did));
           if (found) {
             setProduct(found);
             setIsLoading(false);
@@ -128,7 +129,7 @@ export const ProductDetail = () => {
         }
 
         const allProds = await fetchProducts({ limit: 100 });
-        const found = allProds.find(p => p.id === did || String(p.raw?.id) === String(did));
+        const found = allProds.find(p => p.slug === did || p.id === did || String(p.raw?.id) === String(did));
         if (found) {
           setProduct(found);
           addToRecentlyViewed(found.id);

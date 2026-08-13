@@ -352,12 +352,23 @@ export const useAppStore = create((set, get) => {
       return Math.round(finalPrice);
     },
 
-    handleAddToCart: (product, size, concentration, qty = 1, explicitUnitPrice = null) => {
+     handleAddToCart: (product, size, concentration, qty = 1, explicitUnitPrice = null) => {
+      const variations = product?.variations || [];
+      const hasVariations = variations.length > 0;
+      const isSimpleProduct = !hasVariations || (variations.length === 1 && variations[0].size === "Full Bottle");
+
+      // Verify variation selection
+      const foundVar = hasVariations
+        ? variations.find(v => v.size === size)
+        : null;
+
+      if (!isSimpleProduct && !foundVar) {
+        get().addToast(`Error: Please select a valid size for ${product?.name || 'this product'}.`, 'error');
+        return;
+      }
+
       let unitPrice = explicitUnitPrice;
       if (unitPrice == null) {
-        const foundVar = product?.variations && Array.isArray(product.variations)
-          ? product.variations.find(v => v.size === size)
-          : null;
         const basePrice = foundVar ? foundVar.price : (product?.basePrice ?? 0);
         unitPrice = get().calculateItemPrice(basePrice, size, concentration);
       }

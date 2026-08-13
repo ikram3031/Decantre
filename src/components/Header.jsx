@@ -300,7 +300,7 @@ export const Header = ({
     setLocalSearchVal(item.name);
     setIsSearchPanelOpen(false);
     if (item?.id) {
-      navigate(`/product?id=${encodeURIComponent(item.id)}`);
+      navigate(`/product/${item.slug || item.id}`);
     }
   };
 
@@ -808,7 +808,7 @@ export const Header = ({
           navigate(`/search?${params.toString()}`);
         }}
         onSelectProduct={(item) => {
-          navigate(`/product?id=${encodeURIComponent(item.id)}`);
+          navigate(`/product/${item.slug || item.id}`);
         }}
       />
     </header>

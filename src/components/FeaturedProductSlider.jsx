@@ -104,7 +104,7 @@ export const FeaturedProductSlider = () => {
                     onClick={() => {
                       const targetProd = products.find(p => p.id === slide.productId);
                       if (targetProd) {
-                        navigate(`/product?did=${targetProd.id}`);
+                        navigate(`/product/${targetProd.slug || targetProd.id}`);
                       } else {
                         navigate('/shop');
                       }

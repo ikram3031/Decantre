@@ -210,7 +210,7 @@ export const SearchPanel = ({ isOpen, onClose, onSearch, onSelectProduct }) => {
     if (onSelectProduct) {
       onSelectProduct(product);
     } else {
-      navigate(`/product?id=${encodeURIComponent(product.id)}`);
+      navigate(`/product/${product.slug || product.id}`);
     }
   }, [onClose, onSelectProduct, navigate]);
 

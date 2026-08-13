@@ -25,14 +25,31 @@ export const ProductCard = ({
   const { currentTheme } = useApp();
   const isLight = currentTheme === 'light';
 
-  // determine base price from selected variation if available
-  const variationPrice = (product.variations && product.variations.find(v => v.size === currentSel.size))
-    ? product.variations.find(v => v.size === currentSel.size).price
-    : product.basePrice;
-  const currentPrice = calculateItemPrice(variationPrice, currentSel.size, currentSel.concentration);
+  const variations = product.variations || [];
+  const hasVariations = variations.length > 0;
+  
+  // A variation is considered "selected" if currentSel?.size matches a size in variations.
+  const selectedVariation = hasVariations 
+    ? variations.find(v => v.size === currentSel?.size)
+    : null;
+
+  // It's a simple product if there are no variations or only one variation that is "Full Bottle"
+  const isSimpleProduct = !hasVariations || (variations.length === 1 && variations[0].size === "Full Bottle");
 
   const normalizedStatus = String(product.stockStatus || '').toLowerCase().trim();
   const isOutOfStock = normalizedStatus === 'outofstock' || normalizedStatus === 'out of stock';
+
+  // Add-to-cart should be disabled if:
+  // 1. It is out of stock.
+  // 2. Or, it's a variable product (has multiple variations) and no valid variation is selected.
+  const isSelectionMissing = !isSimpleProduct && !selectedVariation;
+  const isBtnDisabled = isOutOfStock || isSelectionMissing;
+
+  // determine base price from selected variation if available
+  const variationPrice = selectedVariation
+    ? selectedVariation.price
+    : product.basePrice;
+  const currentPrice = calculateItemPrice(variationPrice, currentSel?.size, currentSel?.concentration);
 
   const descriptionText = product.description || product.tagline || product.scentFamily || '';
 
@@ -66,7 +83,7 @@ export const ProductCard = ({
             Out of Stock
           </div>
         )}
-        <Link to={`/product?did=${product.id}`} className="block w-full h-full">
+        <Link to={`/product/${product.slug || product.id}`} className="block w-full h-full">
           <img
             src={product.image || (product.raw && product.raw.image) || defaultPerfumeImage}
             alt={product.brand || product.category || 'Perfume'}
@@ -87,7 +104,7 @@ export const ProductCard = ({
           </div>
 
           {/* Product Name - 3 lines reserved */}
-          <Link to={`/product?did=${product.id}`} className="block hover:opacity-80 transition-opacity my-1">
+          <Link to={`/product/${product.slug || product.id}`} className="block hover:opacity-80 transition-opacity my-1">
             <h3 
               className={`text-xs sm:text-sm font-serif font-medium pt-2 leading-snug line-clamp-3 min-h-[3.6em] text-center ${isLight ? 'text-zinc-900' : 'text-zinc-100'} hover:text-gold`} 
               title={product.name}
@@ -99,32 +116,34 @@ export const ProductCard = ({
       </div>
 
       {/* SELECTION CONTROLS (Size / Variants - up to 6 or more) */}
-      <div className={`${hideMobileVariations ? 'hidden sm:block' : 'block'} border-t border-white/10 pt-1 flex-shrink-0`}>
-        <div className="grid grid-cols-3 gap-1">
-          {Array.from(new Set(
-            (product.variations && product.variations.length > 0
-              ? product.variations.map(v => v.size)
-              : ['3ml', '5ml', '10ml', '30ml', '50ml', '100ml']
-            ).filter(Boolean)
-          )).map((size) => (
-            <button
-              key={size}
-              type="button"
-              disabled={isOutOfStock}
-              onClick={() => !isOutOfStock && onSizeChange(size)}
-              className={`w-full text-center py-1 rounded-sm text-[11px] font-sans font-medium transition-all duration-200 border ${
-                isOutOfStock
-                  ? (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-400 cursor-not-allowed pointer-events-none' : 'bg-zinc-900/40 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-50 pointer-events-none')
-                  : currentSel.size === size
-                    ? (isLight ? 'bg-black text-white border-black cursor-pointer' : 'bg-gold text-black border-gold font-bold cursor-pointer')
-                    : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900 cursor-pointer' : 'bg-black/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 cursor-pointer')
-              }`}
-            >
-              {String(size).replace(/-/g, ' ')}
-            </button>
-          ))}
+      {!isSimpleProduct && (
+        <div className={`${hideMobileVariations ? 'hidden sm:block' : 'block'} border-t border-white/10 pt-1 flex-shrink-0`}>
+          <div className="grid grid-cols-3 gap-1">
+            {Array.from(new Set(
+              (product.variations && product.variations.length > 0
+                ? product.variations.map(v => v.size)
+                : ['3ml', '5ml', '10ml', '30ml', '50ml', '100ml']
+              ).filter(Boolean)
+            )).map((size) => (
+              <button
+                key={size}
+                type="button"
+                disabled={isOutOfStock}
+                onClick={() => !isOutOfStock && onSizeChange(size)}
+                className={`w-full text-center py-1 rounded-sm text-[11px] font-sans font-medium transition-all duration-200 border ${
+                  isOutOfStock
+                    ? (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-400 cursor-not-allowed pointer-events-none' : 'bg-zinc-900/40 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-50 pointer-events-none')
+                    : currentSel.size === size
+                      ? (isLight ? 'bg-black text-white border-black cursor-pointer' : 'bg-gold text-black border-gold font-bold cursor-pointer')
+                      : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900 cursor-pointer' : 'bg-black/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 cursor-pointer')
+                }`}
+              >
+                {String(size).replace(/-/g, ' ')}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Add to Cart & Price Row */}
       <div className="flex items-center justify-between gap-2 pt-1.5 mt-1 border-t border-white/10 flex-shrink-0">
@@ -138,25 +157,25 @@ export const ProductCard = ({
         <div>
           <button
             type="button"
-            disabled={isOutOfStock}
+            disabled={isBtnDisabled}
             onClick={() => {
-              if (isOutOfStock) return;
+              if (isBtnDisabled) return;
               if (typeof handleAddToCart === 'function') {
-                handleAddToCart(product, currentSel.size, currentSel.concentration, 1, currentPrice);
+                handleAddToCart(product, currentSel?.size, currentSel?.concentration, 1, currentPrice);
               } else {
                 console.warn('handleAddToCart is not available for product:', product.id);
               }
             }}
             className={`font-bold uppercase tracking-wider text-[9px] px-3 py-1.5 rounded-[3px] transition-all flex items-center justify-center gap-1 font-sans border ${
-              isOutOfStock
-                ? (isLight ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed' : 'bg-zinc-800 text-zinc-500 border-zinc-800 cursor-not-allowed opacity-50')
+              isBtnDisabled
+                ? (isLight ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed opacity-50' : 'bg-zinc-800 text-zinc-500 border-zinc-800 cursor-not-allowed opacity-50')
                 : isLight 
                   ? 'bg-black text-white hover:bg-zinc-800 border-black cursor-pointer' 
                   : 'border-gold text-gold hover:bg-gold hover:text-black bg-transparent cursor-pointer'
             }`}
           >
             <ShoppingCart className="w-3 h-3" />
-            <span className="hidden xs:inline">{isOutOfStock ? 'Sold Out' : 'Add'}</span>
+            <span className="hidden xs:inline">{isOutOfStock ? 'Sold Out' : isSelectionMissing ? 'Select Size' : 'Add'}</span>
           </button>
         </div>
       </div>
