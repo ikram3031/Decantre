@@ -79,9 +79,9 @@ export const NewArrival = () => {
                             <Link
                                 to="/shop"
                                 aria-label="See more on shop"
-                                className={`font-sans transition-all flex items-center gap-1 uppercase font-bold text-xs ${
+                                className={`font-sans transition-all flex items-center gap-1 uppercase font-bold text-xs rounded-[3px] ${
                                     isLight 
-                                        ? 'bg-black text-white hover:bg-zinc-800 text-[10px] sm:text-xs px-3.5 py-2 rounded-sm' 
+                                        ? 'bg-black text-white hover:bg-zinc-800 text-[10px] sm:text-xs px-3.5 py-2' 
                                         : 'text-gold hover:text-gold/80 tracking-[0.15em] sm:tracking-widest underline underline-offset-4 decoration-gold/40 hover:decoration-gold/90 sm:border sm:border-gold/30 sm:hover:border-gold sm:no-underline sm:px-3.5 sm:py-2 sm:hover:bg-gold/10'
                                 }`}
                             >
