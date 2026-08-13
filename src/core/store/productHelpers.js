@@ -164,6 +164,59 @@ export const resolveBrandName = (brandValue) => {
   return strVal;
 };
 
+export const resolveBrandSlug = (brandValue) => {
+  if (!brandValue) return "";
+  if (Array.isArray(brandValue)) {
+    for (const item of brandValue) {
+      const resolved = resolveBrandSlug(item);
+      if (resolved) return resolved;
+    }
+    return "";
+  }
+  const cachedList = getCachedBrands();
+  let searchKey = "";
+  if (typeof brandValue === "object" && brandValue !== null) {
+    searchKey = String(brandValue.slug || brandValue.name || brandValue.title || brandValue.id || brandValue._id || "").trim();
+  } else {
+    searchKey = String(brandValue).trim();
+  }
+  if (!searchKey) return "";
+  const found = cachedList.find((b) => {
+    const candidates = [b._id, b.id, b.did, b.slug, b.name, b.title];
+    return candidates.some(
+      (candidate) =>
+        String(candidate || "")
+          .trim()
+          .toLowerCase() === searchKey.toLowerCase(),
+    );
+  });
+  if (found && found.slug) return found.slug;
+  return searchKey.toLowerCase().replace(/\s+/g, "-");
+};
+
+export const resolveCategorySlug = (catValue) => {
+  if (!catValue) return "";
+  const cachedList = getCachedCategories();
+  let searchKey = "";
+  if (typeof catValue === "object" && catValue !== null) {
+    searchKey = String(catValue.slug || catValue.name || catValue.title || catValue.id || catValue._id || "").trim();
+  } else {
+    searchKey = String(catValue).trim();
+  }
+  if (!searchKey) return "";
+  const found = cachedList.find((c) => {
+    const candidates = [c._id, c.id, c.did, c.slug, c.name, c.title];
+    return candidates.some(
+      (candidate) =>
+        String(candidate || "")
+          .trim()
+          .toLowerCase() === searchKey.toLowerCase(),
+    );
+  });
+  if (found && found.slug) return found.slug;
+  return searchKey.toLowerCase().replace(/\s+/g, "-");
+};
+
 const normalizeCategory = (product = {}) => {
   const catInput =
     product.category ||

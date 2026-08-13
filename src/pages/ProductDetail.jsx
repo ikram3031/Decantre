@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link, useParams } from 'react-router-dom';
 import { useAppStore } from '../core/store/useAppStore';
 import { formatBDT } from '../core/utils/formatCurrency';
-import { mapRemoteProduct, resolveBrandName, resolveCategoryName } from '../core/store/productHelpers';
+import { mapRemoteProduct, resolveBrandName, resolveCategoryName, resolveBrandSlug, resolveCategorySlug } from '../core/store/productHelpers';
 import { fetchProductDetails, fetchProducts } from '../core/lib/api';
 import { MoreProducts } from '../components/sections/MoreProducts';
 import { RecentlyViewedProducts } from '../components/sections/RecentlyViewedProducts';
@@ -288,7 +288,7 @@ export const ProductDetail = () => {
             {/* Category Link, Title & Brand */}
             <div className="space-y-2.5 border-b border-gold/15 pb-6">
               <Link
-                to={`/shop?${new URLSearchParams({ category: resolveCategoryName(product.category) || 'All' }).toString()}`}
+                to={`/shop?${new URLSearchParams({ category: resolveCategorySlug(product.category) || 'All' }).toString()}`}
                 className="text-[10px] sm:text-xs font-sans font-bold uppercase tracking-[0.25em] text-gold hover:underline"
               >
                 {resolveCategoryName(product.category)}
@@ -305,7 +305,7 @@ export const ProductDetail = () => {
               </div>
               <span className="text-xs uppercase tracking-widest text-zinc-400 font-sans font-medium block">
                 Brand: <Link
-                  to={`/shop?${new URLSearchParams({ brand: resolveBrandName(product.brand) || 'All' }).toString()}`}
+                  to={`/shop?${new URLSearchParams({ brand: resolveBrandSlug(product.brand) || 'All' }).toString()}`}
                   className="text-gold font-semibold hover:underline"
                 >
                   {resolveBrandName(product.brand)}
