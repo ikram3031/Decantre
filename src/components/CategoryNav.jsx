@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-// Fallback image URL for missing category assets
-const FALLBACK_IMAGE_URL = 'https://server.decantrebd.com/src/uploads/product-placeholder.webp';
-const perfumeForHim = FALLBACK_IMAGE_URL;
-const perfumeForHer = FALLBACK_IMAGE_URL;
-const perfumeUnisex = FALLBACK_IMAGE_URL;
+import localHim from '../assets/images/for him.webp';
+import localHer from '../assets/images/For her.webp';
+import localUnisex from '../assets/images/Unisex.webp';
+
+const remoteHim = 'https://server.decantrebd.com/uploads/perfume_for_him_1784311883603.jpg';
+const remoteHer = 'https://server.decantrebd.com/uploads/perfume_for_her_1784311895919.jpg';
+const remoteUnisex = 'https://server.decantrebd.com/uploads/perfume_unisex_1784311906469.jpg';
 
 export const CategoryNav = ({ setSelectedCategory }) => {
   const navigate = useNavigate();
@@ -38,8 +40,12 @@ export const CategoryNav = ({ setSelectedCategory }) => {
         >
           <div className="absolute inset-0 bg-luxury-black">
             <img 
-              src={perfumeForHim} 
+              src={remoteHim} 
               alt="For Him Category" 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = localHim;
+              }}
               className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
             />
@@ -66,8 +72,12 @@ export const CategoryNav = ({ setSelectedCategory }) => {
         >
           <div className="absolute inset-0 bg-luxury-black">
             <img 
-              src={perfumeForHer} 
+              src={remoteHer} 
               alt="For Her Category" 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = localHer;
+              }}
               className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
             />
@@ -94,8 +104,12 @@ export const CategoryNav = ({ setSelectedCategory }) => {
         >
           <div className="absolute inset-0 bg-luxury-black">
             <img 
-              src={perfumeUnisex} 
+              src={remoteUnisex} 
               alt="Unisex Category" 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = localUnisex;
+              }}
               className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-700"
               referrerPolicy="no-referrer"
             />
