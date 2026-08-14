@@ -127,16 +127,18 @@ export const ProductCard = ({
           <div className="grid grid-cols-3 gap-1">
             {genuineVariations.map((v) => {
               const size = v.size;
-              const isSelected = String(activeSize || '').trim().toLowerCase() === String(size || '').trim().toLowerCase();
+              const isSelected =
+                String(activeSize || '').trim().toLowerCase() === String(size || '').trim().toLowerCase() ||
+                (v.slug && currentSel?.slug && v.slug === currentSel.slug);
               return (
                 <button
-                  key={v.id || size}
+                  key={v.id || v.slug || size}
                   type="button"
                   disabled={isOutOfStock}
                   onClick={() => {
                     if (isOutOfStock) return;
                     if (typeof onSizeChange === 'function') {
-                      onSizeChange(size);
+                      onSizeChange(size, v.slug);
                     }
                   }}
                   className={`w-full text-center py-1 rounded-sm text-[11px] font-sans font-medium transition-all duration-200 border ${
@@ -147,7 +149,7 @@ export const ProductCard = ({
                         : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900 cursor-pointer' : 'bg-black/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 cursor-pointer')
                   }`}
                 >
-                  {String(size).replace(/-/g, ' ')}
+                  {v.label || String(size).replace(/-/g, ' ')}
                 </button>
               );
             })}

@@ -299,15 +299,22 @@ export const mapRemoteProduct = (product = {}) => {
         Number.isFinite(+v.offerPrice) && +v.offerPrice > 0
           ? Number(v.price)
           : null;
+      const rawSize = String(v.size || "Standard").trim();
+      const variantSlug = v.slug || rawSize.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const displayLabel = rawSize.replace(/-/g, " ");
+
       return {
-        id: v._id || v.id || `var-${idx}`,
-        name: `${product.name || product.title} - ${v.size}`,
-        size: v.size || "Standard",
+        id: v._id || v.id || `var-${variantSlug}-${idx}`,
+        name: `${product.name || product.title} - ${rawSize}`,
+        size: rawSize,
+        slug: variantSlug,
+        label: displayLabel,
         price: effectivePrice,
         originalPrice: originalPrice,
         stockQuantity: v.stockQuantity ?? 0,
         stockStatus: (v.stockQuantity ?? 1) > 0 ? "instock" : "outofstock",
         sku: v.sku || "",
+        sortOrder: v.sortOrder ?? idx,
         raw: v,
       };
     });
@@ -316,15 +323,24 @@ export const mapRemoteProduct = (product = {}) => {
     product.variations.length > 0
   ) {
     // WP / Legacy Variations Schema
-    variations = product.variations.map((v, idx) => ({
-      id: v.id || `var-${idx}`,
-      name: v.name || product.title || product.name,
-      size: v.size || "Standard",
-      price: Number(v.price || 0),
-      originalPrice: v.originalPrice ? Number(v.originalPrice) : null,
-      stockStatus: v.stockStatus || "instock",
-      raw: v,
-    }));
+    variations = product.variations.map((v, idx) => {
+      const rawSize = String(v.size || "Standard").trim();
+      const variantSlug = v.slug || rawSize.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const displayLabel = rawSize.replace(/-/g, " ");
+      return {
+        id: v.id || `var-${variantSlug}-${idx}`,
+        name: v.name || product.title || product.name,
+        size: rawSize,
+        slug: variantSlug,
+        label: displayLabel,
+        price: Number(v.price || 0),
+        originalPrice: v.originalPrice ? Number(v.originalPrice) : null,
+        stockStatus: v.stockStatus || "instock",
+        sku: v.sku || "",
+        sortOrder: v.sortOrder ?? idx,
+        raw: v,
+      };
+    });
   }
 
   // If simple product or no variations specified, create a default top-level variation
@@ -342,6 +358,8 @@ export const mapRemoteProduct = (product = {}) => {
       id: product.id || product._id || product.slug || "var-default",
       name: product.name || product.title || "",
       size: "Full Bottle",
+      slug: "full-bottle",
+      label: "Full Bottle",
       price: topPrice,
       originalPrice: topOriginalPrice,
       stockQuantity: product.stockQuantity ?? 0,
@@ -401,14 +419,19 @@ export const mapRemoteProduct = (product = {}) => {
 };
 
 export const getDefaultSelection = (product = {}) => {
-  const variations = product.variations || [];
+  const variations = Array.isArray(product.variations) ? product.variations : [];
   if (variations.length === 0) {
-    return { size: "", concentration: "Eau de Parfum" };
+    return { size: "Full Bottle", slug: "full-bottle", label: "Full Bottle", concentration: "Eau de Parfum" };
   }
   // Find variation with the lowest price
   const lowest = variations.reduce((min, curr) => {
     return (curr.price < min.price) ? curr : min;
   }, variations[0]);
-  return { size: lowest?.size || "", concentration: "Eau de Parfum" };
+  return {
+    size: lowest?.size || "Standard",
+    slug: lowest?.slug || String(lowest?.size || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    label: lowest?.label || String(lowest?.size || "").replace(/-/g, " "),
+    concentration: "Eau de Parfum"
+  };
 };
 
