@@ -26,24 +26,30 @@ export const ProductCard = ({
   const { currentTheme } = useApp();
   const isLight = currentTheme === 'light';
 
-  const variations = Array.isArray(product?.variations) ? product.variations : [];
-  const hasVariations = variations.length > 0;
+  const rawVariations = Array.isArray(product?.variations) ? product.variations : [];
   
-  // Find variation matching current selection, or fallback to first available variation
-  const activeVariation = hasVariations 
-    ? (variations.find(v => String(v.size || '').trim().toLowerCase() === String(currentSel?.size || '').trim().toLowerCase()) || variations[0])
+  // Extract only genuine variations (excluding default placeholders like 'Full Bottle' or 'Standard')
+  const genuineVariations = rawVariations.filter(
+    (v) => v && v.size && v.size !== 'Full Bottle' && v.size !== 'Standard'
+  );
+  
+  const hasMultipleVariations = genuineVariations.length > 1;
+  const availableVariations = genuineVariations.length > 0 ? genuineVariations : rawVariations;
+
+  // Active variation resolution: match user selection or default to first actual variation
+  const activeVariation = availableVariations.length > 0
+    ? (availableVariations.find((v) => String(v.size || '').trim().toLowerCase() === String(currentSel?.size || '').trim().toLowerCase()) || availableVariations[0])
     : null;
 
-  const activeSize = activeVariation ? activeVariation.size : (currentSel?.size || "Full Bottle");
-  const isSimpleProduct = !hasVariations || (variations.length === 1 && variations[0].size === "Full Bottle");
+  const activeSize = activeVariation ? activeVariation.size : (currentSel?.size || 'Full Bottle');
 
   const normalizedStatus = String(product?.stockStatus || '').toLowerCase().trim();
   const isOutOfStock = normalizedStatus === 'outofstock' || normalizedStatus === 'out of stock';
 
-  // The card button is only disabled when truly out of stock
+  // Card button disabled strictly when truly out of stock
   const isBtnDisabled = isOutOfStock;
 
-  // Determine effective unit price for selected size
+  // Effective unit price for the currently active variation
   const variationPrice = activeVariation
     ? (activeVariation.price ?? activeVariation.offerPrice ?? product?.basePrice ?? product?.price ?? 0)
     : (product?.offerPrice ?? product?.price ?? product?.basePrice ?? 0);
@@ -115,20 +121,16 @@ export const ProductCard = ({
         </div>
       </div>
 
-      {/* SELECTION CONTROLS (Size / Variants) */}
-      {!isSimpleProduct && (
+      {/* SELECTION CONTROLS (Only display if product actually has multiple real variations) */}
+      {hasMultipleVariations && (
         <div className={`${hideMobileVariations ? 'hidden sm:block' : 'block'} border-t border-white/10 pt-1 flex-shrink-0`}>
           <div className="grid grid-cols-3 gap-1">
-            {Array.from(new Set(
-              (hasVariations
-                ? variations.map(v => v.size)
-                : ['3ml', '5ml', '10ml', '30ml', '50ml', '100ml']
-              ).filter(Boolean)
-            )).map((size) => {
+            {genuineVariations.map((v) => {
+              const size = v.size;
               const isSelected = String(activeSize || '').trim().toLowerCase() === String(size || '').trim().toLowerCase();
               return (
                 <button
-                  key={size}
+                  key={v.id || size}
                   type="button"
                   disabled={isOutOfStock}
                   onClick={() => {
