@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { formatBDT } from '../core/utils/formatCurrency';
 import { useApp } from '../core/context/AppContext';
-import { resolveBrandName, resolveCategoryName } from '../core/store/productHelpers';
+import { resolveBrandName, resolveCategoryName, normalizeProductImage } from '../core/store/productHelpers';
+
 // Fallback image URL for missing product card assets
 const defaultPerfumeImage = 'https://server.decantrebd.com/uploads/product-placeholder.webp';
 
@@ -12,7 +13,7 @@ export const ProductCard = ({
   currentSel,
   onSizeChange,
   onConcentrationChange,
-  wishlist,
+  wishlist = [],
   toggleWishlist,
   handleOpenProductDetail,
   handleAddToCart,
@@ -25,33 +26,33 @@ export const ProductCard = ({
   const { currentTheme } = useApp();
   const isLight = currentTheme === 'light';
 
-  const variations = product.variations || [];
+  const variations = Array.isArray(product?.variations) ? product.variations : [];
   const hasVariations = variations.length > 0;
   
-  // A variation is considered "selected" if currentSel?.size matches a size in variations.
-  const selectedVariation = hasVariations 
-    ? variations.find(v => v.size === currentSel?.size)
+  // Find variation matching current selection, or fallback to first available variation
+  const activeVariation = hasVariations 
+    ? (variations.find(v => String(v.size || '').trim().toLowerCase() === String(currentSel?.size || '').trim().toLowerCase()) || variations[0])
     : null;
 
-  // It's a simple product if there are no variations or only one variation that is "Full Bottle"
+  const activeSize = activeVariation ? activeVariation.size : (currentSel?.size || "Full Bottle");
   const isSimpleProduct = !hasVariations || (variations.length === 1 && variations[0].size === "Full Bottle");
 
-  const normalizedStatus = String(product.stockStatus || '').toLowerCase().trim();
+  const normalizedStatus = String(product?.stockStatus || '').toLowerCase().trim();
   const isOutOfStock = normalizedStatus === 'outofstock' || normalizedStatus === 'out of stock';
 
-  // Add-to-cart should be disabled if:
-  // 1. It is out of stock.
-  // 2. Or, it's a variable product (has multiple variations) and no valid variation is selected.
-  const isSelectionMissing = !isSimpleProduct && !selectedVariation;
-  const isBtnDisabled = isOutOfStock || isSelectionMissing;
+  // The card button is only disabled when truly out of stock
+  const isBtnDisabled = isOutOfStock;
 
-  // determine base price from selected variation if available
-  const variationPrice = selectedVariation
-    ? selectedVariation.price
-    : product.basePrice;
-  const currentPrice = calculateItemPrice(variationPrice, currentSel?.size, currentSel?.concentration);
+  // Determine effective unit price for selected size
+  const variationPrice = activeVariation
+    ? (activeVariation.price ?? activeVariation.offerPrice ?? product?.basePrice ?? product?.price ?? 0)
+    : (product?.offerPrice ?? product?.price ?? product?.basePrice ?? 0);
 
-  const descriptionText = product.description || product.tagline || product.scentFamily || '';
+  const currentPrice = typeof calculateItemPrice === 'function'
+    ? calculateItemPrice(variationPrice, activeSize, currentSel?.concentration)
+    : Number(variationPrice || 0);
+
+  const productImage = normalizeProductImage(product?.image || (product?.raw && product.raw.image) || defaultPerfumeImage);
 
   return (
     <div 
@@ -60,16 +61,15 @@ export const ProductCard = ({
         isLight ? 'bg-white border-zinc-200 hover:border-gold/60 text-black shadow-sm hover:shadow-md' : 'bg-luxury-dark/90 border-gold/20 hover:border-gold/60 text-white shadow-xl hover:shadow-gold/10'
       } rounded-[6px] p-2 sm:p-3 transition-all duration-300 relative`}
     >
-
-
       {/* Wishlist toggle */}
       <button 
-        onClick={() => toggleWishlist(product.id)}
-        className="absolute top-5 right-5 z-20 p-1.5 bg-black/60 border border-gold/40 hover:border-gold rounded-full text-zinc-300 hover:text-gold transition-all shadow-md cursor-pointer"
+        type="button"
+        onClick={() => toggleWishlist && toggleWishlist(product.id)}
+        className="absolute top-4 sm:top-5 right-4 sm:right-5 z-20 p-1.5 bg-black/60 border border-gold/40 hover:border-gold rounded-full text-zinc-300 hover:text-gold transition-all shadow-md cursor-pointer"
         aria-label="Toggle wishlist"
       >
         <Heart 
-          className={`w-3.5 h-3.5 ${wishlist.includes(product.id) ? 'fill-gold text-gold' : ''}`} 
+          className={`w-3.5 h-3.5 ${Array.isArray(wishlist) && wishlist.includes(product.id) ? 'fill-gold text-gold' : ''}`} 
         />
       </button>
 
@@ -85,8 +85,8 @@ export const ProductCard = ({
         )}
         <Link to={`/product/${product.slug || product.id}`} className="block w-full h-full">
           <img
-            src={product.image || (product.raw && product.raw.image) || defaultPerfumeImage}
-            alt={product.brand || product.category || 'Perfume'}
+            src={productImage}
+            alt={product.name || 'Perfume'}
             className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImageLoaded(true)}
             onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = defaultPerfumeImage; setImageLoaded(true); }}
@@ -115,32 +115,40 @@ export const ProductCard = ({
         </div>
       </div>
 
-      {/* SELECTION CONTROLS (Size / Variants - up to 6 or more) */}
+      {/* SELECTION CONTROLS (Size / Variants) */}
       {!isSimpleProduct && (
         <div className={`${hideMobileVariations ? 'hidden sm:block' : 'block'} border-t border-white/10 pt-1 flex-shrink-0`}>
           <div className="grid grid-cols-3 gap-1">
             {Array.from(new Set(
-              (product.variations && product.variations.length > 0
-                ? product.variations.map(v => v.size)
+              (hasVariations
+                ? variations.map(v => v.size)
                 : ['3ml', '5ml', '10ml', '30ml', '50ml', '100ml']
               ).filter(Boolean)
-            )).map((size) => (
-              <button
-                key={size}
-                type="button"
-                disabled={isOutOfStock}
-                onClick={() => !isOutOfStock && onSizeChange(size)}
-                className={`w-full text-center py-1 rounded-sm text-[11px] font-sans font-medium transition-all duration-200 border ${
-                  isOutOfStock
-                    ? (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-400 cursor-not-allowed pointer-events-none' : 'bg-zinc-900/40 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-50 pointer-events-none')
-                    : currentSel.size === size
-                      ? (isLight ? 'bg-black text-white border-black cursor-pointer' : 'bg-gold text-black border-gold font-bold cursor-pointer')
-                      : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900 cursor-pointer' : 'bg-black/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 cursor-pointer')
-                }`}
-              >
-                {String(size).replace(/-/g, ' ')}
-              </button>
-            ))}
+            )).map((size) => {
+              const isSelected = String(activeSize || '').trim().toLowerCase() === String(size || '').trim().toLowerCase();
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  disabled={isOutOfStock}
+                  onClick={() => {
+                    if (isOutOfStock) return;
+                    if (typeof onSizeChange === 'function') {
+                      onSizeChange(size);
+                    }
+                  }}
+                  className={`w-full text-center py-1 rounded-sm text-[11px] font-sans font-medium transition-all duration-200 border ${
+                    isOutOfStock
+                      ? (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-400 cursor-not-allowed pointer-events-none' : 'bg-zinc-900/40 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-50 pointer-events-none')
+                      : isSelected
+                        ? (isLight ? 'bg-black text-white border-black cursor-pointer font-bold' : 'bg-gold text-black border-gold font-bold cursor-pointer')
+                        : (isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900 cursor-pointer' : 'bg-black/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 cursor-pointer')
+                  }`}
+                >
+                  {String(size).replace(/-/g, ' ')}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -161,9 +169,9 @@ export const ProductCard = ({
             onClick={() => {
               if (isBtnDisabled) return;
               if (typeof handleAddToCart === 'function') {
-                handleAddToCart(product, currentSel?.size, currentSel?.concentration, 1, currentPrice);
+                handleAddToCart(product, activeSize, currentSel?.concentration || 'Eau de Parfum', 1, currentPrice);
               } else {
-                console.warn('handleAddToCart is not available for product:', product.id);
+                console.warn('handleAddToCart is not available for product:', product?.id);
               }
             }}
             className={`font-bold uppercase tracking-wider text-[9px] px-3 py-1.5 rounded-[3px] transition-all flex items-center justify-center gap-1 font-sans border ${
@@ -175,11 +183,10 @@ export const ProductCard = ({
             }`}
           >
             <ShoppingCart className="w-3 h-3" />
-            <span className="hidden xs:inline">{isOutOfStock ? 'Sold Out' : isSelectionMissing ? 'Select Size' : 'Add'}</span>
+            <span className="hidden xs:inline">{isOutOfStock ? 'Sold Out' : 'Add'}</span>
           </button>
         </div>
       </div>
-
     </div>
   );
 };

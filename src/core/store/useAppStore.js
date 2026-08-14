@@ -352,30 +352,33 @@ export const useAppStore = create((set, get) => {
       return Math.round(finalPrice);
     },
 
-     handleAddToCart: (product, size, concentration, qty = 1, explicitUnitPrice = null) => {
-      const variations = product?.variations || [];
+    handleAddToCart: (product, size, concentration, qty = 1, explicitUnitPrice = null) => {
+      if (!product) return;
+      const variations = Array.isArray(product.variations) ? product.variations : [];
       const hasVariations = variations.length > 0;
-      const isSimpleProduct = !hasVariations || (variations.length === 1 && variations[0].size === "Full Bottle");
 
-      // Verify variation selection
-      const foundVar = hasVariations
-        ? variations.find(v => v.size === size)
+      // Find matching variation (case-insensitive & trimmed)
+      let foundVar = hasVariations
+        ? variations.find(v => String(v.size || '').trim().toLowerCase() === String(size || '').trim().toLowerCase())
         : null;
 
-      if (!isSimpleProduct && !foundVar) {
-        get().addToast(`Error: Please select a valid size for ${product?.name || 'this product'}.`, 'error');
-        return;
+      // If not found, fallback to first variation if variable product
+      if (!foundVar && hasVariations) {
+        foundVar = variations[0];
       }
 
-      let unitPrice = explicitUnitPrice;
-      if (unitPrice == null) {
-        const basePrice = foundVar ? foundVar.price : (product?.basePrice ?? 0);
-        unitPrice = get().calculateItemPrice(basePrice, size, concentration);
-      }
-      const cart = get().cart;
+      const safeSize = foundVar ? foundVar.size : (size || 'Full Bottle');
       const safeConcentration = concentration || 'Eau de Parfum';
+
+      let unitPrice = explicitUnitPrice;
+      if (unitPrice == null || isNaN(unitPrice) || Number(unitPrice) <= 0) {
+        const basePrice = foundVar ? (foundVar.price ?? foundVar.offerPrice) : (product.offerPrice ?? product.price ?? product.basePrice ?? 0);
+        unitPrice = get().calculateItemPrice(basePrice, safeSize, safeConcentration);
+      }
+
+      const cart = get().cart;
       const existingIndex = cart.findIndex(
-        (item) => item.product.id === product.id && item.size === size && item.concentration === safeConcentration
+        (item) => item.product?.id === product.id && String(item.size || '').trim().toLowerCase() === String(safeSize || '').trim().toLowerCase() && item.concentration === safeConcentration
       );
 
       let newCart = [...cart];
@@ -383,17 +386,17 @@ export const useAppStore = create((set, get) => {
         newCart[existingIndex].quantity += qty;
       } else {
         newCart.push({
-          id: `${product.id}-${size}-${safeConcentration.replace(/\s+/g, '')}`,
+          id: `${product.id}-${String(safeSize).replace(/\s+/g, '')}-${safeConcentration.replace(/\s+/g, '')}`,
           product,
-          size,
+          size: safeSize,
           concentration: safeConcentration,
           quantity: qty,
-          unitPrice
+          unitPrice: Number(unitPrice)
         });
       }
 
       get().saveCart(newCart);
-      get().addToast(`Added ${qty}x ${product.name} (${size} - ${safeConcentration}) to your cart.`, 'success');
+      get().addToast(`Added ${qty}x ${product.name} (${safeSize}) to your cart.`, 'success');
     },
 
     handleAddComboToCart: (combo, qty = 1) => {
