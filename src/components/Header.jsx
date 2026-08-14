@@ -418,40 +418,53 @@ export const Header = ({
           </div>
 
           <div className="w-full max-w-2xl mx-auto px-6 sm:px-10 py-6 sm:py-8 space-y-6 flex-grow min-h-0 overflow-hidden">
-            {/* Search Input Bar */}
-            <div className="relative flex items-center bg-black border border-white/10 rounded-sm px-4 py-3 group focus-within:border-gold/50 transition-all">
-              <Search className="w-4 h-4 text-gold shrink-0 mr-3" />
-              <input 
-                type="text"
-                placeholder="Search perfumes, brands, notes..."
-                value={localSearchVal}
-                onChange={(e) => setLocalSearchVal(e.value ? e.value : e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handlePerformSearch(e);
-                    setIsMobileMenuOpen(false);
-                  }
-                }}
-                className="w-full text-xs sm:text-sm font-light placeholder-zinc-500 bg-transparent focus:outline-none text-zinc-100"
-              />
-                  {/* Async search dropdown */}
-                  <SearchDropdown
-                    query={localSearchVal}
-                    onSelect={(item) => {
-                      handleSuggestionSelect(item);
+            {/* Search Input Bar - Uniform with top search */}
+            <div className="flex flex-row items-stretch border border-gold/40 rounded-sm shadow-lg relative bg-black">
+              <div className="relative flex-grow flex items-center bg-black rounded-l-sm">
+                <input 
+                  type="text"
+                  placeholder="Search perfumes, brands, notes..."
+                  value={localSearchVal}
+                  onChange={(e) => setLocalSearchVal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handlePerformSearch(e);
                       setIsMobileMenuOpen(false);
-                      setLocalSearchVal('');
-                    }}
-                    maxResults={6}
-                  />
-              {localSearchVal && (
-                <button 
-                  onClick={() => setLocalSearchVal('')} 
-                  className="p-1 text-zinc-400 hover:text-gold text-xs cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+                    }
+                  }}
+                  className="w-full px-4 py-3 text-xs sm:text-sm font-sans font-light placeholder-zinc-500 bg-black text-zinc-100 focus:outline-none border-none rounded-l-sm no-outline-search"
+                />
+                {localSearchVal && (
+                  <button 
+                    onClick={() => setLocalSearchVal('')} 
+                    className="p-1.5 text-zinc-400 hover:text-gold text-xs cursor-pointer mr-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Async search dropdown */}
+              <SearchDropdown
+                query={localSearchVal}
+                onSelect={(item) => {
+                  handleSuggestionSelect(item);
+                  setIsMobileMenuOpen(false);
+                  setLocalSearchVal('');
+                }}
+                maxResults={6}
+              />
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  handlePerformSearch(e);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="bg-gold hover:bg-gold/80 text-black transition-all px-4 py-3 flex items-center justify-center text-xs uppercase font-sans font-bold cursor-pointer shrink-0 border-none rounded-r-sm"
+              >
+                <Search className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Menu List - Exact Hierarchy match */}
@@ -805,8 +818,11 @@ export const Header = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -80 }}
             transition={{ type: 'tween', duration: 0.35, ease: 'easeInOut' }}
-            className="fixed top-0 inset-x-0 bg-[#0a0a0a] text-zinc-100 z-50 shadow-[0_15px_40px_rgba(0,0,0,0.85)] py-6 sm:py-8 px-4 sm:px-6 border-b border-gold/30"
+            className="fixed top-0 inset-x-0 bg-[#050505] text-zinc-100 z-50 shadow-[0_25px_60px_rgba(0,0,0,0.95)] py-6 sm:py-8 px-4 sm:px-6 border-b border-gold/30"
           >
+            {/* Top gold accent line */}
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
+
             <div className="max-w-4xl mx-auto relative pt-2">
               {/* Header inside search panel */}
               <div className="flex items-center justify-between mb-4">
@@ -823,7 +839,7 @@ export const Header = ({
               </div>
 
               {/* Form Row */}
-              <div className="flex flex-row items-stretch border border-gold/40 rounded-sm shadow-lg relative">
+              <div className="flex flex-row items-stretch border border-gold/40 rounded-sm shadow-lg relative bg-black">
                 {/* Search Input */}
                 <div className="relative flex-grow flex items-center bg-black rounded-l-sm">
                   <input 
@@ -837,7 +853,17 @@ export const Header = ({
                       }
                     }}
                     className="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-sans font-light placeholder-zinc-500 focus:outline-none bg-black text-zinc-100 border-none rounded-l-sm no-outline-search"
+                    autoFocus
                   />
+                  {localSearchVal && (
+                    <button
+                      type="button"
+                      onClick={() => setLocalSearchVal('')}
+                      className="p-1.5 text-zinc-400 hover:text-gold transition-colors cursor-pointer mr-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
                 <SearchDropdown
