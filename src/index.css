@@ -333,22 +333,5 @@ html:not(.dark) {
   }
 }
 
-/* Search Panel custom scrollbar */
-.search-panel-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-.search-panel-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.search-panel-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #C5A059, #8B6914);
-  border-radius: 3px;
-}
-.search-panel-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #d4af6a, #C5A059);
-}
-.search-panel-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #C5A059 transparent;
-}
+
 

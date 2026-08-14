@@ -4,7 +4,6 @@ import { Compass, Heart, ShoppingBag, Search, Menu, X, ChevronDown, ChevronUp, C
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../core/context/AppContext';
 import SearchDropdown from './SearchDropdown';
-import SearchPanel from './SearchPanel';
 
 import menuData from '../data/menuData.json';
 
@@ -798,19 +797,73 @@ export const Header = ({
         </div>
       )}
 
-      {/* Search Panel Overlay */}
-      <SearchPanel
-        isOpen={isSearchPanelOpen}
-        onClose={() => setIsSearchPanelOpen(false)}
-        onSearch={(query) => {
-          const params = new URLSearchParams();
-          params.set('search', query);
-          navigate(`/search?${params.toString()}`);
-        }}
-        onSelectProduct={(item) => {
-          navigate(`/product/${item.slug || item.id}`);
-        }}
-      />
+      {/* Sliding Search Panel Overlay */}
+      <AnimatePresence>
+        {isSearchPanelOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -80 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -80 }}
+            transition={{ type: 'tween', duration: 0.35, ease: 'easeInOut' }}
+            className="fixed top-0 inset-x-0 bg-[#0a0a0a] text-zinc-100 z-50 shadow-[0_15px_40px_rgba(0,0,0,0.85)] py-6 sm:py-8 px-4 sm:px-6 border-b border-gold/30"
+          >
+            <div className="max-w-4xl mx-auto relative pt-2">
+              {/* Header inside search panel */}
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs uppercase tracking-[0.25em] font-serif text-gold font-semibold">
+                  Search Fragrances
+                </span>
+                <button 
+                  onClick={() => setIsSearchPanelOpen(false)}
+                  className="p-1.5 text-gold hover:text-white hover:bg-gold/10 border border-gold/40 rounded-full transition-colors cursor-pointer"
+                  aria-label="Close search"
+                >
+                  <X className="w-5 h-5 stroke-[1.5]" />
+                </button>
+              </div>
+
+              {/* Form Row */}
+              <div className="flex flex-row items-stretch border border-gold/40 rounded-sm shadow-lg relative">
+                {/* Search Input */}
+                <div className="relative flex-grow flex items-center bg-black rounded-l-sm">
+                  <input 
+                    type="text"
+                    placeholder={`Search "${placeholderText || 'Search'}"...`}
+                    value={localSearchVal}
+                    onChange={(e) => setLocalSearchVal(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handlePerformSearch(e);
+                      }
+                    }}
+                    className="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-sans font-light placeholder-zinc-500 focus:outline-none bg-black text-zinc-100 border-none rounded-l-sm no-outline-search"
+                  />
+                </div>
+
+                <SearchDropdown
+                  query={localSearchVal}
+                  onSelect={(item) => {
+                    handleSuggestionSelect(item);
+                    setIsSearchPanelOpen(false);
+                    setLocalSearchVal('');
+                  }}
+                  maxResults={6}
+                />
+
+                {/* Search Button */}
+                <button
+                  type="button"
+                  onClick={(e) => handlePerformSearch(e)}
+                  className="bg-gold hover:bg-gold/80 text-black transition-all px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-center gap-2 text-xs uppercase tracking-[0.2em] font-sans font-bold cursor-pointer shrink-0 border-none rounded-r-sm"
+                >
+                  <Search className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">Search</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };
