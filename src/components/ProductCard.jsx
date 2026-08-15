@@ -37,8 +37,14 @@ export const ProductCard = ({
   const availableVariations = genuineVariations.length > 0 ? genuineVariations : rawVariations;
 
   // Active variation resolution: match user selection or default to first actual variation
+  const selectedTerm = String(currentSel?.size || currentSel?.slug || '').trim().toLowerCase();
+
   const activeVariation = availableVariations.length > 0
-    ? (availableVariations.find((v) => String(v.size || '').trim().toLowerCase() === String(currentSel?.size || '').trim().toLowerCase()) || availableVariations[0])
+    ? (availableVariations.find((v) => {
+        const vSize = String(v.size || '').trim().toLowerCase();
+        const vSlug = String(v.slug || '').trim().toLowerCase();
+        return selectedTerm && (vSize === selectedTerm || vSlug === selectedTerm);
+      }) || availableVariations[0])
     : null;
 
   const activeSize = activeVariation ? activeVariation.size : (currentSel?.size || 'Full Bottle');
@@ -127,9 +133,9 @@ export const ProductCard = ({
           <div className="grid grid-cols-3 gap-1">
             {genuineVariations.map((v) => {
               const size = v.size;
-              const isSelected =
-                String(activeSize || '').trim().toLowerCase() === String(size || '').trim().toLowerCase() ||
-                (v.slug && currentSel?.slug && v.slug === currentSel.slug);
+              const isSelected = activeVariation
+                ? (activeVariation.id === v.id || String(activeVariation.size).trim().toLowerCase() === String(size).trim().toLowerCase())
+                : false;
               return (
                 <button
                   key={v.id || v.slug || size}
