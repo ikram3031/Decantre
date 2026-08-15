@@ -219,8 +219,9 @@ export async function fetchProducts(opts = {}) {
 				? json
 				: [];
 		const mapped = list.map(mapRemoteProduct);
+		mapped._pagination = json.pagination || null;
 		mapped._meta = json.meta || null;
-		mapped._totalRows = json.meta?.total_products ?? json.totalRows ?? list.length;
+		mapped._totalRows = json.pagination?.total ?? json.meta?.total_products ?? json.totalRows ?? list.length;
 		return mapped;
 	} catch (err) {
 		console.error("fetchProducts Error:", err);
