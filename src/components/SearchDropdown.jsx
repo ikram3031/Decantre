@@ -75,40 +75,36 @@ export const SearchDropdown = ({ query, onSelect, maxResults = 6 }) => {
       {results.length > 0 && (
         <ul className="divide-y divide-white/5 max-h-80 overflow-y-auto">
           {results.map((item) => {
-            const resolvedImg = normalizeProductImage(item.image || item.imageUrl || item.thumbnailUrl);
+            const rawImg = item.thumbnailUrl || item.imageUrl || item.image;
+            const resolvedImg = rawImg ? normalizeProductImage(rawImg) : null;
             return (
               <li key={item.id}>
                 <button
                   type="button"
                   onClick={() => onSelect && onSelect({ id: item.id, name: item.name, slug: item.slug })}
-                  className="w-full text-left px-3.5 py-2.5 flex items-center justify-between gap-3 hover:bg-gold/[0.06] transition-colors cursor-pointer group"
+                  className="w-full text-left px-3.5 py-2.5 flex items-center justify-between gap-3 hover:bg-gold/[0.08] transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center gap-3 w-[70%] min-w-0">
-                    <div className="w-10 h-10 rounded-sm bg-zinc-900 border border-white/10 group-hover:border-gold/40 overflow-hidden shrink-0 flex items-center justify-center transition-colors">
+                    <div className="w-11 h-11 rounded-sm bg-[#111111] border border-white/10 group-hover:border-gold/50 overflow-hidden shrink-0 flex items-center justify-center transition-colors relative">
                       {resolvedImg ? (
                         <img
                           src={resolvedImg}
                           alt={item.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                            e.currentTarget.style.display = 'none';
                           }}
                         />
-                      ) : null}
-                      <div
-                        className="w-full h-full flex items-center justify-center bg-zinc-900"
-                        style={{ display: resolvedImg ? 'none' : 'flex' }}
-                      >
-                        <ShoppingBag className="w-4 h-4 text-gold/40" />
-                      </div>
+                      ) : (
+                        <ShoppingBag className="w-4 h-4 text-gold/50" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium font-serif text-zinc-100 truncate group-hover:text-gold transition-colors tracking-wide">
                         {item.name}
                       </div>
                       <div className="text-[11px] font-sans text-zinc-400 truncate mt-0.5 font-light">
-                        {item.brand}{item.category ? ` · ${item.category}` : ''}
+                        {item.brand ? item.brand : ''}{item.category ? ` · ${item.category}` : ''}
                       </div>
                     </div>
                   </div>
