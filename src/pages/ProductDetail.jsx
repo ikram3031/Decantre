@@ -517,7 +517,8 @@ export const ProductDetail = () => {
               */}
             </div>
 
-            {/* Customer Reviews Section */}
+            {/* Customer Reviews Section - Temporarily hidden */}
+            {false && (
             <div className="p-6 border bg-zinc-950/80 border-gold/15 rounded-sm space-y-6">
               <div className="flex items-center justify-between border-b border-gold/15 pb-3">
                 <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-gold flex items-center gap-2">
@@ -592,6 +593,7 @@ export const ProductDetail = () => {
                 ))}
               </div>
             </div>
+            )}
 
           </div>
         </div>
