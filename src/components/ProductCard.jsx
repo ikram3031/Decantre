@@ -111,7 +111,7 @@ export const ProductCard = ({
         <div className="space-y-1">
           {/* Category / Brand Row */}
           <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.15em] font-sans font-semibold text-gold">
-            <span className="truncate max-w-full sm:max-w-[60%]">{resolveBrandName(product.brand) || resolveCategoryName(product.category) || 'Fragrance'}</span>
+            <span className="truncate max-w-full sm:max-w-[60%]">{resolveBrandName(product.brand) || resolveCategoryName(product.category)}</span>
             <span className="text-zinc-400 font-normal truncate max-w-[38%] text-right hidden sm:block">{resolveCategoryName(product.category)}</span>
           </div>
 

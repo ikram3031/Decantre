@@ -97,12 +97,12 @@ const getCachedBrands = () => {
 };
 
 export const resolveCategoryName = (catValue) => {
-  if (!catValue) return "Unisex";
+  if (!catValue) return "";
   if (typeof catValue === "object" && catValue !== null) {
-    return catValue.name || catValue.title || catValue.slug || "Unisex";
+    return catValue.name || catValue.title || catValue.slug || "";
   }
   const strVal = String(catValue).trim();
-  if (!strVal) return "Unisex";
+  if (!strVal) return "";
   const cachedList = getCachedCategories();
   const found = cachedList.find(
     (c) =>
