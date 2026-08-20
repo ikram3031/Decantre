@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { ShieldCheck, Calendar, Compass, ArrowRight, FileText, Sparkles, CheckCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../core/context/AppContext';
+import { pixelPurchase } from '../utils/fbPixel';
 
 export const ThankYou = () => {
   const location = useLocation();
@@ -10,7 +11,9 @@ export const ThankYou = () => {
     orderNumber: apiOrderNumber,
     handleResetCheckout,
     addToast,
-    currentTheme
+    currentTheme,
+    cart,
+    cartTotal,
   } = useApp();
 
   const isLight = currentTheme === 'light';
@@ -30,6 +33,22 @@ export const ThankYou = () => {
   useEffect(() => {
     addToast('Your order has been placed successfully!', 'success');
   }, [addToast]);
+
+  // Facebook Pixel – Purchase event (fires once per order)
+  useEffect(() => {
+    if (!rawOrderNumber) return;
+    const flagKey = `fb_pixel_purchase_${rawOrderNumber}`;
+    if (sessionStorage.getItem(flagKey)) return; // prevent duplicate fires
+    const savedCart = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('luxury_last_order_cart') || '[]');
+      } catch { return []; }
+    })();
+    const savedTotal = Number(localStorage.getItem('luxury_last_order_total') || cartTotal || 0);
+    const itemsToReport = (savedCart.length ? savedCart : cart) || [];
+    pixelPurchase(rawOrderNumber, itemsToReport, savedTotal);
+    sessionStorage.setItem(flagKey, '1');
+  }, [rawOrderNumber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={`py-12 sm:py-20 ${isLight ? 'bg-white text-zinc-900' : 'bg-luxury-black text-luxury-white'} animate-fade-in text-left`}>

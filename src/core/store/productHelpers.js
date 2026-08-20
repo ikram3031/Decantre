@@ -96,29 +96,34 @@ const getCachedBrands = () => {
   }
 };
 
-export const resolveCategoryName = (catValue) => {
+export const resolveCategoryName = (catValue, customList = null) => {
   if (!catValue) return "";
   if (typeof catValue === "object" && catValue !== null) {
     return catValue.name || catValue.title || catValue.slug || "";
   }
   const strVal = String(catValue).trim();
   if (!strVal) return "";
-  const cachedList = getCachedCategories();
+  const cachedList = Array.isArray(customList) && customList.length > 0 ? customList : getCachedCategories();
   const found = cachedList.find(
     (c) =>
-      String(c._id || c.id) === strVal ||
+      String(c._id || c.id || c.did || "").toLowerCase() === strVal.toLowerCase() ||
       String(c.slug || "").toLowerCase() === strVal.toLowerCase() ||
       String(c.name || "").toLowerCase() === strVal.toLowerCase(),
   );
-  if (found) return found.name || found.title || found.slug || strVal;
+  if (found) return found.name || found.title || found.slug || "";
+
+  // Never return raw hex ID / DID strings to the UI
+  if (/^[0-9a-fA-F]{16,24}$/.test(strVal)) {
+    return "";
+  }
   return strVal;
 };
 
-export const resolveBrandName = (brandValue) => {
+export const resolveBrandName = (brandValue, customList = null) => {
   if (!brandValue) return "";
   if (Array.isArray(brandValue)) {
     for (const item of brandValue) {
-      const resolved = resolveBrandName(item);
+      const resolved = resolveBrandName(item, customList);
       if (resolved) return resolved;
     }
     return "";
@@ -132,7 +137,7 @@ export const resolveBrandName = (brandValue) => {
       brandValue.id || brandValue._id || brandValue.did || "",
     ).trim();
     if (lookupValue) {
-      const cachedList = getCachedBrands();
+      const cachedList = Array.isArray(customList) && customList.length > 0 ? customList : getCachedBrands();
       const found = cachedList.find((b) => {
         const candidates = [b._id, b.id, b.did, b.slug, b.name, b.title];
         return candidates.some(
@@ -142,7 +147,10 @@ export const resolveBrandName = (brandValue) => {
               .toLowerCase() === lookupValue.toLowerCase(),
         );
       });
-      if (found) return found.name || found.title || found.slug || lookupValue;
+      if (found) return found.name || found.title || found.slug || "";
+      if (/^[0-9a-fA-F]{16,24}$/.test(lookupValue)) {
+        return "";
+      }
       return lookupValue;
     }
     return "";
@@ -150,7 +158,7 @@ export const resolveBrandName = (brandValue) => {
 
   const strVal = String(brandValue).trim();
   if (!strVal) return "";
-  const cachedList = getCachedBrands();
+  const cachedList = Array.isArray(customList) && customList.length > 0 ? customList : getCachedBrands();
   const found = cachedList.find((b) => {
     const candidates = [b._id, b.id, b.did, b.slug, b.name, b.title];
     return candidates.some(
@@ -160,20 +168,25 @@ export const resolveBrandName = (brandValue) => {
           .toLowerCase() === strVal.toLowerCase(),
     );
   });
-  if (found) return found.name || found.title || found.slug || strVal;
+  if (found) return found.name || found.title || found.slug || "";
+
+  // Never return raw hex ID / DID strings to the UI
+  if (/^[0-9a-fA-F]{16,24}$/.test(strVal)) {
+    return "";
+  }
   return strVal;
 };
 
-export const resolveBrandSlug = (brandValue) => {
+export const resolveBrandSlug = (brandValue, customList = null) => {
   if (!brandValue) return "";
   if (Array.isArray(brandValue)) {
     for (const item of brandValue) {
-      const resolved = resolveBrandSlug(item);
+      const resolved = resolveBrandSlug(item, customList);
       if (resolved) return resolved;
     }
     return "";
   }
-  const cachedList = getCachedBrands();
+  const cachedList = Array.isArray(customList) && customList.length > 0 ? customList : getCachedBrands();
   let searchKey = "";
   if (typeof brandValue === "object" && brandValue !== null) {
     searchKey = String(brandValue.slug || brandValue.name || brandValue.title || brandValue.id || brandValue._id || "").trim();
@@ -191,12 +204,15 @@ export const resolveBrandSlug = (brandValue) => {
     );
   });
   if (found && found.slug) return found.slug;
+  if (/^[0-9a-fA-F]{16,24}$/.test(searchKey)) {
+    return "all";
+  }
   return searchKey.toLowerCase().replace(/\s+/g, "-");
 };
 
-export const resolveCategorySlug = (catValue) => {
+export const resolveCategorySlug = (catValue, customList = null) => {
   if (!catValue) return "";
-  const cachedList = getCachedCategories();
+  const cachedList = Array.isArray(customList) && customList.length > 0 ? customList : getCachedCategories();
   let searchKey = "";
   if (typeof catValue === "object" && catValue !== null) {
     searchKey = String(catValue.slug || catValue.name || catValue.title || catValue.id || catValue._id || "").trim();
@@ -214,6 +230,9 @@ export const resolveCategorySlug = (catValue) => {
     );
   });
   if (found && found.slug) return found.slug;
+  if (/^[0-9a-fA-F]{16,24}$/.test(searchKey)) {
+    return "all";
+  }
   return searchKey.toLowerCase().replace(/\s+/g, "-");
 };
 
@@ -251,9 +270,15 @@ const normalizeBrand = (product = {}) => {
     if (resolved) return resolved;
   }
 
-  // Fallback: extract from product name if name is in "Brand - Product" or "Brand Product" format
+  // Fallback: extract from product name if name is in "Product by Brand" or "Brand - Product" format
   if (product.name || product.title) {
     const fullName = String(product.name || product.title).trim();
+    if (/\s+by\s+/i.test(fullName)) {
+      const parts = fullName.split(/\s+by\s+/i);
+      if (parts.length > 1 && parts[parts.length - 1].trim()) {
+        return parts[parts.length - 1].trim();
+      }
+    }
     if (fullName.includes(" - ")) {
       return fullName.split(" - ")[0].trim();
     }

@@ -627,6 +627,17 @@ export const useAppStore = create((set, get) => {
           localStorage.setItem('luxury_last_order_number', String(resolvedOrderId));
         }
 
+        // Save cart snapshot + total for Facebook Pixel Purchase event (ThankYou page reads these)
+        try {
+          const cartSnapshot = cart.map((item) => ({
+            id: item.product?.id || item.product?._id || '',
+            name: item.product?.name || '',
+            quantity: item.quantity,
+          }));
+          localStorage.setItem('luxury_last_order_cart', JSON.stringify(cartSnapshot));
+          localStorage.setItem('luxury_last_order_total', String(pricing.cartTotal || 0));
+        } catch (_) { /* ignore */ }
+
         get().saveCart([]);
         set({
           isProcessingOrder: false,
@@ -651,6 +662,8 @@ export const useAppStore = create((set, get) => {
     handleResetCheckout: () => {
       get().saveCart([]);
       localStorage.removeItem('luxury_last_order_number');
+      localStorage.removeItem('luxury_last_order_cart');
+      localStorage.removeItem('luxury_last_order_total');
       set({
         isCheckoutMode: false,
         orderCompleted: false,

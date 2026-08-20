@@ -3,9 +3,16 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Accept VITE_API_URL as build argument
+# Accept build arguments
 ARG VITE_API_URL=https://server.decantrebd.com
+ARG VITE_IMAGE_BASE_URL=https://server.decantrebd.com
+ARG VITE_FB_PIXEL_ID=1279816157389873
+ARG VITE_FB_TEST_EVENT_CODE=
+
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_IMAGE_BASE_URL=$VITE_IMAGE_BASE_URL
+ENV VITE_FB_PIXEL_ID=$VITE_FB_PIXEL_ID
+ENV VITE_FB_TEST_EVENT_CODE=$VITE_FB_TEST_EVENT_CODE
 
 # Copy package files
 COPY package.json package-lock.json ./
@@ -16,8 +23,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build with VITE_API_URL
-RUN VITE_API_URL=${VITE_API_URL} npm run build
+# Build
+RUN npm run build
 
 # Production stage
 FROM node:22-alpine

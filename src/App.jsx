@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider } from './core/context/AppContext';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
@@ -24,11 +24,22 @@ import { ReturnPolicy } from './pages/ReturnPolicy';
 import { ProductDetail } from './pages/ProductDetail';
 import { FAQ } from './pages/FAQ';
 import { MyAccount } from './pages/MyAccount';
+import { pixelPageView } from './utils/fbPixel';
+
+/** Fires a Facebook Pixel PageView on every route change */
+function RouteChangeTracker() {
+  const location = useLocation();
+  React.useEffect(() => {
+    pixelPageView();
+  }, [location.pathname]);
+  return null;
+}
 
 export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
+        <RouteChangeTracker />
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />

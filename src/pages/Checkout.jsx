@@ -20,6 +20,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { formatBDT as fmtBDT } from '../core/utils/formatCurrency';
 import { useApp } from '../core/context/AppContext';
 import { DISTRICTS as districtData } from '../core/lib/districts.js';
+import { pixelInitiateCheckout } from '../utils/fbPixel';
 
 const DISTRICT_THANAS = {
   Dhaka: [
@@ -136,6 +137,13 @@ export const Checkout = () => {
 
   const isLight = currentTheme === 'light';
   const navigate = useNavigate();
+
+  // Facebook Pixel – InitiateCheckout (fires once when checkout page loads with items)
+  React.useEffect(() => {
+    if (cart && cart.length > 0) {
+      pixelInitiateCheckout(cart, cartTotal);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
     if (!user) return;

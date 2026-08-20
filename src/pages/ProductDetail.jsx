@@ -6,6 +6,7 @@ import { mapRemoteProduct, resolveBrandName, resolveCategoryName, resolveBrandSl
 import { fetchProductDetails, fetchProducts } from '../core/lib/api';
 import { MoreProducts } from '../components/sections/MoreProducts';
 import { RecentlyViewedProducts } from '../components/sections/RecentlyViewedProducts';
+import { pixelViewContent, pixelAddToCart } from '../utils/fbPixel';
 
 const addToRecentlyViewed = (id) => {
   if (!id) return;
@@ -53,6 +54,8 @@ export const ProductDetail = () => {
   
   // Use specific selectors to avoid subscribing to the entire store
   const products = useAppStore((state) => state.products);
+  const brands = useAppStore((state) => state.brands);
+  const categories = useAppStore((state) => state.categories);
   const wishlist = useAppStore((state) => state.wishlist);
   const toggleWishlist = useAppStore((state) => state.toggleWishlist);
   const handleAddToCart = useAppStore((state) => state.handleAddToCart);
@@ -145,6 +148,17 @@ export const ProductDetail = () => {
 
     loadProductDetail();
   }, [did]);
+
+  // Facebook Pixel – ViewContent (fires when product loads)
+  useEffect(() => {
+    if (product) {
+      pixelViewContent({
+        id: product.id || product._id,
+        name: product.name,
+        price: product.price || product.basePrice,
+      });
+    }
+  }, [product]);
 
   // Dynamic variations directly from API
   const decantSwatches = React.useMemo(() => {
@@ -305,10 +319,10 @@ export const ProductDetail = () => {
               </div>
               <span className="text-xs uppercase tracking-widest text-zinc-400 font-sans font-medium block">
                 Brand: <Link
-                  to={`/shop?${new URLSearchParams({ brand: resolveBrandSlug(product.brand) || 'All' }).toString()}`}
+                  to={`/shop?${new URLSearchParams({ brand: resolveBrandSlug(product.brand, brands) || 'All' }).toString()}`}
                   className="text-gold font-semibold hover:underline"
                 >
-                  {resolveBrandName(product.brand)}
+                  {resolveBrandName(product.brand, brands) || (product.name && /\s+by\s+/i.test(product.name) ? product.name.split(/\s+by\s+/i).pop().trim() : '') || 'Perfume'}
                 </Link>
               </span>
 
@@ -431,6 +445,7 @@ export const ProductDetail = () => {
                 onClick={() => {
                   if (isOutOfStock) return;
                   handleAddToCart(product, activeSwatch.size, 'Eau de Parfum', quantity, unitPrice);
+                  pixelAddToCart(product, quantity, unitPrice);
                 }}
                 className={`w-full py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                   isOutOfStock

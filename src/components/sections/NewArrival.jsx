@@ -1,74 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../core/context/AppContext';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ProductCard } from '../ProductCard';
 import { ProductGridSkeleton } from '../Skeleton';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '../ui/carousel';
 
 export const NewArrival = () => {
     const { fetchProducts, filteredProducts, isProductsLoading, productsError, cardSelections, setCardSelections, wishlist, toggleWishlist, handleOpenProductDetail, handleAddToCart, calculateItemPrice, currentTheme } = useApp();
 
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [visibleCount, setVisibleCount] = useState(4);
-    const [isPaused, setIsPaused] = useState(false);
+    const [api, setApi] = useState(null);
+    const [current, setCurrent] = useState(0);
+    const [count, setCount] = useState(0);
 
     useEffect(() => {
-        // Fetch newest products (sorted by createdAt descending)
         if (typeof fetchProducts === 'function') {
             fetchProducts({ skip: 0, limit: 15, sortBy: 'createdAt', order: 'desc' });
         }
     }, [fetchProducts]);
 
     useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth < 768) {
-                setVisibleCount(2);
-            } else if(window.innerWidth < 1024) {
-                setVisibleCount(3);
-            }
-            else {
-                setVisibleCount(4);
-            }
+        if (!api) return;
+
+        setCount(api.scrollSnapList().length);
+        setCurrent(api.selectedScrollSnap());
+
+        const onSelect = () => {
+            setCurrent(api.selectedScrollSnap());
         };
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
-    // Show exactly 9 products maximum
+        api.on('select', onSelect);
+        api.on('reInit', onSelect);
+
+        return () => {
+            api.off('select', onSelect);
+            api.off('reInit', onSelect);
+        };
+    }, [api]);
+
     const items = filteredProducts.slice(0, 15);
-    const maxIndex = Math.max(0, items.length - visibleCount);
-    const safeCurrentIndex = Math.min(currentIndex, maxIndex);
-
-    const nextSlide = () => {
-        setCurrentIndex((prev) => (prev + 1) % (maxIndex + 1));
-    };
-
-    const prevSlide = () => {
-        setCurrentIndex((prev) => (prev - 1 + maxIndex + 1) % (maxIndex + 1));
-    };
-
-    // Auto-play the slider very slowly (6000ms)
-    useEffect(() => {
-        if (isPaused || maxIndex <= 0) return;
-        const timer = setInterval(() => {
-            nextSlide();
-        }, 6000);
-        return () => clearInterval(timer);
-    }, [isPaused, maxIndex]);
-
-    useEffect(() => {
-        if (currentIndex > maxIndex) {
-            setCurrentIndex(maxIndex);
-        }
-    }, [maxIndex, currentIndex]);
-
     const isLight = currentTheme === 'light';
 
     return (
         <section id="catalog-section" className={`py-10 sm:py-14 ${isLight ? 'bg-white border-y border-zinc-200 text-black' : 'bg-luxury-dark/40 border-y border-gold/20'} scroll-mt-24 select-none`}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header - Reduced title size and spacing */}
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                {/* Header */}
                 <div className="flex flex-col gap-2 mb-6">
                     <div className="flex items-baseline justify-between gap-4 w-full border-b border-gold/10 pb-3">
                         <div className="space-y-0.5 text-left">
@@ -97,7 +79,7 @@ export const NewArrival = () => {
 
                 {isProductsLoading ? (
                     <div className="w-full">
-                        <ProductGridSkeleton count={visibleCount} />
+                        <ProductGridSkeleton count={4} />
                     </div>
                 ) : productsError ? (
                     <div className="p-8 border border-amber-500/20 bg-amber-500/5 rounded-sm text-center my-4 space-y-3">
@@ -118,28 +100,23 @@ export const NewArrival = () => {
                         </p>
                     </div>
                 ) : (
-                    <div 
-                        className="relative"
-                        onMouseEnter={() => setIsPaused(true)}
-                        onMouseLeave={() => setIsPaused(false)}
-                    >
-                        {/* Carousel Outer wrapper */}
-                        <div className="overflow-hidden w-full px-1">
-                            {/* Sliding Track */}
-                            <div 
-                                className="flex transition-transform duration-1000 ease-out"
-                                style={{ 
-                                    transform: `translateX(-${safeCurrentIndex * (100 / visibleCount)}%)`,
-                                }}
-                            >
+                    <div className="relative px-0 sm:px-4">
+                        <Carousel
+                            setApi={setApi}
+                            opts={{
+                                align: 'start',
+                                loop: true,
+                            }}
+                            className="w-full"
+                        >
+                            <CarouselContent className="-ml-2 md:-ml-4">
                                 {items.map((prod) => {
                                     const defaultSize = (prod.variations && prod.variations[0] && prod.variations[0].size) || '100ml';
                                     const currentSel = cardSelections[prod.id] || { size: defaultSize, concentration: 'Eau de Parfum' };
                                     return (
-                                        <div 
-                                            key={prod.id} 
-                                            className="flex-shrink-0"
-                                            style={{ width: `${100 / visibleCount}%` }}
+                                        <CarouselItem
+                                            key={prod.id}
+                                            className="carousel-item-2col pl-2 md:pl-4"
                                         >
                                             <ProductCard
                                                 product={prod}
@@ -153,21 +130,24 @@ export const NewArrival = () => {
                                                 calculateItemPrice={calculateItemPrice}
                                                 isLargeCard={false}
                                             />
-                                        </div>
+                                        </CarouselItem>
                                     );
                                 })}
-                            </div>
-                        </div>
+                            </CarouselContent>
+
+                            <CarouselPrevious className="flex" />
+                            <CarouselNext className="flex" />
+                        </Carousel>
 
                         {/* Pagination Dots */}
-                        {maxIndex > 0 && (
+                        {count > 1 && (
                             <div className="mt-6 flex justify-center items-center gap-2">
-                                {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
+                                {Array.from({ length: count }).map((_, idx) => (
                                     <button
                                         key={idx}
-                                        onClick={() => setCurrentIndex(idx)}
+                                        onClick={() => api?.scrollTo(idx)}
                                         className={`w-2 h-2 rounded-full transition-all duration-500 cursor-pointer ${
-                                            idx === safeCurrentIndex 
+                                            idx === current 
                                                 ? 'bg-gold w-6' 
                                                 : 'bg-zinc-700 hover:bg-zinc-500'
                                         }`}
@@ -175,24 +155,6 @@ export const NewArrival = () => {
                                     />
                                 ))}
                             </div>
-                        )}
-
-                        {/* Navigation Arrows */}
-                        {maxIndex > 0 && (
-                            <>
-                                <button 
-                                    onClick={prevSlide}
-                                    className="absolute -left-2 sm:-left-5 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-2.5 bg-black/85 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer shadow-lg shadow-black/50"
-                                >
-                                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                                </button>
-                                <button 
-                                    onClick={nextSlide}
-                                    className="absolute -right-2 sm:-right-5 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-2.5 bg-black/85 hover:bg-gold text-white hover:text-black rounded-full border border-gold/40 hover:border-gold transition-all duration-300 cursor-pointer shadow-lg shadow-black/50"
-                                >
-                                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                                </button>
-                            </>
                         )}
                     </div>
                 )}

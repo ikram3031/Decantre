@@ -23,7 +23,7 @@ export const ProductCard = ({
   showProductName = false
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const { currentTheme } = useApp();
+  const { currentTheme, brands, categories } = useApp();
   const isLight = currentTheme === 'light';
 
   const rawVariations = Array.isArray(product?.variations) ? product.variations : [];
@@ -111,8 +111,20 @@ export const ProductCard = ({
         <div className="space-y-1">
           {/* Category / Brand Row */}
           <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.15em] font-sans font-semibold text-gold">
-            <span className="truncate max-w-full sm:max-w-[60%]">{resolveBrandName(product.brand) || resolveCategoryName(product.category)}</span>
-            <span className="text-zinc-400 font-normal truncate max-w-[38%] text-right hidden sm:block">{resolveCategoryName(product.category)}</span>
+            <span className="truncate max-w-full sm:max-w-[60%]">
+              {(() => {
+                const resolvedBrand = resolveBrandName(product.brand, brands);
+                if (resolvedBrand) return resolvedBrand;
+                if (product.name && /\s+by\s+/i.test(product.name)) {
+                  const parts = product.name.split(/\s+by\s+/i);
+                  if (parts.length > 1 && parts[parts.length - 1].trim()) {
+                    return parts[parts.length - 1].trim();
+                  }
+                }
+                return resolveCategoryName(product.category, categories);
+              })()}
+            </span>
+            <span className="text-zinc-400 font-normal truncate max-w-[38%] text-right hidden sm:block">{resolveCategoryName(product.category, categories)}</span>
           </div>
 
           {/* Product Name - 3 lines reserved */}
