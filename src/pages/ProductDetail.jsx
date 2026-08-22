@@ -698,7 +698,7 @@ export const ProductDetail = () => {
 
               {/* Dynamic Review Submission Form */}
               {isReviewFormOpen && (
-                <div className={`p-4 sm:p-6 rounded-sm border animate-fade-in ${
+                <div className={`p-4 sm:p-6 rounded-sm border overflow-hidden animate-fade-in ${
                   isLight ? 'bg-white border-gold/30' : 'bg-black/70 border-gold/30 shadow-2xl'
                 }`}>
                   {user ? (
@@ -717,7 +717,7 @@ export const ProductDetail = () => {
                         <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-zinc-400 block">
                           Rating *
                         </label>
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                           <div className="flex items-center gap-1 shrink-0">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <button
@@ -726,7 +726,7 @@ export const ProductDetail = () => {
                                 onClick={() => setReviewRating(star)}
                                 onMouseEnter={() => setReviewHoverRating(star)}
                                 onMouseLeave={() => setReviewHoverRating(0)}
-                                className="p-0.5 sm:p-1 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
+                                className="p-1 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
                               >
                                 <Star
                                   className={`w-5 h-5 sm:w-6 sm:h-6 transition-colors ${
@@ -738,7 +738,7 @@ export const ProductDetail = () => {
                               </button>
                             ))}
                           </div>
-                          <span className="text-xs text-gold font-sans font-semibold whitespace-nowrap">
+                          <span className="text-xs text-gold font-sans font-semibold">
                             {(reviewHoverRating || reviewRating) === 5 && '5/5 — Excellent'}
                             {(reviewHoverRating || reviewRating) === 4 && '4/5 — Very Good'}
                             {(reviewHoverRating || reviewRating) === 3 && '3/5 — Good'}
@@ -759,23 +759,23 @@ export const ProductDetail = () => {
                           value={reviewText}
                           onChange={(e) => setReviewText(e.target.value)}
                           placeholder="Write your review here..."
-                          className="w-full bg-zinc-900/90 border border-white/10 focus:border-gold/70 text-xs text-zinc-100 p-3.5 sm:p-4 rounded-sm outline-none font-sans leading-relaxed resize-y transition-colors"
+                          className="w-full bg-zinc-900/90 border border-white/10 focus:border-gold/70 text-xs text-zinc-100 p-3.5 sm:p-4 rounded-sm outline-none font-sans leading-relaxed resize-y transition-colors box-border"
                         />
                       </div>
 
                       {/* Submit Actions */}
-                      <div className="flex items-center justify-end gap-3 pt-2">
+                      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2">
                         <button
                           type="button"
                           onClick={() => setIsReviewFormOpen(false)}
-                          className="px-4 py-2.5 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white text-xs font-sans uppercase tracking-wider rounded-sm transition-all cursor-pointer shrink-0"
+                          className="w-full sm:w-auto px-5 py-2.5 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white text-xs font-sans uppercase tracking-wider rounded-sm transition-all cursor-pointer text-center"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={isSubmittingReview || !reviewText.trim()}
-                          className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-sans font-bold uppercase tracking-wider rounded-sm whitespace-nowrap transition-all shadow-md shrink-0 ${
+                          className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-sans font-bold uppercase tracking-wider rounded-sm whitespace-nowrap transition-all shadow-md ${
                             isSubmittingReview || !reviewText.trim()
                               ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                               : 'bg-gold hover:bg-gold/90 text-black shadow-gold/10 cursor-pointer'
