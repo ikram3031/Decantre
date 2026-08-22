@@ -302,12 +302,12 @@ export const mapRemoteProduct = (product = {}) => {
   // Handle Gallery Images
   const galleryImages = Array.isArray(product.images)
     ? product.images
-        .map((img) =>
-          typeof img === "object"
-            ? normalizeProductImage(img.url)
-            : normalizeProductImage(img),
-        )
-        .filter(Boolean)
+      .map((img) =>
+        typeof img === "object"
+          ? normalizeProductImage(img.url)
+          : normalizeProductImage(img),
+      )
+      .filter(Boolean)
     : [];
 
   // Determine Product Variations (Mongoose 'variants' or WP 'variations')
@@ -403,6 +403,7 @@ export const mapRemoteProduct = (product = {}) => {
   return {
     id: product.id || product._id || product.slug || String(Math.random()),
     _id: product._id || product.id,
+    did: product.did || product.raw?.did || product._id,
     name: product.name || product.title || "",
     slug: product.slug || "",
     type: product.type || "simple",

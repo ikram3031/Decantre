@@ -4,7 +4,7 @@ import { mapRemoteProduct } from "../store/productHelpers";
 export const getApiBaseUrl = () => {
 	const envUrl =
 		import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || "";
-	return envUrl ? envUrl.replace(/\/$/, "") : "";
+	return envUrl ? envUrl.replace(/\/$/, "") : "https://server.decantrebd.com";
 };
 
 // Centralized helper to get the image base URL from env
@@ -747,6 +747,117 @@ export async function fetchCouponByCode(code) {
 	const json = await res.json().catch(() => null);
 	if (!res.ok) {
 		throw new Error(json?.message || json?.error || "Invalid coupon code.");
+	}
+	return json?.data || json;
+}
+
+/**
+ * REVIEWS API COLLECTION (/api/v1/reviews)
+ */
+
+/**
+ * Fetch approved reviews and aggregated statistics for a specific product
+ * @param {string} productDid - The product's DID or ID
+ * @param {object} [opts] - { skip, limit }
+ * @returns {Promise<{stats: {totalReviews: number, averageRating: number, ratingBreakdown: object}, reviews: Array, pagination: object}>}
+ */
+export async function fetchProductReviews(productDid, opts = {}) {
+	if (!productDid) return { stats: { totalReviews: 0, averageRating: 0, ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } }, reviews: [], pagination: { skip: 0, limit: 10, total: 0 } };
+	const apiBaseUrl = getApiBaseUrl();
+	const skip = opts.skip ?? 0;
+	const limit = opts.limit ?? 10;
+	try {
+		const res = await fetchWithRetry(
+			`${apiBaseUrl}/api/v1/reviews/product/${encodeURIComponent(productDid)}?skip=${skip}&limit=${limit}`,
+			{ method: "GET" },
+			8000,
+			3,
+		);
+		if (!res.ok) {
+			throw new Error(`Failed to fetch reviews: ${res.status}`);
+		}
+		const json = await res.json();
+		return json.data || { stats: { totalReviews: 0, averageRating: 0, ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } }, reviews: [], pagination: { skip, limit, total: 0 } };
+	} catch (err) {
+		console.error("fetchProductReviews Error:", err);
+		return { stats: { totalReviews: 0, averageRating: 0, ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } }, reviews: [], pagination: { skip: 0, limit: 10, total: 0 } };
+	}
+}
+
+/**
+ * Create a new review for a product (Member authenticated)
+ * @param {{ productDid: string, rating: number, description: string }} payload
+ * @returns {Promise<object>}
+ */
+export async function createProductReview(payload) {
+	const apiBaseUrl = getApiBaseUrl();
+	const res = await authFetch(`${apiBaseUrl}/api/v1/reviews`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(payload),
+	});
+	const json = await res.json().catch(() => null);
+	if (!res.ok) {
+		const errorMsg = json?.message || json?.error || "Failed to submit review.";
+		throw new Error(errorMsg);
+	}
+	return json;
+}
+
+/**
+ * Update an existing review (Owner or Admin)
+ * @param {string} reviewId - The review ID or DID
+ * @param {{ rating?: number, description?: string }} payload
+ * @returns {Promise<object>}
+ */
+export async function updateProductReview(reviewId, payload) {
+	const apiBaseUrl = getApiBaseUrl();
+	const res = await authFetch(`${apiBaseUrl}/api/v1/reviews/${encodeURIComponent(reviewId)}`, {
+		method: "PUT",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(payload),
+	});
+	const json = await res.json().catch(() => null);
+	if (!res.ok) {
+		const errorMsg = json?.message || json?.error || "Failed to update review.";
+		throw new Error(errorMsg);
+	}
+	return json;
+}
+
+/**
+ * Delete a review (Owner or Admin)
+ * @param {string} reviewId - The review ID or DID
+ * @returns {Promise<object>}
+ */
+export async function deleteProductReview(reviewId) {
+	const apiBaseUrl = getApiBaseUrl();
+	const res = await authFetch(`${apiBaseUrl}/api/v1/reviews/${encodeURIComponent(reviewId)}`, {
+		method: "DELETE",
+		headers: { "Content-Type": "application/json" },
+	});
+	const json = await res.json().catch(() => null);
+	if (!res.ok) {
+		const errorMsg = json?.message || json?.error || "Failed to delete review.";
+		throw new Error(errorMsg);
+	}
+	return json;
+}
+
+/**
+ * Fetch a single review by ID
+ * @param {string} reviewId - The review ID or DID
+ * @returns {Promise<object>}
+ */
+export async function fetchReviewById(reviewId) {
+	const apiBaseUrl = getApiBaseUrl();
+	const res = await fetchWithRetry(`${apiBaseUrl}/api/v1/reviews/${encodeURIComponent(reviewId)}`, {
+		method: "GET",
+		headers: { "Content-Type": "application/json" },
+	});
+	const json = await res.json().catch(() => null);
+	if (!res.ok) {
+		throw new Error(json?.message || json?.error || "Review not found.");
 	}
 	return json?.data || json;
 }
