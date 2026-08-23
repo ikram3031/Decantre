@@ -61,7 +61,7 @@ export const RecentlyViewedProducts = ({ currentProductId, limit = 8 }) => {
             <ProductCard
               key={p.id}
               product={p}
-              currentSel={cardSelections[p.id] || { size: (p.variations && p.variations[0] && p.variations[0].size) || '10ml', concentration: 'Eau de Parfum' }}
+              currentSel={cardSelections[p.id] || { size: (p.variations && p.variations[0] && p.variations[0].size) || '10ml'  }}
               onSizeChange={(size) => setCardSelections(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || {}), size } }))}
               onConcentrationChange={(c) => setCardSelections(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || {}), concentration: c } }))}
               wishlist={wishlist}

@@ -165,17 +165,16 @@ export const useAppStore = create((set, get) => {
     authModalMode: 'login', // 'login' | 'register' | 'profile'
 
     cardSelections: {
-      'oud-imperial': { size: '100ml', concentration: 'Eau de Parfum' },
-      'nectar-de-saphir': { size: '100ml', concentration: 'Eau de Parfum' },
-      'saffron-mystique': { size: '100ml', concentration: 'Eau de Parfum' },
-      'bergamote-sauvage': { size: '100ml', concentration: 'Eau de Parfum' },
-      'ambre-nuit': { size: '100ml', concentration: 'Eau de Parfum' },
-      'rose-absolue': { size: '100ml', concentration: 'Eau de Parfum' },
+      'oud-imperial': { size: '100ml'  },
+      'nectar-de-saphir': { size: '100ml'  },
+      'saffron-mystique': { size: '100ml'  },
+      'bergamote-sauvage': { size: '100ml'  },
+      'ambre-nuit': { size: '100ml'  },
+      'rose-absolue': { size: '100ml'  },
     },
 
     selectedProduct: null,
-    modalSize: '100ml',
-    modalConcentration: 'Eau de Parfum',
+    modalSize: '',
 
     isQuizOpen: false,
     quizStep: 1,
@@ -702,8 +701,7 @@ export const useAppStore = create((set, get) => {
     handleOpenProductDetail: (product) => {
       set({
         selectedProduct: product,
-        modalSize: '100ml',
-        modalConcentration: 'Eau de Parfum'
+        modalSize: ''
       });
     },
 
