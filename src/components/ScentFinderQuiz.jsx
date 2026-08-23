@@ -164,7 +164,7 @@ export const ScentFinderQuiz = ({
             <div className="pt-4 flex gap-3 max-w-sm mx-auto font-sans">
               <button 
                 onClick={() => {
-                  handleAddToCart(quizRecommendation, '100ml', 'Eau de Parfum', 1);
+                  handleAddToCart(quizRecommendation, '100ml', 1);
                   setIsQuizOpen(false);
                 }}
                 className="flex-1 bg-transparent border border-gold hover:bg-gold hover:text-black text-gold font-bold uppercase tracking-widest text-[9px] py-3 rounded-none shadow-xl transition-all"

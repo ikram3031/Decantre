@@ -243,7 +243,7 @@ export const ProductDetail = () => {
 
   const handleBuyNow = () => {
     if (!product) return;
-    handleAddToCart(product, activeSwatch.size, 'Eau de Parfum', quantity, unitPrice);
+    handleAddToCart(product, activeSwatch.size, quantity, unitPrice);
     navigate('/checkout');
   };
 
@@ -525,7 +525,7 @@ export const ProductDetail = () => {
                 disabled={isOutOfStock}
                 onClick={() => {
                   if (isOutOfStock) return;
-                  handleAddToCart(product, activeSwatch.size, 'Eau de Parfum', quantity, unitPrice);
+                  handleAddToCart(product, activeSwatch.size, quantity, unitPrice);
                   pixelAddToCart(product, quantity, unitPrice);
                 }}
                 className={`w-full py-4 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${

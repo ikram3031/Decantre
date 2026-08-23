@@ -1388,7 +1388,7 @@ export const Checkout = () => {
                       <div className="space-y-1">
                         <h4 className="font-serif font-light text-zinc-200">{item.product.name}</h4>
                         <span className="text-[10px] text-zinc-500 font-mono block">
-                          {item.size} • {item.concentration} • Qty {item.quantity}
+                          {item.size} • Qty {item.quantity}
                         </span>
                       </div>
                       <span className="font-mono text-gold font-semibold">{fmtBDT(item.unitPrice * item.quantity)}</span>

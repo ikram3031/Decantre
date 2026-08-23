@@ -79,8 +79,6 @@ export const Cart = () => {
                       <h4 className="text-sm font-serif font-light text-luxury-white">{item.product.name}</h4>
                       <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider font-mono">
                         <span className="text-zinc-400">{item.size}</span>
-                        <span className="text-zinc-600">•</span>
-                        <span className="text-gold/80">{item.concentration}</span>
                       </div>
                       
                       {/* Price per unit */}

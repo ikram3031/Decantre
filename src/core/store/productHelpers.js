@@ -447,7 +447,7 @@ export const mapRemoteProduct = (product = {}) => {
 export const getDefaultSelection = (product = {}) => {
   const variations = Array.isArray(product.variations) ? product.variations : [];
   if (variations.length === 0) {
-    return { size: "Full Bottle", slug: "full-bottle", label: "Full Bottle", concentration: "Eau de Parfum" };
+    return { size: "Full Bottle", slug: "full-bottle", label: "Full Bottle" };
   }
   // Find variation with the lowest price
   const lowest = variations.reduce((min, curr) => {
@@ -456,8 +456,7 @@ export const getDefaultSelection = (product = {}) => {
   return {
     size: lowest?.size || "Standard",
     slug: lowest?.slug || String(lowest?.size || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    label: lowest?.label || String(lowest?.size || "").replace(/-/g, " "),
-    concentration: "Eau de Parfum"
+    label: lowest?.label || String(lowest?.size || "").replace(/-/g, " ")
   };
 };
 

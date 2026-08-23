@@ -106,12 +106,6 @@ export const CartDrawer = ({
                         
                         <div className="flex items-center gap-1 text-[10px] text-gold font-sans mt-0.5">
                           <span>{item.size}</span>
-                          {item.concentration && (
-                            <>
-                              <span className="text-zinc-600">•</span>
-                              <span className="truncate">{item.concentration}</span>
-                            </>
-                          )}
                         </div>
 
                         <div className="text-xs font-serif text-gold mt-0.5">

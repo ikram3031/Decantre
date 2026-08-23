@@ -191,7 +191,7 @@ export const ProductCard = ({
             onClick={() => {
               if (isBtnDisabled) return;
               if (typeof handleAddToCart === 'function') {
-                handleAddToCart(product, activeSize, currentSel?.concentration || 'Eau de Parfum', 1, currentPrice);
+                handleAddToCart(product, activeSize, 1, currentPrice);
               } else {
                 console.warn('handleAddToCart is not available for product:', product?.id);
               }

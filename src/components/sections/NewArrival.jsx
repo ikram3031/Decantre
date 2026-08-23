@@ -112,7 +112,7 @@ export const NewArrival = () => {
                             <CarouselContent className="-ml-2 md:-ml-4">
                                 {items.map((prod) => {
                                     const defaultSize = (prod.variations && prod.variations[0] && prod.variations[0].size) || '100ml';
-                                    const currentSel = cardSelections[prod.id] || { size: defaultSize, concentration: 'Eau de Parfum' };
+                                    const currentSel = cardSelections[prod.id] || { size: defaultSize };
                                     return (
                                         <CarouselItem
                                             key={prod.id}

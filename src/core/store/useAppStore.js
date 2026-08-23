@@ -344,15 +344,11 @@ export const useAppStore = create((set, get) => {
       }, 2200);
     },
 
-    calculateItemPrice: (basePrice, size, concentration) => {
-      let finalPrice = Number(basePrice || 0);
-      if (concentration === 'Extrait de Parfum') {
-        finalPrice += 60;
-      }
-      return Math.round(finalPrice);
+    calculateItemPrice: (basePrice) => {
+      return Math.round(Number(basePrice || 0));
     },
 
-    handleAddToCart: (product, size, concentration, qty = 1, explicitUnitPrice = null) => {
+    handleAddToCart: (product, size, qty = 1, explicitUnitPrice = null) => {
       if (!product) return;
       const variations = Array.isArray(product.variations) ? product.variations : [];
       const hasVariations = variations.length > 0;
@@ -368,17 +364,16 @@ export const useAppStore = create((set, get) => {
       }
 
       const safeSize = foundVar ? foundVar.size : (size || 'Full Bottle');
-      const safeConcentration = concentration || 'Eau de Parfum';
 
       let unitPrice = explicitUnitPrice;
       if (unitPrice == null || isNaN(unitPrice) || Number(unitPrice) <= 0) {
         const basePrice = foundVar ? (foundVar.price ?? foundVar.offerPrice) : (product.offerPrice ?? product.price ?? product.basePrice ?? 0);
-        unitPrice = get().calculateItemPrice(basePrice, safeSize, safeConcentration);
+        unitPrice = get().calculateItemPrice(basePrice);
       }
 
       const cart = get().cart;
       const existingIndex = cart.findIndex(
-        (item) => item.product?.id === product.id && String(item.size || '').trim().toLowerCase() === String(safeSize || '').trim().toLowerCase() && item.concentration === safeConcentration
+        (item) => item.product?.id === product.id && String(item.size || '').trim().toLowerCase() === String(safeSize || '').trim().toLowerCase()
       );
 
       let newCart = [...cart];
@@ -386,10 +381,9 @@ export const useAppStore = create((set, get) => {
         newCart[existingIndex].quantity += qty;
       } else {
         newCart.push({
-          id: `${product.id}-${String(safeSize).replace(/\s+/g, '')}-${safeConcentration.replace(/\s+/g, '')}`,
+          id: `${product.id}-${String(safeSize).replace(/\s+/g, '')}`,
           product,
           size: safeSize,
-          concentration: safeConcentration,
           quantity: qty,
           unitPrice: Number(unitPrice)
         });
@@ -614,8 +608,7 @@ export const useAppStore = create((set, get) => {
             name: item.product.name,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            size: item.size,
-            concentration: item.concentration
+            size: item.size
           })),
           paymentDetails: ['bkash', 'nagad', 'bank_transfer'].includes(paymentMethod) ? paymentDetails : null
         };
