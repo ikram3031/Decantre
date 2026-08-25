@@ -7,9 +7,11 @@ export const getApiBaseUrl = () => {
   return "https://server.decantrebd.com";
 };
 
+// Normalizes raw product image URLs with dynamic Dev and Live environment host resolution
 export const normalizeProductImage = (rawImage = "") => {
   let imageUrl = rawImage || "";
   if (!imageUrl || imageUrl === "undefined") return "";
+  if (imageUrl.startsWith("blob:") || imageUrl.startsWith("data:")) return imageUrl;
   if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
 
   imageUrl = imageUrl.replace(
@@ -18,11 +20,23 @@ export const normalizeProductImage = (rawImage = "") => {
   );
   imageUrl = imageUrl.replace(/\/content\//gi, "/uploads/");
 
+  const baseUrl = getApiBaseUrl();
+
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    try {
+      const urlObj = new URL(imageUrl);
+      const isRawLocalhost = urlObj.hostname === "localhost" || urlObj.hostname === "127.0.0.1";
+      const isBaseLocalhost = baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1");
+
+      if (isBaseLocalhost && !isRawLocalhost && urlObj.pathname.startsWith("/uploads")) {
+        return `${baseUrl}${urlObj.pathname}${urlObj.search}`;
+      } else if (!isBaseLocalhost && isRawLocalhost && urlObj.pathname.startsWith("/uploads")) {
+        return `${baseUrl}${urlObj.pathname}${urlObj.search}`;
+      }
+    } catch (_) {}
     return imageUrl;
   }
 
-  const baseUrl = getApiBaseUrl();
   const cleanPath = imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`;
   return `${baseUrl}${cleanPath}`;
 };
