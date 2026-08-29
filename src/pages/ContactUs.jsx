@@ -1,32 +1,76 @@
-import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Clock, Send, Sparkles, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Phone, MapPin, Clock, Send, Sparkles, HelpCircle, ShieldCheck } from 'lucide-react';
 import { useApp } from '../core/context/AppContext';
+import { submitContactMessage } from '../core/lib/api';
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ler054tAAAAADRfcpBPB1SwxFLPMwb9O1HYNlet';
 
 export const ContactUs = () => {
   const { addToast } = useApp();
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
+  const [formPhone, setFormPhone] = useState('');
   const [formSubject, setFormSubject] = useState('General Inquiry');
   const [formMessage, setFormMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInquirySubmit = (e) => {
+  // Load Google reCAPTCHA v3 script dynamically
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY) return;
+    const scriptId = 'google-recaptcha-script';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  const handleInquirySubmit = async (e) => {
     e.preventDefault();
-    if (!formName || !formEmail || !formMessage) {
+    if (!formName.trim() || !formEmail.trim() || !formMessage.trim()) {
       addToast('Please satisfy all inquiry coordinates.', 'error');
       return;
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    try {
+      let recaptchaToken = '';
+      if (window.grecaptcha && RECAPTCHA_SITE_KEY) {
+        try {
+          await new Promise((resolve) => window.grecaptcha.ready(resolve));
+          recaptchaToken = await window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submit_contact' });
+        } catch (captchaErr) {
+          console.warn('reCAPTCHA execution error:', captchaErr);
+        }
+      }
+
+      await submitContactMessage({
+        name: formName.trim(),
+        email: formEmail.trim(),
+        phone: formPhone.trim(),
+        subject: formSubject.trim(),
+        message: formMessage.trim(),
+        recaptchaToken,
+      });
+
       addToast('Inquiry received. A sovereign liaison will reply in 12 hours.', 'success');
-      
+
       // Reset form
       setFormName('');
       setFormEmail('');
+      setFormPhone('');
+      setFormSubject('General Inquiry');
       setFormMessage('');
-    }, 1500);
+    } catch (err) {
+      console.error('Contact submission failed:', err);
+      addToast(err?.message || 'Failed to submit your inquiry. Please try again.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const salons = [
@@ -137,18 +181,30 @@ export const ContactUs = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-2 font-semibold">Subject of Correspondence</label>
-                <select
-                  value={formSubject}
-                  onChange={(e) => setFormSubject(e.target.value)}
-                  className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
-                >
-                  <option value="General Inquiry">General Inquiry</option>
-                  <option value="Private Consultation">Private Consultation</option>
-                  <option value="Order Assistance">Order Assistance</option>
-                  <option value="Product Information">Product Information</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-2 font-semibold">Subject of Correspondence</label>
+                  <select
+                    value={formSubject}
+                    onChange={(e) => setFormSubject(e.target.value)}
+                    className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                  >
+                    <option value="General Inquiry">General Inquiry</option>
+                    <option value="Private Consultation">Private Consultation</option>
+                    <option value="Order Assistance">Order Assistance</option>
+                    <option value="Product Information">Product Information</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-2 font-semibold">Contact Phone (Optional)</label>
+                  <input
+                    type="tel"
+                    placeholder="+8801XXXXXXXXX"
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    className="w-full bg-zinc-800/80 border border-zinc-700/80 focus:border-gold/60 text-zinc-200 text-xs px-4 py-3 outline-none rounded-sm font-sans"
+                  />
+                </div>
               </div>
 
               <div>
@@ -164,14 +220,19 @@ export const ContactUs = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
-                <span className="text-[10px] text-zinc-500 font-sans font-light flex items-center gap-1.5">
-                  <HelpCircle className="w-3.5 h-3.5 text-gold/50" /> We aim to respond within one business day.
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-zinc-500 font-sans font-light flex items-center gap-1.5">
+                    <HelpCircle className="w-3.5 h-3.5 text-gold/50" /> We aim to respond within one business day.
+                  </span>
+                  <span className="text-[9px] text-zinc-600 font-sans font-light flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-500/70" /> Protected by Google reCAPTCHA
+                  </span>
+                </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-8 py-3.5 bg-gold hover:bg-gold/90 text-black text-[10px] font-sans font-bold uppercase tracking-widest rounded-sm transition-all duration-300 flex items-center gap-2 shadow-lg shadow-gold/5 disabled:opacity-50"
+                  className="px-8 py-3.5 bg-gold hover:bg-gold/90 text-black text-[10px] font-sans font-bold uppercase tracking-widest rounded-sm transition-all duration-300 flex items-center gap-2 shadow-lg shadow-gold/5 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? 'SENDING...' : 'SEND MESSAGE'}
                   <Send className="w-3 h-3 text-black" />

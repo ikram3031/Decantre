@@ -861,3 +861,24 @@ export async function fetchReviewById(reviewId) {
 	}
 	return json?.data || json;
 }
+
+/**
+ * Submit Contact Inquiry Message
+ * @param {object} payload - Contact form payload with reCAPTCHA token
+ * @returns {Promise<object>}
+ */
+export async function submitContactMessage(payload) {
+	const apiBaseUrl = getApiBaseUrl();
+	const res = await fetch(`${apiBaseUrl}/api/v1/contact`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(payload),
+	});
+	const json = await res.json().catch(() => null);
+	if (!res.ok) {
+		const errorMsg = json?.message || json?.error || "Failed to send message. Please try again.";
+		throw new Error(errorMsg);
+	}
+	return json;
+}
+
