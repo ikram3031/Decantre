@@ -349,6 +349,13 @@ export const useAppStore = create((set, get) => {
 
     handleAddToCart: (product, size, qty = 1, explicitUnitPrice = null) => {
       if (!product) return;
+
+      const isOutOfStock = String(product.stockStatus || '').toLowerCase().trim() === 'outofstock' || String(product.stockStatus || '').toLowerCase().trim() === 'out of stock';
+      if (isOutOfStock) {
+        get().addToast(`"${product.name}" is currently out of stock.`, 'error');
+        return;
+      }
+
       const variations = Array.isArray(product.variations) ? product.variations : [];
       const hasVariations = variations.length > 0;
 

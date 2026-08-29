@@ -57,6 +57,11 @@ export const ProductDetailModal = ({
         { id: 'v1', size: 'Full Bottle', price: selectedProduct.price || selectedProduct.basePrice || 0 }
       ];
 
+  const isOutOfStock = (() => {
+    const status = String(selectedProduct.stockStatus || '').toLowerCase().trim();
+    return status === 'outofstock' || status === 'out of stock';
+  })();
+
   // Selected variation price
   const selectedVariation = variationsToDisplay.find(v => v.size === modalSize) || variationsToDisplay[0];
   const activePrice = selectedVariation ? selectedVariation.price : selectedProduct.basePrice;
@@ -217,14 +222,20 @@ export const ProductDetailModal = ({
                   </div>
 
                   <button
+                    disabled={isOutOfStock}
                     onClick={() => {
+                      if (isOutOfStock) return;
                       handleAddToCart(selectedProduct, modalSize, 1, activePrice);
                       onClose();
                     }}
-                    className="bg-transparent border border-gold hover:bg-gold hover:text-black text-gold font-sans font-bold uppercase tracking-[0.25em] text-[10px] px-8 py-3.5 rounded-none shadow-2xl flex items-center justify-center gap-2 transition-all cursor-pointer h-12"
+                    className={`border font-sans font-bold uppercase tracking-[0.25em] text-[10px] px-8 py-3.5 rounded-none shadow-2xl flex items-center justify-center gap-2 transition-all h-12 ${
+                      isOutOfStock
+                        ? 'bg-zinc-800 border-zinc-800 text-zinc-500 cursor-not-allowed opacity-60'
+                        : 'bg-transparent border-gold hover:bg-gold hover:text-black text-gold cursor-pointer'
+                    }`}
                   >
                     <ShoppingCart className="w-3.5 h-3.5" />
-                    Add to cart
+                    {isOutOfStock ? 'Out of Stock' : 'Add to cart'}
                   </button>
                 </div>
 
