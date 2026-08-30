@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, Sparkles, HelpCircle, ShieldCheck } from 'lucide-react';
 import { useApp } from '../core/context/AppContext';
 import { submitContactMessage } from '../core/lib/api';
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ler054tAAAAADRfcpBPB1SwxFLPMwb9O1HYNlet';
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LcevJ8tAAAAALl_komvYqm4vwHZ5ftyQ3F7B7Me';
 
+// Contact Us page component providing official liaison channels and inquiry submission with reCAPTCHA v2
 export const ContactUs = () => {
   const { addToast } = useApp();
   const [formName, setFormName] = useState('');
@@ -12,19 +13,52 @@ export const ContactUs = () => {
   const [formPhone, setFormPhone] = useState('');
   const [formSubject, setFormSubject] = useState('General Inquiry');
   const [formMessage, setFormMessage] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load Google reCAPTCHA v3 script dynamically
+  const recaptchaContainerRef = useRef(null);
+  const widgetIdRef = useRef(null);
+
   useEffect(() => {
-    if (!RECAPTCHA_SITE_KEY) return;
-    const scriptId = 'google-recaptcha-script';
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
+    const renderRecaptcha = () => {
+      if (window.grecaptcha && window.grecaptcha.render && recaptchaContainerRef.current) {
+        if (widgetIdRef.current === null) {
+          try {
+            widgetIdRef.current = window.grecaptcha.render(recaptchaContainerRef.current, {
+              sitekey: RECAPTCHA_SITE_KEY,
+              theme: 'dark',
+              callback: (token) => {
+                setCaptchaToken(token);
+              },
+              'expired-callback': () => {
+                setCaptchaToken('');
+              },
+              'error-callback': () => {
+                setCaptchaToken('');
+              },
+            });
+          } catch (err) {
+            console.error('reCAPTCHA render error:', err);
+          }
+        }
+      }
+    };
+
+    if (window.grecaptcha && window.grecaptcha.render) {
+      renderRecaptcha();
+    } else {
+      const scriptId = 'google-recaptcha-v2-script';
+      window.onRecaptchaLoadCallback = () => {
+        renderRecaptcha();
+      };
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoadCallback&render=explicit';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
     }
   }, []);
 
@@ -35,36 +69,35 @@ export const ContactUs = () => {
       return;
     }
 
+    if (!captchaToken) {
+      addToast('Please verify that you are not a robot.', 'error');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      let recaptchaToken = '';
-      if (window.grecaptcha && RECAPTCHA_SITE_KEY) {
-        try {
-          await new Promise((resolve) => window.grecaptcha.ready(resolve));
-          recaptchaToken = await window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submit_contact' });
-        } catch (captchaErr) {
-          console.warn('reCAPTCHA execution error:', captchaErr);
-        }
-      }
-
       await submitContactMessage({
         name: formName.trim(),
         email: formEmail.trim(),
         phone: formPhone.trim(),
         subject: formSubject.trim(),
         message: formMessage.trim(),
-        recaptchaToken,
+        recaptchaToken: captchaToken,
       });
 
       addToast('Inquiry received. A sovereign liaison will reply in 12 hours.', 'success');
 
-      // Reset form
       setFormName('');
       setFormEmail('');
       setFormPhone('');
       setFormSubject('General Inquiry');
       setFormMessage('');
+      setCaptchaToken('');
+
+      if (window.grecaptcha && widgetIdRef.current !== null) {
+        window.grecaptcha.reset(widgetIdRef.current);
+      }
     } catch (err) {
       console.error('Contact submission failed:', err);
       addToast(err?.message || 'Failed to submit your inquiry. Please try again.', 'error');
@@ -87,7 +120,6 @@ export const ContactUs = () => {
     <div className="py-12 sm:py-20 bg-luxury-black animate-fade-in text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Page Header */}
         <div className="text-center space-y-4 mb-20 relative py-12 border-b border-gold/15">
           <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium block">Get in Touch</span>
           <h1 className="text-3xl sm:text-5xl font-serif font-light text-luxury-white tracking-wide">
@@ -100,7 +132,6 @@ export const ContactUs = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
           
-          {/* Salons Location Info list */}
           <div className="lg:col-span-5 space-y-8">
             <div className="space-y-2">
               <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-sans font-medium font-bold">DECANTRE</span>
@@ -142,7 +173,6 @@ export const ContactUs = () => {
             </div>
           </div>
 
-          {/* Interactive contact booking form */}
           <div className="lg:col-span-7 bg-zinc-900/90 border border-zinc-700/60 p-6 sm:p-10 rounded-sm space-y-6 shadow-xl">
             <div className="space-y-2 border-b border-zinc-800 pb-4">
               <div className="flex items-center gap-2 text-gold">
@@ -219,6 +249,10 @@ export const ContactUs = () => {
                 />
               </div>
 
+              <div className="pt-1">
+                <div ref={recaptchaContainerRef} className="flex justify-start overflow-x-auto py-1"></div>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] text-zinc-500 font-sans font-light flex items-center gap-1.5">
@@ -244,7 +278,6 @@ export const ContactUs = () => {
 
         </div>
 
-        {/* Full Width Google Map Section (Height 400px) */}
         <div className="mt-16 sm:mt-20 w-full overflow-hidden rounded-sm border border-gold/30 bg-black shadow-2xl">
           <div className="px-6 py-4 bg-luxury-dark/60 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-2">
