@@ -57,6 +57,7 @@ export default function App() {
             <Route path="cart" element={<Cart />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="thank-you" element={<ThankYou />} />
+            <Route path="contact" element={<ContactUs />} />
             <Route path="contact-us" element={<ContactUs />} />
             <Route path="about-us" element={<AboutUs />} />
             <Route path="privacy-policy" element={<PrivacyPolicy />} />

@@ -65,12 +65,12 @@ export const ContactUs = () => {
   const handleInquirySubmit = async (e) => {
     e.preventDefault();
     if (!formName.trim() || !formEmail.trim() || !formMessage.trim()) {
-      addToast('Please satisfy all inquiry coordinates.', 'error');
+      addToast('Please fill out all required fields (Name, Email, and Message).', 'error');
       return;
     }
 
-    if (!captchaToken) {
-      addToast('Please verify that you are not a robot.', 'error');
+    if (RECAPTCHA_SITE_KEY && window.grecaptcha && !captchaToken) {
+      addToast('Please complete the reCAPTCHA verification.', 'error');
       return;
     }
 
@@ -86,7 +86,7 @@ export const ContactUs = () => {
         recaptchaToken: captchaToken,
       });
 
-      addToast('Inquiry received. A sovereign liaison will reply in 12 hours.', 'success');
+      addToast('Thank you! Your message has been sent successfully.', 'success');
 
       setFormName('');
       setFormEmail('');
@@ -100,7 +100,7 @@ export const ContactUs = () => {
       }
     } catch (err) {
       console.error('Contact submission failed:', err);
-      addToast(err?.message || 'Failed to submit your inquiry. Please try again.', 'error');
+      addToast(err?.message || 'Failed to submit your message. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
