@@ -241,14 +241,9 @@ export async function searchProductsAPI(q, limit = 12) {
 	if (!q || !q.trim()) return [];
 	const params = new URLSearchParams({ q: q.trim(), limit: String(limit) });
 	try {
-		const { accessToken } = getStoredMemberTokens();
-		const headers = {};
-		if (accessToken) {
-			headers["Authorization"] = `Bearer ${accessToken}`;
-		}
 		const res = await fetchWithRetry(
 			`${apiBaseUrl}/api/v1/search?${params.toString()}`,
-			{ method: "GET", headers },
+			{ method: "GET" },
 			8000,
 			2,
 		);
