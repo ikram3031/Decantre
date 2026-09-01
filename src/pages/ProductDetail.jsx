@@ -8,18 +8,16 @@ import { MoreProducts } from '../components/sections/MoreProducts';
 import { RecentlyViewedProducts } from '../components/sections/RecentlyViewedProducts';
 import { pixelViewContent, pixelAddToCart } from '../utils/fbPixel';
 
+// Adds recently viewed product identifier to browser local storage
 const addToRecentlyViewed = (id) => {
   if (!id) return;
   try {
     const stored = localStorage.getItem('recently_viewed');
     let list = stored ? JSON.parse(stored) : [];
     if (!Array.isArray(list)) list = [];
-    
-    // Filter out if already exists, and push to front (max 10)
     list = list.filter(item => String(item) !== String(id));
     list.unshift(id);
     list = list.slice(0, 10);
-    
     localStorage.setItem('recently_viewed', JSON.stringify(list));
   } catch (e) {
     console.error(e);
@@ -51,11 +49,11 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
+// Renders standalone fragrance product detail page with variations, reviews, and recommendations
 export const ProductDetail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  // Use specific selectors to avoid subscribing to the entire store
   const products = useAppStore((state) => state.products);
   const brands = useAppStore((state) => state.brands);
   const categories = useAppStore((state) => state.categories);
@@ -76,14 +74,12 @@ export const ProductDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Configuration states
   const [selectedSize, setSelectedSize] = useState('15ML');
   const [quantity, setQuantity] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
-  // Dynamic Reviews API states
   const [reviewsStats, setReviewsStats] = useState({
     totalReviews: 0,
     averageRating: 0,
@@ -147,7 +143,6 @@ export const ProductDetail = () => {
     loadProductDetail();
   }, [did]);
 
-  // Facebook Pixel – ViewContent (fires when product loads)
   useEffect(() => {
     if (product) {
       pixelViewContent({
@@ -158,7 +153,6 @@ export const ProductDetail = () => {
     }
   }, [product]);
 
-  // Dynamic variations directly from API
   const decantSwatches = React.useMemo(() => {
     if (product && Array.isArray(product.variations) && product.variations.length > 0) {
       return product.variations.map((v) => {
@@ -177,14 +171,13 @@ export const ProductDetail = () => {
     return [];
   }, [product]);
 
-  // Sync initial selected size with available variations
   useEffect(() => {
     if (decantSwatches.length > 0 && (!selectedSize || !decantSwatches.some(s => s.size === selectedSize))) {
       setSelectedSize(decantSwatches[0].size);
     }
   }, [decantSwatches, selectedSize]);
 
-  // Helper to load reviews from backend API
+  // Fetches paginated approved reviews and statistical summary from API
   const loadReviews = async (targetProductDid, skip = 0, append = false) => {
     if (!targetProductDid) return;
     setIsLoadingReviews(true);
@@ -210,7 +203,6 @@ export const ProductDetail = () => {
     }
   };
 
-  // Load reviews whenever product details become available
   useEffect(() => {
     const productDid = product?.did || product?.id;
     if (productDid) {
@@ -228,6 +220,7 @@ export const ProductDetail = () => {
 
   const unitPrice = activeSwatch?.price ?? product?.basePrice ?? 980;
 
+  // Shares product URL or copies link to system clipboard
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -241,12 +234,14 @@ export const ProductDetail = () => {
     }
   };
 
+  // Adds active product variation to cart and navigates directly to checkout
   const handleBuyNow = () => {
     if (!product) return;
     handleAddToCart(product, activeSwatch.size, quantity, unitPrice);
     navigate('/checkout');
   };
 
+  // Submits customer product review to backend API with validation
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
@@ -280,7 +275,6 @@ export const ProductDetail = () => {
       setReviewText('');
       setReviewRating(5);
       setIsReviewFormOpen(false);
-      // Refresh reviews list and stats
       loadReviews(productDid, 0, false);
     } catch (err) {
       addToast(err?.message || 'Failed to submit review.', 'error');
@@ -596,16 +590,14 @@ export const ProductDetail = () => {
               />
             </div>
 
-            {/* Customer Reviews Section */}
             <div id="product-reviews-section" className={`p-6 sm:p-8 border rounded-sm space-y-8 scroll-mt-24 transition-all ${
-              isLight ? 'bg-zinc-50/80 border-zinc-200' : 'bg-zinc-950/90 border-gold/20'
+              isLight ? 'bg-zinc-50/90 border-zinc-200 shadow-sm' : 'bg-zinc-950/90 border-gold/20'
             }`}>
               
-              {/* Header & Rating Summary */}
-              <div className="border-b border-gold/15 pb-6 space-y-6">
+              <div className={`border-b pb-6 space-y-6 ${isLight ? 'border-zinc-200' : 'border-gold/15'}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-serif text-luxury-white font-medium flex items-center gap-2.5">
+                    <h3 className={`text-xl sm:text-2xl font-serif font-medium flex items-center gap-2.5 ${isLight ? 'text-zinc-900' : 'text-luxury-white'}`}>
                       <MessageSquare className="w-5 h-5 text-gold shrink-0" />
                       Customer Reviews
                     </h3>
@@ -636,13 +628,11 @@ export const ProductDetail = () => {
                   </button>
                 </div>
 
-                {/* Rating Overview Grid */}
                 <div className={`grid grid-cols-1 md:grid-cols-12 gap-6 p-5 sm:p-6 rounded-sm border ${
-                  isLight ? 'bg-white border-zinc-200' : 'bg-black/50 border-white/5'
+                  isLight ? 'bg-white border-zinc-200 shadow-xs' : 'bg-black/50 border-white/5'
                 }`}>
                   
-                  {/* Left Column: Big Average Score */}
-                  <div className="md:col-span-4 flex flex-col items-center justify-center text-center p-2 border-b md:border-b-0 md:border-r border-white/10">
+                  <div className={`md:col-span-4 flex flex-col items-center justify-center text-center p-2 border-b md:border-b-0 md:border-r ${isLight ? 'border-zinc-200' : 'border-white/10'}`}>
                     <div className="text-4xl sm:text-5xl font-serif font-bold text-gold mb-1">
                       {reviewsStats.totalReviews > 0 ? reviewsStats.averageRating.toFixed(1) : '0.0'}
                     </div>
@@ -653,17 +643,16 @@ export const ProductDetail = () => {
                           className={`w-4 h-4 ${
                             reviewsStats.totalReviews > 0 && star <= Math.round(reviewsStats.averageRating || 0)
                               ? 'fill-amber-400 text-amber-400'
-                              : 'text-zinc-700'
+                              : isLight ? 'text-zinc-300' : 'text-zinc-700'
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-[11px] font-sans text-zinc-400 uppercase tracking-wider">
+                    <span className={`text-[11px] font-sans uppercase tracking-wider ${isLight ? 'text-zinc-500' : 'text-zinc-400'}`}>
                       Based on {reviewsStats.totalReviews} {reviewsStats.totalReviews === 1 ? 'review' : 'reviews'}
                     </span>
                   </div>
 
-                  {/* Right Column: 5-to-1 Star Breakdown */}
                   <div className="md:col-span-8 flex flex-col justify-center space-y-2 text-xs font-sans">
                     {[5, 4, 3, 2, 1].map((stars) => {
                       const count = reviewsStats.ratingBreakdown?.[String(stars)] ?? reviewsStats.ratingBreakdown?.[stars] ?? 0;
@@ -673,19 +662,19 @@ export const ProductDetail = () => {
 
                       return (
                         <div key={stars} className="flex items-center gap-3">
-                          <div className="flex items-center gap-1 w-12 shrink-0 text-zinc-300 font-mono text-[11px]">
+                          <div className={`flex items-center gap-1 w-12 shrink-0 font-mono text-[11px] ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
                             <span>{stars}</span>
                             <Star className="w-3 h-3 fill-amber-400 text-amber-400 inline" />
                           </div>
 
-                          <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                          <div className={`flex-1 h-2 rounded-full overflow-hidden ${isLight ? 'bg-zinc-200' : 'bg-zinc-800'}`}>
                             <div
                               className="h-full bg-gold transition-all duration-500 rounded-full"
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
 
-                          <span className="w-12 text-right text-[11px] text-zinc-400 font-mono shrink-0">
+                          <span className={`w-12 text-right text-[11px] font-mono shrink-0 ${isLight ? 'text-zinc-500' : 'text-zinc-400'}`}>
                             {count} ({percentage}%)
                           </span>
                         </div>
@@ -696,25 +685,23 @@ export const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Dynamic Review Submission Form */}
               {isReviewFormOpen && (
                 <div className={`p-4 sm:p-6 rounded-sm border overflow-hidden animate-fade-in ${
-                  isLight ? 'bg-white border-gold/30' : 'bg-black/70 border-gold/30 shadow-2xl'
+                  isLight ? 'bg-white border-gold/40 shadow-md' : 'bg-black/70 border-gold/30 shadow-2xl'
                 }`}>
                   {user ? (
                     <form onSubmit={handleReviewSubmit} className="space-y-5">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3 ${isLight ? 'border-zinc-200' : 'border-white/10'}`}>
                         <span className="text-xs font-sans font-bold uppercase tracking-widest text-gold">
                           Write a Review
                         </span>
-                        <span className="text-xs text-zinc-400 font-sans truncate">
-                          Reviewing as <strong className="text-white font-medium">{user.name || user.email}</strong>
+                        <span className={`text-xs font-sans truncate ${isLight ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                          Reviewing as <strong className={`font-medium ${isLight ? 'text-zinc-900' : 'text-white'}`}>{user.name || user.email}</strong>
                         </span>
                       </div>
 
-                      {/* Interactive Star Picker */}
                       <div className="space-y-2">
-                        <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-zinc-400 block">
+                        <label className={`text-[10px] font-sans font-bold uppercase tracking-wider block ${isLight ? 'text-zinc-600' : 'text-zinc-400'}`}>
                           Rating *
                         </label>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
@@ -732,7 +719,7 @@ export const ProductDetail = () => {
                                   className={`w-5 h-5 sm:w-6 sm:h-6 transition-colors ${
                                     star <= (reviewHoverRating || reviewRating)
                                       ? 'fill-amber-400 text-amber-400'
-                                      : 'text-zinc-700 hover:text-zinc-500'
+                                      : isLight ? 'text-zinc-300 hover:text-zinc-400' : 'text-zinc-700 hover:text-zinc-500'
                                   }`}
                                 />
                               </button>
@@ -748,9 +735,8 @@ export const ProductDetail = () => {
                         </div>
                       </div>
 
-                      {/* Review Description Textarea */}
                       <div className="space-y-2">
-                        <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-zinc-400 block">
+                        <label className={`text-[10px] font-sans font-bold uppercase tracking-wider block ${isLight ? 'text-zinc-600' : 'text-zinc-400'}`}>
                           Your Review *
                         </label>
                         <textarea
@@ -759,16 +745,23 @@ export const ProductDetail = () => {
                           value={reviewText}
                           onChange={(e) => setReviewText(e.target.value)}
                           placeholder="Write your review here..."
-                          className="w-full bg-zinc-900/90 border border-white/10 focus:border-gold/70 text-xs text-zinc-100 p-3.5 sm:p-4 rounded-sm outline-none font-sans leading-relaxed resize-y transition-colors box-border"
+                          className={`w-full border text-xs p-3.5 sm:p-4 rounded-sm outline-none font-sans leading-relaxed resize-y transition-colors box-border ${
+                            isLight
+                              ? 'bg-zinc-50 border-zinc-300 focus:border-gold text-zinc-900 placeholder:text-zinc-400'
+                              : 'bg-zinc-900/90 border-white/10 focus:border-gold/70 text-zinc-100 placeholder:text-zinc-500'
+                          }`}
                         />
                       </div>
 
-                      {/* Submit Actions */}
                       <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2">
                         <button
                           type="button"
                           onClick={() => setIsReviewFormOpen(false)}
-                          className="w-full sm:w-auto px-5 py-2.5 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white text-xs font-sans uppercase tracking-wider rounded-sm transition-all cursor-pointer text-center"
+                          className={`w-full sm:w-auto px-5 py-2.5 border text-xs font-sans uppercase tracking-wider rounded-sm transition-all cursor-pointer text-center ${
+                            isLight
+                              ? 'border-zinc-300 hover:border-zinc-400 text-zinc-600 hover:text-black'
+                              : 'border-white/10 hover:border-white/20 text-zinc-400 hover:text-white'
+                          }`}
                         >
                           Cancel
                         </button>
@@ -801,10 +794,10 @@ export const ProductDetail = () => {
                         <UserCheck className="w-5 h-5" />
                       </div>
                       <div className="space-y-1">
-                        <h4 className="text-sm font-sans font-bold uppercase tracking-wider text-zinc-200">
+                        <h4 className={`text-sm font-sans font-bold uppercase tracking-wider ${isLight ? 'text-zinc-900' : 'text-zinc-200'}`}>
                           Please Log In
                         </h4>
-                        <p className="text-xs text-zinc-400 font-sans font-light max-w-sm mx-auto">
+                        <p className={`text-xs font-sans font-light max-w-sm mx-auto ${isLight ? 'text-zinc-600' : 'text-zinc-400'}`}>
                           Please log in to your account to write a review.
                         </p>
                       </div>
@@ -820,7 +813,6 @@ export const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Reviews List */}
               <div className="space-y-4">
                 {isLoadingReviews && reviewsList.length === 0 ? (
                   <div className="py-12 flex flex-col items-center justify-center space-y-3 text-zinc-500">
@@ -828,10 +820,12 @@ export const ProductDetail = () => {
                     <span className="text-xs font-sans tracking-widest uppercase">Loading Reviews...</span>
                   </div>
                 ) : reviewsList.length === 0 ? (
-                  <div className="text-center py-12 px-4 border border-white/5 rounded-sm bg-black/20 space-y-3">
+                  <div className={`text-center py-12 px-4 border rounded-sm space-y-3 ${
+                    isLight ? 'border-zinc-200 bg-white' : 'border-white/5 bg-black/20'
+                  }`}>
                     <MessageSquare className="w-8 h-8 text-gold/30 mx-auto" />
-                    <h4 className="text-sm font-serif text-zinc-300">No Reviews Yet</h4>
-                    <p className="text-xs text-zinc-500 font-sans font-light max-w-md mx-auto leading-relaxed">
+                    <h4 className={`text-sm font-serif ${isLight ? 'text-zinc-800' : 'text-zinc-300'}`}>No Reviews Yet</h4>
+                    <p className={`text-xs font-sans font-light max-w-md mx-auto leading-relaxed ${isLight ? 'text-zinc-600' : 'text-zinc-500'}`}>
                       There are no reviews for this product yet. Be the first to leave a review!
                     </p>
                     <button
@@ -850,7 +844,7 @@ export const ProductDetail = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4 divide-y divide-white/5">
+                  <div className={`space-y-4 divide-y ${isLight ? 'divide-zinc-200' : 'divide-white/5'}`}>
                     {reviewsList.map((review) => {
                       const reviewerName = review.memberId?.name || review.author || 'Verified Customer';
                       const initials = reviewerName
@@ -879,7 +873,7 @@ export const ProductDetail = () => {
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-sans font-bold text-zinc-200 uppercase tracking-wide">
+                                  <span className={`text-xs font-sans font-bold uppercase tracking-wide ${isLight ? 'text-zinc-900' : 'text-zinc-200'}`}>
                                     {reviewerName}
                                   </span>
                                   <span className="inline-flex items-center gap-1 text-[9px] font-sans font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-1.5 py-0.5 rounded-xs">
@@ -887,7 +881,7 @@ export const ProductDetail = () => {
                                     Verified
                                   </span>
                                 </div>
-                                <span className="text-[10px] text-zinc-500 font-mono block">
+                                <span className={`text-[10px] font-mono block ${isLight ? 'text-zinc-500' : 'text-zinc-500'}`}>
                                   {formattedDate}
                                 </span>
                               </div>
@@ -898,14 +892,14 @@ export const ProductDetail = () => {
                                 <Star
                                   key={star}
                                   className={`w-3.5 h-3.5 ${
-                                    star <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-zinc-700'
+                                    star <= review.rating ? 'fill-amber-400 text-amber-400' : isLight ? 'text-zinc-300' : 'text-zinc-700'
                                   }`}
                                 />
                               ))}
                             </div>
                           </div>
 
-                          <p className="text-xs sm:text-sm text-zinc-300 font-sans font-light leading-relaxed whitespace-pre-line pl-11">
+                          <p className={`text-xs sm:text-sm font-sans font-light leading-relaxed whitespace-pre-line pl-11 ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
                             {review.description || review.comment || review.text}
                           </p>
                         </div>
@@ -914,7 +908,6 @@ export const ProductDetail = () => {
                   </div>
                 )}
 
-                {/* Load More Button */}
                 {reviewsPagination.total > reviewsList.length && (
                   <div className="pt-4 text-center">
                     <button
@@ -924,7 +917,11 @@ export const ProductDetail = () => {
                         const productDid = product?.did || product?.id;
                         loadReviews(productDid, reviewsList.length, true);
                       }}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 border border-white/10 hover:border-gold/50 text-zinc-300 hover:text-gold text-xs font-sans uppercase tracking-widest rounded-sm transition-all cursor-pointer"
+                      className={`inline-flex items-center gap-2 px-6 py-2.5 border text-xs font-sans uppercase tracking-widest rounded-sm transition-all cursor-pointer ${
+                        isLight
+                          ? 'border-zinc-300 hover:border-gold text-zinc-700 hover:text-black'
+                          : 'border-white/10 hover:border-gold/50 text-zinc-300 hover:text-gold'
+                      }`}
                     >
                       {isLoadingReviews ? (
                         <>
