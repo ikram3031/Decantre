@@ -432,10 +432,8 @@ export async function fetchCombos(opts = {}) {
 	return [];
 }
 
-/**
- * Create Order
- */
-export async function createOrder(orderPayload) {
+// Create a new order from checkout payload
+export const createOrder = async (orderPayload) => {
 	const apiBaseUrl = getApiBaseUrl();
 	const res = await fetch(`${apiBaseUrl}/api/v1/orders/new-order`, {
 		method: "POST",
@@ -449,7 +447,13 @@ export async function createOrder(orderPayload) {
 		throw new Error(errorMsg);
 	}
 	return json;
-}
+};
+
+// Generates printable invoice HTML URL for a given order ID
+export const getOrderInvoiceUrl = (orderId) => {
+	const apiBaseUrl = getApiBaseUrl();
+	return `${apiBaseUrl}/api/v1/orders/${encodeURIComponent(orderId)}/invoice`;
+};
 
 /**
  * Check Member Email (via /members/check-email)
