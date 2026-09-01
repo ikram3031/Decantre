@@ -1,7 +1,7 @@
 {
   "name": "Decantre",
   "private": true,
-  "version": "2.0.6",
+  "version": "2.0.07",
   "type": "module",
   "scripts": {
     "set-env": "node scripts/set-env.js",
