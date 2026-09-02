@@ -423,17 +423,6 @@ export const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Linked Shipping Notice */}
-            <div className={`p-4 border rounded-sm flex items-start gap-3 shadow-md ${
-              isLight ? 'bg-amber-50/60 border-amber-200 text-amber-900' : 'bg-zinc-900/90 border-zinc-700/60 text-zinc-200'
-            }`}>
-              <Truck className="w-5 h-5 text-gold shrink-0 mt-0.5" />
-              <div className="text-xs font-sans leading-relaxed">
-                <strong className="text-gold font-bold uppercase tracking-wider block mb-0.5">Delivery Notice</strong>
-                Courier delivery: <span className="font-semibold text-white">৳80 Inside Dhaka (24–48h)</span>, <span className="font-semibold text-white">৳120 Outside Dhaka (24–72h)</span>. Cash on Delivery & Office Pickup available.
-              </div>
-            </div>
-
             {/* 3-Column Variation Swatches */}
             {product.type === 'variant' && decantSwatches.length > 0 && (
               <div className="space-y-3">
@@ -583,6 +572,17 @@ export const ProductDetail = () => {
               product={product} 
               onOpenSizeGuide={() => setIsSizeGuideOpen(true)} 
             />
+
+            {/* Linked Shipping Notice */}
+            <div className={`p-4 border rounded-sm flex items-start gap-3 shadow-md ${
+              isLight ? 'bg-amber-50/60 border-amber-200 text-amber-900' : 'bg-zinc-900/90 border-zinc-700/60 text-zinc-200'
+            }`}>
+              <Truck className="w-5 h-5 text-gold shrink-0 mt-0.5" />
+              <div className="text-xs font-sans leading-relaxed">
+                <strong className="text-gold font-bold uppercase tracking-wider block mb-0.5">Delivery Notice</strong>
+                Courier delivery: <span className="font-semibold text-white">৳80 Inside Dhaka (24–48h)</span>, <span className="font-semibold text-white">৳120 Outside Dhaka (24–72h)</span>. Cash on Delivery & Office Pickup available.
+              </div>
+            </div>
 
             {/* Description & Olfactory Notes breakdown */}
             <div className="p-6 border bg-zinc-950/80 border-gold/15 rounded-sm space-y-4">
