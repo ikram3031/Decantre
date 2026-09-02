@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { ShoppingCart, X as XIcon } from 'lucide-react';
 import { formatBDT } from '../core/utils/formatCurrency';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
+import { AvailableSizesCard } from './AvailableSizesCard';
 
 export const ProductDetailModal = ({
   selectedProduct,
@@ -237,6 +238,11 @@ export const ProductDetailModal = ({
                     <ShoppingCart className="w-3.5 h-3.5" />
                     {isOutOfStock ? 'Out of Stock' : 'Add to cart'}
                   </button>
+                </div>
+
+                {/* Available Sizes Showcase */}
+                <div className="pt-2">
+                  <AvailableSizesCard product={selectedProduct} />
                 </div>
 
               </div>

@@ -6,6 +6,7 @@ import { mapRemoteProduct, resolveBrandName, resolveCategoryName, resolveBrandSl
 import { fetchProductDetails, fetchProducts, fetchProductReviews, createProductReview } from '../core/lib/api';
 import { MoreProducts } from '../components/sections/MoreProducts';
 import { RecentlyViewedProducts } from '../components/sections/RecentlyViewedProducts';
+import { AvailableSizesCard } from '../components/AvailableSizesCard';
 import { pixelViewContent, pixelAddToCart } from '../utils/fbPixel';
 
 // Adds recently viewed product identifier to browser local storage
@@ -576,6 +577,12 @@ export const ProductDetail = () => {
                 WISHLIST
               </button>
             </div>
+
+            {/* Available Decant Sizes Showcase with Popup Preview */}
+            <AvailableSizesCard 
+              product={product} 
+              onOpenSizeGuide={() => setIsSizeGuideOpen(true)} 
+            />
 
             {/* Description & Olfactory Notes breakdown */}
             <div className="p-6 border bg-zinc-950/80 border-gold/15 rounded-sm space-y-4">

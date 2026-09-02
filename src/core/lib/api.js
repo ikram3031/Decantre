@@ -881,3 +881,25 @@ export async function submitContactMessage(payload) {
 	return json;
 }
 
+// Fetches size attribute values including thumbnail bottle images
+export const fetchSizeAttributes = async () => {
+	const apiBaseUrl = getApiBaseUrl();
+	try {
+		const res = await fetchWithRetry(`${apiBaseUrl}/api/v1/attributes`, {}, 8000);
+		if (!res.ok) {
+			const fallbackRes = await fetchWithRetry(`${apiBaseUrl}/api/v1/dashboard/attributes`, {}, 8000);
+			if (fallbackRes.ok) {
+				const fallbackJson = await fallbackRes.json();
+				const found = (fallbackJson?.data || []).find((a) => a.slug === "size" || a.slug === "sizes" || a.name?.toLowerCase() === "size");
+				return found?.values || [];
+			}
+			return [];
+		}
+		const json = await res.json();
+		const found = (json?.data || []).find((a) => a.slug === "size" || a.slug === "sizes" || a.name?.toLowerCase() === "size");
+		return found?.values || [];
+	} catch (err) {
+		return [];
+	}
+};
+
