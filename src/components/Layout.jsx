@@ -96,8 +96,8 @@ export const Layout = () => {
         {/* Breadcrumb Navigation on all subpages */}
         <Breadcrumb />
 
-        {/* Main Content Area in Fixed Container */}
-        <main className="min-h-[70vh] max-w-7xl mx-auto w-full">
+        {/* Main Content Area */}
+        <main className="min-h-[70vh] w-full">
           <Outlet />
         </main>
 

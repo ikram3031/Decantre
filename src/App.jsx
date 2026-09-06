@@ -18,7 +18,7 @@ import { SearchResults } from './pages/SearchResults';
 import { NotFound } from './pages/NotFound';
 import { ContactUs } from './pages/ContactUs';
 import { AboutUs } from './pages/AboutUs';
-import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { PrivacyPolicy } from './pages/LegalPrivacy';
 import { TermsAndCondition } from './pages/TermsAndCondition';
 import { ReturnPolicy } from './pages/ReturnPolicy';
 import { ProductDetail } from './pages/ProductDetail';

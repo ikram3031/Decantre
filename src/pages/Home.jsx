@@ -50,7 +50,7 @@ export const Home = () => {
   const spotlightProducts = filteredProducts.slice(0, 3);
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in w-full">
       {/* Hero Display Showcase */}
       <HeroSlider />
 
