@@ -351,7 +351,7 @@ export const mapRemoteProduct = (product = {}) => {
         price: effectivePrice,
         originalPrice: originalPrice,
         stockQuantity: v.stockQuantity ?? 0,
-        stockStatus: (v.stockQuantity ?? 1) > 0 ? "instock" : "outofstock",
+        stockStatus: v.stockStatus || ((v.stockQuantity ?? 1) > 0 ? "instock" : "outofstock"),
         sku: v.sku || "",
         sortOrder: v.sortOrder ?? idx,
         raw: v,

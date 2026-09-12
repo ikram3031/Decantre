@@ -219,6 +219,15 @@ export const ProductDetail = () => {
     return status === 'outofstock' || status === 'out of stock';
   }, [product]);
 
+  const isVariableProduct = React.useMemo(() => {
+    if (!product) return false;
+    return Boolean(
+      product.type === 'variant' ||
+      (Array.isArray(product.variants) && product.variants.length > 0) ||
+      (Array.isArray(product.variations) && product.variations.length > 0)
+    );
+  }, [product]);
+
   const unitPrice = activeSwatch?.price ?? product?.basePrice ?? 980;
 
   // Shares product URL or copies link to system clipboard
@@ -540,18 +549,20 @@ export const ProductDetail = () => {
             </div>
 
             {/* Share and Wishlist Row */}
-            <div className="grid grid-cols-2 gap-3">
-              <button 
-                onClick={handleShare}
-                className={`w-full py-3 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer border ${
-                  isLight 
-                    ? 'bg-transparent text-[#050505] border-[#050505] hover:bg-[#050505]/10' 
-                    : 'bg-black/40 text-zinc-300 border-white/10 hover:border-gold hover:text-gold'
-                }`}
-              >
-                <Share2 className={`w-4 h-4 ${isLight ? 'text-black' : 'text-gold'}`} />
-                SHARE
-              </button>
+            <div className={`grid gap-3 ${!isVariableProduct ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {!isVariableProduct && (
+                <button 
+                  onClick={handleShare}
+                  className={`w-full py-3 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer border ${
+                    isLight 
+                      ? 'bg-transparent text-[#050505] border-[#050505] hover:bg-[#050505]/10' 
+                      : 'bg-black/40 text-zinc-300 border-white/10 hover:border-gold hover:text-gold'
+                  }`}
+                >
+                  <Share2 className={`w-4 h-4 ${isLight ? 'text-black' : 'text-gold'}`} />
+                  SHARE
+                </button>
+              )}
               <button 
                 onClick={() => toggleWishlist(product.id)}
                 className={`w-full py-3 rounded-sm text-xs font-sans font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer border ${
