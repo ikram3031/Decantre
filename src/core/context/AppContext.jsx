@@ -22,6 +22,7 @@ export const AppProvider = ({ children }) => {
   const brands = useAppStore((state) => state.brands);
   const fetchCategories = useAppStore((state) => state.fetchCategories);
   const fetchBrands = useAppStore((state) => state.fetchBrands);
+  const fetchStoreUtils = useAppStore((state) => state.fetchStoreUtils);
 
   React.useEffect(() => {
     const state = useAppStore.getState();
@@ -31,6 +32,7 @@ export const AppProvider = ({ children }) => {
     if (!state.brands || state.brands.length === 0) {
       fetchBrands({ skip: 0, limit: 100 });
     }
+    fetchStoreUtils();
   }, []);
 
   return (

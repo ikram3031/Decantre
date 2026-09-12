@@ -2,9 +2,12 @@ import React from 'react';
 import { ProductCard } from '../ProductCard';
 import { useApp } from '../../core/context/AppContext';
 
+// Renders the on-sale discounted promotional products showcase section
 export const OnSale = () => {
-  const { products, productsError, wishlist, toggleWishlist, cardSelections, setCardSelections, handleOpenProductDetail, handleAddToCart, calculateItemPrice } = useApp();
-  const sale = products.filter(p => (p.raw && p.raw.on_sale) || p.isOnSale).slice(0, 6);
+  const { products, storeUtils, productsError, wishlist, toggleWishlist, cardSelections, setCardSelections, handleOpenProductDetail, handleAddToCart, calculateItemPrice } = useApp();
+  const sale = (storeUtils?.onSale && storeUtils.onSale.length > 0)
+    ? storeUtils.onSale
+    : products.filter(p => (p.raw && p.raw.on_sale) || p.isOnSale || (p.variations && p.variations.some(v => v.originalPrice && v.originalPrice > v.price))).slice(0, 6);
 
   return (
     <section className="py-8 border-t border-gold/10">

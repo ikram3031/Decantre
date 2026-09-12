@@ -14,7 +14,7 @@ import { getDefaultSelection } from '../core/store/productHelpers';
 
 const staticBrandHierarchy = menuData.brandHierarchy || {};
 
-export const Shop = () => {
+export const Shop = ({ defaultOnSale = false, pageTitle = null, pageSubtitle = null }) => {
   const {
     searchQuery,
     setSearchQuery,
@@ -250,6 +250,9 @@ export const Shop = () => {
     }
     if (maxPriceParam) {
       opts.maxPrice = Number(maxPriceParam);
+    }
+    if (defaultOnSale || searchParams.get('onSale') === 'true') {
+      opts.onSale = true;
     }
 
     setIsLoadingProducts(true);
@@ -632,10 +635,10 @@ export const Shop = () => {
         {/* Banner */}
         <div className={`text-center space-y-3 mb-12 relative py-8 px-4 border ${isLight ? 'border-zinc-200 bg-zinc-50' : 'border-gold/15 bg-luxury-dark/20'} rounded-sm`}>
           <h1 className={`text-2xl sm:text-4xl font-serif font-light ${isLight ? 'text-black' : 'text-luxury-white'} tracking-wide uppercase`}>
-            ALL PERFUMES & DECANTS
+            {pageTitle || 'ALL PERFUMES & DECANTS'}
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm font-sans font-light max-w-xl mx-auto leading-relaxed px-4">
-            Browse our complete collection of 100% authentic designer and niche perfume decants.
+            {pageSubtitle || 'Browse our complete collection of 100% authentic designer and niche perfume decants.'}
           </p>
         </div>
 

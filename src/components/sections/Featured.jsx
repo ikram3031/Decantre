@@ -2,9 +2,12 @@ import React from 'react';
 import { ProductCard } from '../ProductCard';
 import { useApp } from '../../core/context/AppContext';
 
+// Renders the curated featured products showcase section
 export const Featured = () => {
-  const { products, productsError, wishlist, toggleWishlist, cardSelections, setCardSelections, handleOpenProductDetail, handleAddToCart, calculateItemPrice } = useApp();
-  const featured = products.filter(p => p.isFeatured).slice(0, 6);
+  const { products, storeUtils, productsError, wishlist, toggleWishlist, cardSelections, setCardSelections, handleOpenProductDetail, handleAddToCart, calculateItemPrice } = useApp();
+  const featured = (storeUtils?.featured && storeUtils.featured.length > 0)
+    ? storeUtils.featured
+    : products.filter(p => p.isFeatured).slice(0, 6);
 
   return (
     <section className="py-8 border-t border-gold/10">

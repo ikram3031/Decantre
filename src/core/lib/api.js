@@ -194,6 +194,7 @@ export async function fetchProducts(opts = {}) {
 	if (opts.did) params.set("did", opts.did);
 	if (opts.minPrice !== undefined) params.set("min_price", opts.minPrice);
 	if (opts.maxPrice !== undefined) params.set("max_price", opts.maxPrice);
+	if (opts.onSale) params.set("onSale", "true");
 
 	params.set("skip", String(skip));
 	params.set("limit", String(limit));
@@ -228,6 +229,25 @@ export async function fetchProducts(opts = {}) {
 		throw err;
 	}
 }
+
+// Retrieves configured store utility showcases including featured, best seller, and on sale collections
+export const fetchStoreUtils = async () => {
+	const apiBaseUrl = getApiBaseUrl();
+	try {
+		const res = await fetchWithRetry(`${apiBaseUrl}/api/v1/store-utils`, { method: "GET" }, 8000, 2);
+		if (!res.ok) return { featured: [], bestSeller: [], onSale: [] };
+		const json = await res.json();
+		const data = json?.data || {};
+		return {
+			featured: Array.isArray(data.featured) ? data.featured.map(mapRemoteProduct) : [],
+			bestSeller: Array.isArray(data.bestSeller) ? data.bestSeller.map(mapRemoteProduct) : [],
+			onSale: Array.isArray(data.onSale) ? data.onSale.map(mapRemoteProduct) : [],
+		};
+	} catch (err) {
+		console.warn("fetchStoreUtils Error:", err);
+		return { featured: [], bestSeller: [], onSale: [] };
+	}
+};
 
 /**
  * Search Products (lightweight autocomplete with analytics tracking)

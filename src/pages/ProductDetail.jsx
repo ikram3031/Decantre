@@ -229,6 +229,11 @@ export const ProductDetail = () => {
   }, [product]);
 
   const unitPrice = activeSwatch?.price ?? product?.basePrice ?? 980;
+  const originalUnitPrice = activeSwatch?.originalPrice ?? product?.originalPrice ?? null;
+  const isDetailOnSale = Boolean(originalUnitPrice && Number(originalUnitPrice) > Number(unitPrice));
+  const detailDiscountPercent = isDetailOnSale
+    ? Math.round(((Number(originalUnitPrice) - Number(unitPrice)) / Number(originalUnitPrice)) * 100)
+    : 0;
 
   // Shares product URL or copies link to system clipboard
   const handleShare = () => {
@@ -356,6 +361,11 @@ export const ProductDetail = () => {
                     Out of Stock
                   </div>
                 )}
+                {isDetailOnSale && (
+                  <div className={`absolute ${isOutOfStock ? 'top-12' : 'top-4'} right-4 z-10 bg-amber-500 text-black text-[10px] font-sans font-bold uppercase tracking-wider px-3 py-1 rounded-sm shadow-md`}>
+                    On Sale
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -422,10 +432,20 @@ export const ProductDetail = () => {
               </div>
 
               {/* Price Display */}
-              <div className="pt-3 flex items-baseline gap-3">
+              <div className="pt-3 flex items-baseline gap-3 flex-wrap">
                 <span className="text-2xl sm:text-3xl font-serif text-gold font-bold">
                   {formatBDT(unitPrice * quantity)}
                 </span>
+                {isDetailOnSale && detailDiscountPercent > 0 && (
+                  <>
+                    <span className="text-base sm:text-lg text-zinc-500 line-through font-mono">
+                      {formatBDT(originalUnitPrice * quantity)}
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-emerald-500 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      (-{detailDiscountPercent}%)
+                    </span>
+                  </>
+                )}
                 <span className="text-xs text-zinc-500 font-sans">
                   ({formatBDT(unitPrice)} per bottle)
                 </span>
@@ -469,7 +489,14 @@ export const ProductDetail = () => {
                         }`}
                       >
                         <span className="text-xs font-mono font-bold block">{swatch.label}</span>
-                        <span className="text-[11px] text-gold font-mono font-semibold block mt-1">{formatBDT(swatch.price)}</span>
+                        <div className="flex items-baseline gap-1 mt-1 flex-wrap">
+                          <span className="text-[11px] text-gold font-mono font-semibold">{formatBDT(swatch.price)}</span>
+                          {swatch.originalPrice && Number(swatch.originalPrice) > Number(swatch.price) && (
+                            <span className="text-[9px] text-zinc-500 line-through font-mono">
+                              {formatBDT(swatch.originalPrice)}
+                            </span>
+                          )}
+                        </div>
                         {swatch.sprays && (
                           <span className="text-[10px] text-zinc-400 font-mono block mt-2">{swatch.sprays}</span>
                         )}

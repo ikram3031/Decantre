@@ -5,6 +5,33 @@ import './index.css';
 import { config } from './utils/config';
 import { pixelInit } from './utils/fbPixel';
 
+// Cleans outdated localStorage caches and unregisters stale service workers across deployments
+const checkAndBustStaleCache = () => {
+  try {
+    const buildTime = typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : 'dev';
+    const cachedBuildTime = localStorage.getItem('app_build_time');
+    if (cachedBuildTime && cachedBuildTime !== buildTime) {
+      const preserveKeys = ['luxury_cart', 'luxury_wishlist', 'luxury_user', 'luxury_auth_token'];
+      Object.keys(localStorage).forEach((key) => {
+        if (!preserveKeys.includes(key)) {
+          localStorage.removeItem(key);
+        }
+      });
+      sessionStorage.clear();
+      localStorage.setItem('app_build_time', buildTime);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((r) => r.unregister());
+        });
+      }
+    } else if (!cachedBuildTime) {
+      localStorage.setItem('app_build_time', buildTime);
+    }
+  } catch (_) {}
+};
+
+checkAndBustStaleCache();
+
 // Apply client-specific branding theme properties to root DOM
 if (config.primaryColor) {
   document.documentElement.style.setProperty('--color-gold', config.primaryColor);

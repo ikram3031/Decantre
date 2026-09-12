@@ -26,6 +26,8 @@ export const ProductCard = ({
   const { currentTheme, brands, categories } = useApp();
   const isLight = currentTheme === 'light';
 
+  const [userSelectedSize, setUserSelectedSize] = useState(null);
+
   const rawVariations = Array.isArray(product?.variations) ? product.variations : [];
   
   // Extract only genuine variations (excluding default placeholders like 'Full Bottle' or 'Standard')
@@ -36,15 +38,26 @@ export const ProductCard = ({
   const hasMultipleVariations = genuineVariations.length > 1;
   const availableVariations = genuineVariations.length > 0 ? genuineVariations : rawVariations;
 
-  // Active variation resolution: match user selection or default to first actual variation
-  const selectedTerm = String(currentSel?.size || currentSel?.slug || '').trim().toLowerCase();
+  const discountedVariation = availableVariations.find((v) => {
+    const orig = v.originalPrice ?? (v.raw?.offerPrice && v.raw?.price ? Number(v.raw.price) : null);
+    const eff = v.price ?? (v.raw?.offerPrice ? Number(v.raw.offerPrice) : null);
+    return orig && eff && Number(orig) > Number(eff);
+  });
+
+  const activeTerm = String(userSelectedSize || (discountedVariation ? '' : (currentSel?.size || currentSel?.slug || ''))).trim().toLowerCase();
 
   const activeVariation = availableVariations.length > 0
-    ? (availableVariations.find((v) => {
-        const vSize = String(v.size || '').trim().toLowerCase();
-        const vSlug = String(v.slug || '').trim().toLowerCase();
-        return selectedTerm && (vSize === selectedTerm || vSlug === selectedTerm);
-      }) || availableVariations[0])
+    ? (userSelectedSize
+        ? (availableVariations.find((v) => {
+            const vSize = String(v.size || '').trim().toLowerCase();
+            const vSlug = String(v.slug || '').trim().toLowerCase();
+            return vSize === activeTerm || vSlug === activeTerm;
+          }) || discountedVariation || availableVariations[0])
+        : (discountedVariation || (activeTerm ? availableVariations.find((v) => {
+            const vSize = String(v.size || '').trim().toLowerCase();
+            const vSlug = String(v.slug || '').trim().toLowerCase();
+            return vSize === activeTerm || vSlug === activeTerm;
+          }) : null) || availableVariations[0]))
     : null;
 
   const activeSize = activeVariation ? activeVariation.size : (currentSel?.size || 'Full Bottle');
@@ -64,6 +77,15 @@ export const ProductCard = ({
     ? calculateItemPrice(variationPrice, activeSize, currentSel?.concentration)
     : Number(variationPrice || 0);
 
+  const activeOriginalPrice = activeVariation
+    ? (activeVariation.originalPrice ?? (activeVariation.raw?.offerPrice && activeVariation.raw?.price ? Number(activeVariation.raw.price) : null))
+    : (product?.originalPrice ?? (product?.offerPrice && product?.price ? Number(product.price) : null));
+
+  const isOnSale = Boolean(activeOriginalPrice && Number(activeOriginalPrice) > Number(currentPrice));
+  const discountPercent = isOnSale
+    ? Math.round(((Number(activeOriginalPrice) - Number(currentPrice)) / Number(activeOriginalPrice)) * 100)
+    : 0;
+
   const productImage = normalizeProductImage(product?.image || (product?.raw && product.raw.image) || defaultPerfumeImage);
 
   return (
@@ -73,6 +95,12 @@ export const ProductCard = ({
         isLight ? 'bg-white border-zinc-200 hover:border-gold/60 text-black shadow-sm hover:shadow-md' : 'bg-luxury-dark/90 border-gold/20 hover:border-gold/60 text-white shadow-xl hover:shadow-gold/10'
       } rounded-[6px] p-2 sm:p-3 transition-all duration-300 relative`}
     >
+      {isOnSale && (
+        <span className="absolute top-4 sm:top-5 left-4 sm:left-5 z-20 bg-amber-500 text-black text-[9px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md pointer-events-none">
+          On Sale
+        </span>
+      )}
+
       {/* Wishlist toggle */}
       <button 
         type="button"
@@ -155,6 +183,7 @@ export const ProductCard = ({
                   disabled={isOutOfStock}
                   onClick={() => {
                     if (isOutOfStock) return;
+                    setUserSelectedSize(size);
                     if (typeof onSizeChange === 'function') {
                       onSizeChange(size, v.slug);
                     }
@@ -177,11 +206,23 @@ export const ProductCard = ({
 
       {/* Add to Cart & Price Row */}
       <div className="flex items-center justify-between gap-2 pt-1.5 mt-1 border-t border-white/10 flex-shrink-0">
-        <div className="text-left">
+        <div className="text-left min-w-0">
           <span className="text-[8px] font-sans uppercase text-zinc-400 block tracking-wider font-light">Price</span>
-          <span className="text-sm sm:text-base font-serif font-medium text-gold">
-            {formatBDT(currentPrice)}
-          </span>
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-sm sm:text-base font-serif font-medium text-gold">
+              {formatBDT(currentPrice)}
+            </span>
+            {isOnSale && discountPercent > 0 && (
+              <>
+                <span className="text-[11px] text-zinc-500 line-through font-mono">
+                  {formatBDT(activeOriginalPrice)}
+                </span>
+                <span className="text-[10px] font-bold text-emerald-500 font-mono">
+                  (-{discountPercent}%)
+                </span>
+              </>
+            )}
+          </div>
         </div>
 
         <div>

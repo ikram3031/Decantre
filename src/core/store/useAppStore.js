@@ -6,7 +6,8 @@ import {
   fetchProductDetails as apiFetchProductDetails,
   fetchCombos as apiFetchCombos,
   createOrder as apiCreateOrder,
-  fetchCouponByCode
+  fetchCouponByCode,
+  fetchStoreUtils as apiFetchStoreUtils
 } from '../lib/api';
 
 const parseQuery = (queryString) => {
@@ -87,10 +88,27 @@ export const useAppStore = create((set, get) => {
     isCombosLoading: false,
     combosError: null,
 
+    storeUtils: { featured: [], bestSeller: [], onSale: [] },
+    isStoreUtilsLoading: false,
+    storeUtilsError: null,
+
     setProducts: (newProducts) => set({ products: newProducts }),
     setCategories: (newCategories) => set({ categories: newCategories }),
     setBrands: (newBrands) => set({ brands: newBrands }),
     setCombos: (newCombos) => set({ combos: newCombos }),
+    setStoreUtils: (newStoreUtils) => set({ storeUtils: newStoreUtils }),
+
+    fetchStoreUtils: async () => {
+      set({ isStoreUtilsLoading: true, storeUtilsError: null });
+      try {
+        const data = await apiFetchStoreUtils();
+        set({ storeUtils: data, isStoreUtilsLoading: false, storeUtilsError: null });
+        return data;
+      } catch (err) {
+        set({ isStoreUtilsLoading: false, storeUtilsError: 'Failed to load store showcases' });
+        return { featured: [], bestSeller: [], onSale: [] };
+      }
+    },
 
     fetchProducts: async (opts = {}) => {
       set({ isProductsLoading: true, productsError: null });

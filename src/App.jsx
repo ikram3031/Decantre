@@ -10,6 +10,7 @@ import { Combo } from './pages/Combo';
 
 // New luxury pages
 import { Shop } from './pages/Shop';
+import { OnSale } from './pages/OnSale';
 import { Wishlist } from './pages/Wishlist';
 import { Cart } from './pages/Cart';
 import { Checkout } from './pages/Checkout';
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="season" element={<Season />} />
             <Route path="combo" element={<Combo />} />
             <Route path="shop" element={<Shop />} />
+            <Route path="on-sale" element={<OnSale />} />
             <Route path="search" element={<SearchResults />} />
             <Route path="wishlist" element={<Wishlist />} />
             <Route path="product/:slug" element={<ProductDetail />} />
