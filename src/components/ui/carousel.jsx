@@ -158,7 +158,7 @@ const CarouselPrevious = React.forwardRef(
         ref={ref}
         type="button"
         className={cn(
-          "absolute h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center border border-slate-300/80 dark:border-white/20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md hover:bg-orange-500 dark:hover:bg-orange-500 hover:text-white dark:hover:text-white text-slate-800 dark:text-white transition-all duration-300 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer z-20",
+          "absolute h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center border border-slate-300/80 dark:border-white/20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md hover:bg-gold dark:hover:bg-gold hover:border-gold dark:hover:border-gold hover:text-black dark:hover:text-black text-slate-800 dark:text-white transition-all duration-300 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer z-20",
           orientation === "horizontal"
             ? "-left-1 sm:-left-4 top-1/2 -translate-y-1/2"
             : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
@@ -186,7 +186,7 @@ const CarouselNext = React.forwardRef(
         ref={ref}
         type="button"
         className={cn(
-          "absolute h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center border border-slate-300/80 dark:border-white/20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md hover:bg-orange-500 dark:hover:bg-orange-500 hover:text-white dark:hover:text-white text-slate-800 dark:text-white transition-all duration-300 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer z-20",
+          "absolute h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center border border-slate-300/80 dark:border-white/20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md hover:bg-gold dark:hover:bg-gold hover:border-gold dark:hover:border-gold hover:text-black dark:hover:text-black text-slate-800 dark:text-white transition-all duration-300 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer z-20",
           orientation === "horizontal"
             ? "-right-1 sm:-right-4 top-1/2 -translate-y-1/2"
             : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",

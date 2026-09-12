@@ -55,7 +55,7 @@ export const NewArrival = () => {
                     <div className="flex items-baseline justify-between gap-4 w-full border-b border-gold/10 pb-3">
                         <div className="space-y-0.5 text-left">
                             <span className="text-[9px] uppercase tracking-[0.25em] text-gold font-sans font-semibold">Spotlight Masterpieces</span>
-                            <h2 className="text-xl sm:text-2xl font-serif font-light tracking-wide">New Arrivals</h2>
+                            <h2 className="text-xl sm:text-2xl font-serif font-light tracking-wide">Latest Drops</h2>
                         </div>
                         <div className="shrink-0">
                             <Link
@@ -96,7 +96,7 @@ export const NewArrival = () => {
                 ) : items.length === 0 ? (
                     <div className="p-8 border border-zinc-700/40 bg-zinc-900/40 rounded-sm text-center my-4">
                         <p className="text-zinc-400 font-sans text-xs tracking-wide">
-                            No new arrival products available at the moment.
+                            No latest drops available at the moment.
                         </p>
                     </div>
                 ) : (
