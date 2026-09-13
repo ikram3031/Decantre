@@ -24,6 +24,11 @@ const checkAndBustStaleCache = () => {
           registrations.forEach((r) => r.unregister());
         });
       }
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => caches.delete(name));
+        });
+      }
     } else if (!cachedBuildTime) {
       localStorage.setItem('app_build_time', buildTime);
     }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldCheck as IconShield,
   CheckCircle as IconCheck,
@@ -14,7 +14,9 @@ import {
   PhoneCall,
   Sparkles,
   FileText,
-  Tag
+  Tag,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatBDT as fmtBDT } from '../core/utils/formatCurrency';
@@ -137,6 +139,39 @@ export const Checkout = () => {
 
   const isLight = currentTheme === 'light';
   const navigate = useNavigate();
+
+  const [copiedId, setCopiedId] = useState(null);
+
+  const handleCopy = (text, id) => {
+    if (!text) return;
+    const cleanText = text.trim();
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(cleanText).catch(() => {
+          const textArea = document.createElement('textarea');
+          textArea.value = cleanText;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        });
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = cleanText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+    } catch {
+      // ignore fallback error
+    }
+    setCopiedId(id);
+    addToast(`Copied ${cleanText} to clipboard!`, 'success');
+    setTimeout(() => {
+      setCopiedId(null);
+    }, 2000);
+  };
 
   // Facebook Pixel – InitiateCheckout (fires once when checkout page loads with items)
   React.useEffect(() => {
@@ -1006,9 +1041,53 @@ export const Checkout = () => {
                       <p className="font-bold text-emerald-400 flex items-center gap-1.5">
                         <span>✅ Send your advance payment via:</span>
                       </p>
-                      <div className="space-y-0.5 text-zinc-300 font-sans pl-1">
-                        <div>bKash: <strong className="font-mono text-pink-300">01996 502866</strong> (Send Money)</div>
-                        <div>Nagad: <strong className="font-mono text-orange-300">01869 151550</strong> (Send Money)</div>
+                      <div className="space-y-1.5 text-zinc-300 font-sans pl-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>bKash:</span>
+                          <strong className="font-mono text-pink-300">01869151550</strong>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy('01869151550', 'adv-bkash')}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-pink-950/40 hover:bg-pink-900/60 border border-pink-500/30 text-pink-300 hover:text-pink-100 transition-all cursor-pointer text-[10px]"
+                            title="Copy bKash Number"
+                          >
+                            {copiedId === 'adv-bkash' ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                <span className="text-emerald-400 font-medium">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
+                          <span>(Make Merchant Payment)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>Nagad:</span>
+                          <strong className="font-mono text-orange-300">01869151550</strong>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy('01869151550', 'adv-nagad')}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-950/40 hover:bg-orange-900/60 border border-orange-500/30 text-orange-300 hover:text-orange-100 transition-all cursor-pointer text-[10px]"
+                            title="Copy Nagad Number"
+                          >
+                            {copiedId === 'adv-nagad' ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                <span className="text-emerald-400 font-medium">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
+                          <span>(Send Money)</span>
+                        </div>
                         <div>Bank Transfer: <span className="text-zinc-400">(See bank details above)</span></div>
                       </div>
                     </div>
@@ -1130,10 +1209,50 @@ export const Checkout = () => {
                         <div className="space-y-1 text-[11px] bg-white/5 p-3 rounded-sm font-sans border border-white/5">
                           <h5 className="font-bold text-gold text-xs mb-1">Bank Details</h5>
                           <div>Account Name: <strong className="text-white">Saad Ebna Azad</strong></div>
-                          <div>Account Number: <strong className="text-white font-mono">2302808015001</strong></div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span>Account Number: <strong className="text-white font-mono">2302808015001</strong></span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy('2302808015001', 'bank-acc')}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 border border-white/20 text-zinc-300 hover:text-white transition-all cursor-pointer text-[10px]"
+                              title="Copy Account Number"
+                            >
+                              {copiedId === 'bank-acc' ? (
+                                <>
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span className="text-emerald-400 font-semibold">Copied</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                           <div>Bank Name: <strong className="text-white">The City Bank Ltd</strong></div>
                           <div>Branch: <strong className="text-white">Uttara Branch</strong></div>
-                          <div>Routing Number: <strong className="text-white font-mono">225264634</strong></div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span>Routing Number: <strong className="text-white font-mono">225264634</strong></span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy('225264634', 'bank-routing')}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 border border-white/20 text-zinc-300 hover:text-white transition-all cursor-pointer text-[10px]"
+                              title="Copy Routing Number"
+                            >
+                              {copiedId === 'bank-routing' ? (
+                                <>
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span className="text-emerald-400 font-semibold">Copied</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         <div className="space-y-3 pt-1">
@@ -1182,9 +1301,31 @@ export const Checkout = () => {
                         <div className="space-y-1.5 border-b border-pink-500/20 pb-3">
                           <h4 className="font-bold text-pink-400 text-xs">Disclaimer: Please Read Carefully</h4>
                           <p className="text-[11px] text-zinc-300 leading-relaxed">
-                            To confirm your order, send via bKash (Send Money) to the number below:<br />
-                            bKash Number: <strong className="text-pink-300 font-mono">01996502866</strong><br />
-                            Account Type: Personal
+                            To confirm your order, send via bKash (Make Merchant Payment) to the number below:<br />
+                            <span className="inline-flex items-center gap-1.5 my-0.5">
+                              <span>bKash Number:</span>
+                              <strong className="text-pink-300 font-mono text-xs">01869151550</strong>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy('01869151550', 'bkash-desc')}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-pink-950/50 hover:bg-pink-900/70 border border-pink-500/40 text-pink-300 hover:text-pink-100 transition-all cursor-pointer text-[10px]"
+                                title="Copy bKash Number"
+                              >
+                                {copiedId === 'bkash-desc' ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                    <span className="text-emerald-400 font-medium">Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </button>
+                            </span>
+                            <br />
+                            Account Type: Merchant
                           </p>
                           <div className="text-[11px] text-zinc-300 leading-relaxed pt-1">
                             <strong>After sending the payment:</strong>
@@ -1197,8 +1338,26 @@ export const Checkout = () => {
                               Note: Orders will not be processed without valid payment details.
                             </p>
                           </div>
-                          <div className="pt-2 text-xs font-bold text-pink-300 font-mono">
-                            bKash Personal Number : 01996502866
+                          <div className="pt-2 text-xs font-bold text-pink-300 font-mono flex items-center gap-2">
+                            <span>bKash Merchant Number : 01869151550</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy('01869151550', 'bkash-num')}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-pink-950/60 hover:bg-pink-900/80 border border-pink-500/40 text-pink-300 hover:text-pink-100 transition-all cursor-pointer text-[10px] font-sans font-normal"
+                              title="Copy bKash Number"
+                            >
+                              {copiedId === 'bkash-num' ? (
+                                <>
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span className="text-emerald-400 font-semibold">Copied</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
                           </div>
                         </div>
 
@@ -1249,7 +1408,29 @@ export const Checkout = () => {
                           <h4 className="font-bold text-orange-400 text-xs">Disclaimer: Please Read Carefully</h4>
                           <p className="text-[11px] text-zinc-300 leading-relaxed">
                             To confirm your order, send via Nagad (Send Money) to the number below:<br />
-                            Nagad Number: <strong className="text-orange-300 font-mono">01869151550</strong><br />
+                            <span className="inline-flex items-center gap-1.5 my-0.5">
+                              <span>Nagad Number:</span>
+                              <strong className="text-orange-300 font-mono text-xs">01869151550</strong>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy('01869151550', 'nagad-desc')}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-950/50 hover:bg-orange-900/70 border border-orange-500/40 text-orange-300 hover:text-orange-100 transition-all cursor-pointer text-[10px]"
+                                title="Copy Nagad Number"
+                              >
+                                {copiedId === 'nagad-desc' ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                    <span className="text-emerald-400 font-medium">Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </button>
+                            </span>
+                            <br />
                             Account Type: Personal
                           </p>
                           <div className="text-[11px] text-zinc-300 leading-relaxed pt-1">
@@ -1263,8 +1444,26 @@ export const Checkout = () => {
                               Note: Orders will not be processed without valid payment details.
                             </p>
                           </div>
-                          <div className="pt-2 text-xs font-bold text-orange-300 font-mono">
-                            Nagad Personal Number : 01869151550
+                          <div className="pt-2 text-xs font-bold text-orange-300 font-mono flex items-center gap-2">
+                            <span>Nagad Personal Number : 01869151550</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy('01869151550', 'nagad-num')}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-orange-950/60 hover:bg-orange-900/80 border border-orange-500/40 text-orange-300 hover:text-orange-100 transition-all cursor-pointer text-[10px] font-sans font-normal"
+                              title="Copy Nagad Number"
+                            >
+                              {copiedId === 'nagad-num' ? (
+                                <>
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span className="text-emerald-400 font-semibold">Copied</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
                           </div>
                         </div>
 
